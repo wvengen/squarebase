@@ -1,0 +1,48 @@
+form           { margin: 0; background-color: #DDF; }
+
+table          { border: 1px solid #999; }
+th             { text-align: left; background: #EEE; }
+td.number      { text-align: right; }
+.rowodd        { background: #FFF; }
+.roweven       { background: #EEE; }
+
+ul             { margin: 0; padding: 0; }
+ul li          { list-style-type: none; }
+
+ul.compact     { width: 30em; overflow: hidden; }
+ul.compact li  { display: inline; margin-right: 1em; }
+.rowgroup      { }
+.top           { vertical-align: top; padding-top: 0.3em; }
+.thisrecord    { display: none; } 
+
+.textareablur  { width: 30em; height:  5em; white-space: pre-wrap; }
+.textareafocus { width: 100%; height: 15em; white-space: pre-wrap; }
+
+.integer       { width: 2em; text-align: right; }
+.static        { color: #666; }
+.boolean       { margin: 0; }
+
+input, select  { font-size: 1em; }
+
+.lookup        { width: 10em; }
+
+.foreigntable  { margin-bottom: 1em; }
+
+.typename      { width: 8em; }
+
+h1             { margin: 0; }
+.title         { float: left; }
+.id            { float: right; }
+hr             { clear: both; visibility: hidden; }
+
+.important     { font-weight: bold; }
+
+.error, 
+.problem       { font-weight: bold; color: #F00; }
+
+.trace         { white-space: nowrap; }
+
+.debug         { border: 1px solid #CCC; background-color: #EEE; color: #999; white-space: nowrap; }
+.querytop      { padding-left: 0; }
+.querymeta     { padding-left: 2em; }
+.querydata     { padding-left: 4em; }
