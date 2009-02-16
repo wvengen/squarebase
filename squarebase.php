@@ -731,46 +731,8 @@
       if (!$value && $row)
         $value = $row[$field['fieldname']];
 //    print $field['fieldname'].' '.$field['presentation'].html('br');
-      if ($field['presentation']) {
-        include_once("presentation/$field[presentation].php");
-        $cell = call_user_func("formfield_$field[presentation]", $metabasename, $databasename, $field, $value, $action);
-      }
-      elseif ($field['foreigntableid']) {
-        if ($action == 'delete_record') {
-          list($references) = orderedrows($metabasename, $databasename, $field['foreigntableid'], $field['foreigntablename'], 0, 0, $field['foreignuniquefieldname'], 'desc', $field['foreignuniquefieldname'], $value);
-          $reference = mysql_fetch_assoc($references);
-          $option = $reference["${tablename}_$field[fieldname]"];
-          $cell =
-            html('select', array('name'=>"field:$field[fieldname]", 'readonly'=>'readonly', 'disabled'=>'disabled'),
-              html('option', array_merge(array('value'=>$reference[$field['foreignuniquefieldname']]), $checkoption ? array('selected'=>'selected') : array()), $option)
-            );
-        }
-        else {
-          list($references) = orderedrows($metabasename, $databasename, $field['foreigntableid'], $field['foreigntablename'], 0, 0, $field['foreignuniquefieldname'], 'desc');
-          $options = '';
-          while ($reference = mysql_fetch_assoc($references)) {
-            $option = $reference["${field[foreigntablename]}_descriptor"];
-            $checkoption = $value == $reference[$field['foreignuniquefieldname']];
-            $checked = $checked || $checkoption;
-            $options .= html('option', array_merge(array('value'=>$reference[$field['foreignuniquefieldname']]), $checkoption ? array('selected'=>'selected') : array()), $option);
-          }
-          if ($field['nullallowed'])
-            $options =
-              html('option', array_merge(array('value'=>''), $checked ? array() : array('selected'=>'selected')), '').
-              $options;
-          $cell =
-            html('select', array('name'=>"field:$field[fieldname]"), $options).' '.
-            html('input', array('type'=>'submit', 'name'=>'action', 'value'=>"new_record_$field[foreigntablename]", 'onclick'=>"this.form.newtableid.value = $field[foreigntableid]; return true;", 'class'=>'button'));
-        }
-      }
-      elseif ($field['autoincrement'])
-        $cell = $value;
-      elseif ($field['typeyesno'])
-        $cell = html('input', array_merge(array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"field:$field[fieldname]"), $value ? array('checked'=>'checked') : array(), $action == 'delete_record' ? array('readonly'=>'readonly', 'disabled'=>'disabled') : array()));
-      elseif ($field['type'] == 'text')
-        $cell = html('textarea', array_merge(array('name'=>"field:$field[fieldname]", 'class'=>'textareablur', 'onfocus'=>"this.className = 'textareafocus';", 'onblur'=>"this.className = 'textareablur';"), preg_replace('/<(.*?)>/', '&lt;$1&gt;', $action == 'delete_record' ? array('readonly'=>'readonly', 'disabled'=>'disabled') : array())), ''.$value);
-      else
-        $cell = html('input', array_merge(array('type'=>'text', 'name'=>"field:$field[fieldname]", 'value'=>$value), $action == 'delete_record' ? array('readonly'=>'readonly', 'disabled'=>'disabled') : array()));
+      include_once("presentation/$field[presentation].php");
+      $cell = call_user_func("formfield_$field[presentation]", $metabasename, $databasename, $field, $value, $action);
       $lines .=
         html('tr', array(),
           html('td', array('valign'=>'top', 'width'=>1, 'nowrap'=>'nowrap'), preg_replace('/(?<=[a-z_])id$/', '', $field['fieldname'])).
@@ -836,7 +798,6 @@
     $newtableid   = parameter('get', 'newtableid');
     $parameters = parameter('get');
     $parameters['action'] = 'edit_record';
-    $parameters['back'] = null;
 
     internalredirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$newtableid, 'back'=>internalurl($parameters)));
   }
