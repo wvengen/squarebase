@@ -640,7 +640,7 @@
       while ($metafield = mysql_fetch_assoc($metafields)) {
         if ($metafield['uniquefieldid'] != $metafield['fieldid']) {
           $oldfield = $associatedoldfields[$metafield['fieldname']];
-          $oldtype = $oldfield['Type'].($oldfield['Null'] ? '' : ' not null');
+          $oldtype = $oldfield['Type'].($oldfield['Null'] == 'YES' ? '' : ' not null');
           $newtype = totaltype($metafield);
           if ($oldfield) {
             if (strcasecmp($oldtype, $newtype))

@@ -467,4 +467,8 @@
       ? html('option', array_merge(array('value'=>$value), $value == $current ? array('selected'=>'selected') : array()), $text ? $text : $value)
       : '';
   }
+
+  function show_array($arr) {
+    return html('pre', array(), print_r($arr, true));
+  }
 ?>
