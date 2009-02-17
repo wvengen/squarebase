@@ -1,8 +1,8 @@
 <?php
-  function formfield_lookup($metabasename, $databasename, $field, $value, $action) {
+  function formfield_lookup($metabasename, $databasename, $field, $value, $readonly) {
     if (!$field['foreigntableid'])
       error("no foreigntableid for $field[fieldname]");
-    if ($action == 'delete_record') {
+    if ($readonly) {
       list($references) = orderedrows($metabasename, $databasename, $field['foreigntableid'], $field['foreigntablename'], 0, 0, $field['foreignuniquefieldname'], 'desc', $field['foreignuniquefieldname'], $value);
       $reference = mysql_fetch_assoc($references);
       $option = $reference["${tablename}_$field[fieldname]"];
@@ -30,5 +30,16 @@
 
   function formvalue_lookup($field) {
     return parameter('get', "field:$field[fieldname]");
+  }
+
+  function cell_lookup($metabasename, $databasename, $field, $value) {
+    return
+      ($field['thisrecord']
+      ? $field['descriptor']
+      : ($field['descriptor']
+        ? internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$field['foreigntableid'], 'uniquevalue'=>$value, 'back'=>parameter('server', 'REQUEST_URI')), $field['descriptor']) 
+        : $value
+        )
+      );
   }
 ?>

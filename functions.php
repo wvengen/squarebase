@@ -8,13 +8,17 @@
     return $value ? str_replace("\\'", "'", $value) : $default;
   }
 
-  function html($name, $parameters = array(), $text = null) {
-    foreach ($parameters as $key=>$value)
-      if (!is_null($value))
-        $parameterlist .= ' '.$key.(is_null($value) ? '' : '='.(is_int($value) && $value >= 0 ? $value : '"'.$value.'"'));
-    $starttag = $name ? "<$name$parameterlist>" : '';
-    $closetag = $name ? "</$name>" : '';
-    return $starttag.(is_null($text) ? '' : (is_array($text) ? JOIN($closetag.$starttag, $text) : $text).$closetag);
+  function cleanlist($list) {
+    return array_diff($list, array(null));
+  }
+
+  function html($tag, $parameters = array(), $text = null) {
+    foreach ($parameters as $parameter=>$value)
+      if ($parameter && !is_null($value))
+        $parameterlist .= " $parameter=\"$value\"";
+    $starttag = $tag ? '<'.$tag.$parameterlist.(is_null($text) ? ' /' : '').'>' : '';
+    $endtag = $tag ? "</$tag>" : '';
+    return $starttag.(is_null($text) ? '' : (is_array($text) ? join($endtag.$starttag, cleanlist($text)) : $text).$endtag);
   }
 
   function httpurl($parameters) {
@@ -77,7 +81,7 @@
     if ($result)
       return $result;
     $errno = mysql_errno();
-    if ($errno == 1044) /* Access denied for user '%s'@'%s' to database '%s' */
+    if ($errno == 1044) // Access denied for user '%s'@'%s' to database '%s'
       return null;
     error('problem while querying the databasemanager'.html('p', array(), html('i', array(), "$errno: ".mysql_error())).$query);
   }
@@ -106,22 +110,14 @@
 
     header('Content-Type: text/html; charset=iso-8859-1');
     echo
-      '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">'.
+      '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'.
       html('html', array(),
         html('head', array(),
           html('title', array(), $title).
-          html('link', array('href'=>'style.css', 'type'=>'text/css', 'rel'=>'stylesheet'))
+          html('link', array('href'=>'style.css', 'type'=>'text/css', 'rel'=>'stylesheet')).
+          html('script', array('type'=>'text/javascript', 'src'=>'script.js'), '')
         ).
-        html('body',
-          array('onload'=>
-            'var formnr, elementnr, eerste = null;'.
-            'for (formnr = 0; !eerste && formnr < document.forms.length; formnr++)'.
-              'for (elementnr = 0; !eerste && elementnr < document.forms[formnr].elements.length; elementnr++)'.
-                'if (document.forms[formnr].elements[elementnr].type != \'hidden\')'.
-                  'eerste = document.forms[formnr].elements[elementnr];'.
-            'if (eerste)'.
-              'eerste.focus();'
-          ),
+        html('body', array(),
           html('h1', array('class'=>'title'), $title).
           ($sessionparts ? html('div', array('class'=>'id'), "$sessionparts[1]@$sessionparts[2] | ".internalreference(array('action'=>'logout'), 'logout')) : '').
           html('hr').
@@ -163,7 +159,7 @@
     return html('h2', array(), 
       $metabasename.
       ($databasename
-      ? " - ".internalreference(array('action'=>'show_tables', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'back'=>parameter('server', 'REQUEST_URI')), $databasename).
+      ? " - ".internalreference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'back'=>parameter('server', 'REQUEST_URI')), $databasename).
         ($tablename
         ? " - ".internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid), $tablename).
           ($description
@@ -226,23 +222,11 @@
         if ($field['purpose'] == 'list') {
           $value = $row["${tablename}_$field[fieldname]"];
           $class = 'column';
-          if ($field['foreigntableid']) {
-            if ($foreignvalue && $field['fieldname'] == $foreignfieldname) {
-              $cell = '(this)';
-              $class .= ' thisrecord'; 
-            }
-            elseif ($row["$field[foreigntablename]_$field[fieldname]_descriptor"])
-              $cell = internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$field['foreigntableid'], 'uniquevalue'=>$value, 'back'=>parameter('server', 'REQUEST_URI')), $row["$field[foreigntablename]_$field[fieldname]_descriptor"]);
-            else {
-              $cell = $value;
-              $class = ' problem';
-            }
-          }
-          elseif ($field['typeyesno'])
-            $cell = html('input', array_merge(array('type'=>'checkbox', 'class'=>'checkboxlist', 'readonly'=>'readonly', 'disabled'=>'disabled', 'name'=>$field['fieldname']), $value ? array('checked'=>'checked') : array()));
-          else
-            $cell = $value;
-          $line .= html('td', array('valign'=>'top', 'class'=>$class, 'align'=>$field['typeyesno'] ? 'center' : ($field['type'] == 'int' && !$field['foreigntableid'] ? 'right' : 'left')), $cell);
+          $field['descriptor'] = $row["$field[foreigntablename]_$field[fieldname]_descriptor"];
+          $field['thisrecord'] = $foreignvalue && $field['fieldname'] == $foreignfieldname;
+          include_once("presentation/$field[presentation].php");
+          $cell = call_user_func("cell_$field[presentation]", $metabasename, $databasename, $field, $value);
+          $line .= html('td', array('class'=>'column '.$field['presentation']), $cell);
         }
       }
       $rownumber++;
@@ -250,7 +234,7 @@
         html('tr', array('class'=>$rownumber % 2 == 0 ? 'roweven' : 'rowodd'), 
           $line.
           ($interactive
-          ? html('td', array('valign'=>'top'), 
+          ? html('td', array(),
               array(
                 internalreference(array('action'=>'edit_record',   'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'uniquevalue'=>$row[$uniquefieldname], 'back'=>parameter('server', 'REQUEST_URI')), 'edit'  ),
                 internalreference(array('action'=>'delete_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'uniquevalue'=>$row[$uniquefieldname], 'back'=>parameter('server', 'REQUEST_URI')), 'delete')
@@ -268,7 +252,7 @@
           $line .= 
             html('th', $foreignvalue && $field['fieldname'] == $foreignfieldname ? array('class'=>'thisrecord') : array(), 
               ($foreignvalue && $foreignfieldname) || $field['fieldid'] == $orderfieldid || !$field['sortable']
-              ? ($field['foreigntableid'] ? preg_replace('/id$/', '', $field['fieldname']) : $field['fieldname'])
+              ? preg_replace('/(?<=[a-z_])id$/', '', $field['fieldname'])
               : internalreference(
                   array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'orderfieldid'=>$field['fieldid']), 
                   $field['fieldname']
@@ -281,7 +265,7 @@
           html('tr', array(), 
             $line.
             ($interactive
-            ? html('th', array(), array('', ''))
+            ? html('th', array(), array('&nbsp;', '&nbsp;'))
             : ''
             )
           ).

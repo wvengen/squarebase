@@ -1,10 +1,14 @@
 <?php
-  function formfield_datetime($metabasename, $databasename, $field, $value, $action) {
-    return html('input', array('type'=>'text', 'class'=>$field['presentation'], 'name'=>"field:$field[fieldname]", 'value'=>swap_datetime($value), 'readonly'=>$action == 'delete_record' ? 'readonly' : null, 'disabled'=>$action == 'delete_record' ? 'disabled' : null));
+  function formfield_datetime($metabasename, $databasename, $field, $value, $readonly) {
+    return html('input', array('type'=>'text', 'class'=>$field['presentation'], 'name'=>"field:$field[fieldname]", 'value'=>swap_datetime($value), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null));
   }
 
   function formvalue_datetime($field) {
     return swap_datetime(parameter('get', "field:$field[fieldname]"));
+  }
+
+  function cell_datetime($metabasename, $databasename, $field, $value) {
+    return swap_datetime($value);
   }
 
   function swap_datetime($value) {

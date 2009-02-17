@@ -2,7 +2,9 @@ form           { margin: 0; background-color: #DDF; }
 
 table          { border: 1px solid #999; }
 th             { text-align: left; background: #EEE; }
+td             { vertical-align: top; }
 td.number      { text-align: right; }
+td.center      { text-align: center; }
 .rowodd        { background: #FFF; }
 .roweven       { background: #EEE; }
 
@@ -13,7 +15,7 @@ ul.compact     { width: 30em; overflow: hidden; }
 ul.compact li  { display: inline; margin-right: 1em; }
 .rowgroup      { }
 .top           { vertical-align: top; padding-top: 0.3em; }
-.thisrecord    { display: none; } 
+.thisrecord    { } /* display: none; } */
 
 .textareablur  { width: 30em; height:  5em; white-space: pre-wrap; }
 .textareafocus { width: 100%; height: 15em; white-space: pre-wrap; }
@@ -24,6 +26,7 @@ ul.compact li  { display: inline; margin-right: 1em; }
 
 input, select  { font-size: 1em; }
 
+.column        { white-space: nowrap; }
 .lookup        { width: 10em; }
 
 .foreigntable  { margin-bottom: 1em; }

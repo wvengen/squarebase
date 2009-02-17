@@ -122,7 +122,7 @@
 //    echo html('hr');
       $rows .=
         html('tr', array(),
-          html('td', array('valign'=>'top'),
+          html('td', array(),
             array(
               internalreference(array('action'=>'form_metabase_for_database', 'databasename'=>$databasename), $databasename),
               $contents,
@@ -732,10 +732,10 @@
         $value = $row[$field['fieldname']];
 //    print $field['fieldname'].' '.$field['presentation'].html('br');
       include_once("presentation/$field[presentation].php");
-      $cell = call_user_func("formfield_$field[presentation]", $metabasename, $databasename, $field, $value, $action);
+      $cell = call_user_func("formfield_$field[presentation]", $metabasename, $databasename, $field, $value, $action == 'delete_record');
       $lines .=
         html('tr', array(),
-          html('td', array('valign'=>'top', 'width'=>1, 'nowrap'=>'nowrap'), preg_replace('/(?<=[a-z_])id$/', '', $field['fieldname'])).
+          html('td', array('width'=>1, 'nowrap'=>'nowrap'), preg_replace('/(?<=[a-z_])id$/', '', $field['fieldname'])).
           html('td', array(), $cell)
         );
     }
@@ -833,7 +833,7 @@
     while ($user = mysql_fetch_assoc($users)) {
       $privcols = '';
       foreach ($privileges as $title=>$privilege)
-        $privcols .= html('td', array('align'=>'center'), checkboxyn($user[$privilege]));
+        $privcols .= html('td', array('class'=>'center'), checkboxyn($user[$privilege]));
       $table .= html('tr', array(), html('td', array(), array($user['User'], $user['Host'])).$privcols.html('td', array(), array(internalreference(array('action'=>'edit_user', 'host'=>$user['Host'], 'username'=>$user['User']), 'edit'), internalreference(array('action'=>'delete_user', 'host'=>$user['Host'], 'username'=>$user['User']), 'delete'))));
     }
     foreach ($privileges as $title=>$privilege)
@@ -863,7 +863,7 @@
       while ($database = mysql_fetch_assoc($databases)) {
         $privcols = '';
         foreach ($privileges as $title=>$privilege)
-          $privcols .= html('td', array('align'=>'center'), checkboxyn($database[$privilege]));
+          $privcols .= html('td', array('class'=>'center'), checkboxyn($database[$privilege]));
         $table .=
           html('tr', array(),
             html('td', array(), $database['Db']).
