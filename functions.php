@@ -1,4 +1,6 @@
 <?php
+  umask(0077); //no rwx for group and other, so only owner gets permissions
+
   function parameter($type, $name = null, $default = null) {
     global $HTTP_POST_VARS, $HTTP_GET_VARS, $HTTP_SERVER_VARS;
     $array = $type == 'get' ? ($HTTP_POST_VARS ? $HTTP_POST_VARS : $HTTP_GET_VARS) : ($type == 'server' ? $HTTP_SERVER_VARS : array());
