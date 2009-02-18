@@ -58,45 +58,73 @@
     redirect($url ? $url : parameter('server', 'HTTP_REFERER'));
   }
 
-  function error($text) {
+  function error($error) {
     $stack = debug_backtrace();
+    $traces = array();
     foreach ($stack as $element) {
-      $args = '';
-      if ($element['args'])
+      $args = array();
+      if ($element['args']) {
         foreach ($element['args'] as $arg)
-          $args .= ($args ? ', ' : '').preg_replace('/<(.*?)>/', '&lt;\1&gt;', "'$arg'");
-      $trace .= html('div', array('class'=>'trace'), "$element[file]:$element[line] $element[function]($args)");
+          $args[] = preg_replace('/<(.*?)>/', '&lt;\1&gt;', "'$arg'");
+      }
+      $traces[] = html('div', array('class'=>'trace'), "$element[file]:$element[line] $element[function](".join(',', $args).")");
     }
     page('error',
-      html('div', array('class'=>'error'), $text).
-      html('div', array('class'=>'debug'), $trace)
+      html('p', array('class'=>'error'), $error).
+      html('p', array('class'=>'trace'), html('ol', array(), html('li', array(), $traces)))
     );
     exit;
   }
   
   $allqueries = array();
   
-  function query($type, $query) {
+  function query($metaordata, $query) {
     global $allqueries;
-    $allqueries[$query] = $type;
+
+    $before = microtime();
     $result = mysql_query($query);
+    $after = microtime();
+    list($beforemsec, $beforesec) = explode(' ', $before);
+    list($aftermsec, $aftersec) = explode(' ', $after);
+
+    $errno = mysql_errno();
+
+    $allqueries[] = 
+      html('li', array('class'=>"query$metaordata"),
+        '['.
+        sprintf('%.2f sec', ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).
+        ', '.
+        ($errno
+        ? html('span', array('class'=>'error'), 'error: '.$errno.' '.mysql_error())
+        : (preg_match('@^[^A-Z]*(EXPLAIN|SELECT|SHOW) @i', $query)
+          ? mysql_num_rows($result).' results'
+          : mysql_affected_rows($database).' affected'
+          )
+        ).
+        '] '.
+        preg_replace(
+          array('@<@' , '@>@' , '@& @'  ),
+          array('&lt;', '&gt;', '&amp; '),
+          $query
+        )
+      );
+
     if ($result)
       return $result;
-    $errno = mysql_errno();
     if ($errno == 1044) // Access denied for user '%s'@'%s' to database '%s'
       return null;
-    error('problem while querying the databasemanager'.html('p', array(), html('i', array(), "$errno: ".mysql_error())).$query);
+    error('problem while querying the databasemanager'.html('p', array('class'=>'error'), "$errno: ".mysql_error()).$query);
   }
   
-  function query1($type, $query) {
-    $results = query($type, $query);
+  function query1($metaordata, $query) {
+    $results = query($metaordata, $query);
     if ($results && mysql_num_rows($results) == 1)
       return mysql_fetch_assoc($results);
     error('problem retrieving 1 result, because there are '.($results ? mysql_num_rows($results) : 'no').' results'.html('p', array(), $query));
   }
 
-  function query1field($type, $query, $field) {
-    $result = query1($type, $query);
+  function query1field($metaordata, $query, $field) {
+    $result = query1($metaordata, $query);
     return $result[$field];
   }
   
@@ -106,9 +134,6 @@
     $title = str_replace('_', ' ', $action);
 
     $error = parameter('get', 'error');
-
-    foreach ($allqueries as $query=>$type)
-      $allqueriesastext .= html('li', array('class'=>"query$type"), $query);
 
     header('Content-Type: text/html; charset=iso-8859-1');
     echo
@@ -125,7 +150,8 @@
           html('hr').
           ($error ? html('div', array('class'=>'error'), $error) : '').
           $content.
-          ($allqueriesastext ? html('ol', array('class'=>'debug'), $allqueriesastext) : '')
+          ($allqueries ? html('ol', array('class'=>'debug'), join('', $allqueries)) : '').
+          html('script', array('type'=>'text/javascript'), 'onload();')
         )
       );
     exit;
