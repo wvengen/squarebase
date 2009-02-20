@@ -2,8 +2,7 @@
   umask(0077); //no rwx for group and other, so only owner gets permissions
 
   function parameter($type, $name = null, $default = null) {
-    global $HTTP_POST_VARS, $HTTP_GET_VARS, $HTTP_SERVER_VARS;
-    $array = $type == 'get' ? ($HTTP_POST_VARS ? $HTTP_POST_VARS : $HTTP_GET_VARS) : ($type == 'server' ? $HTTP_SERVER_VARS : array());
+    $array = $type == 'get' ? ($_POST ? $_POST : $_GET) : ($type == 'server' ? $_SERVER : array());
     if (!$name)
       return $array;
     $value = $array[$name];
@@ -24,8 +23,7 @@
   }
 
   function httpurl($parameters) {
-    global $session;
-    $parameters['session'] = $session;
+    $parameters['session'] = session();
     foreach ($parameters as $name=>$value)
       if (!is_null($value))
         $parameterlist .= ($parameterlist ? '&' : '').$name.'='.rawurlencode($value);
@@ -76,11 +74,24 @@
     exit;
   }
   
-  $allqueries = array();
-  
-  function query($metaordata, $query) {
-    global $allqueries;
+  function addlog($class, $text) {
+    $text = html('li', array('class'=>$class), $text);
+    $file = fopen('tmp/log', 'a');
+    if (!$file)
+      error('error opening log file');
+    if (!fwrite($file, $text))
+      error('error writing to log file');
+    if (!fclose($file))
+      error('error closing log file');
+  }
 
+  function getlogs() {
+    $logs = @file('tmp/log');
+    @unlink('tmp/log');
+    return $logs;
+  }
+
+  function query($metaordata, $query) {
     $before = microtime();
     $result = mysql_query($query);
     $after = microtime();
@@ -89,25 +100,25 @@
 
     $errno = mysql_errno();
 
-    $allqueries[] = 
-      html('li', array('class'=>"query$metaordata"),
-        '['.
-        sprintf('%.2f sec', ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).
-        ', '.
-        ($errno
-        ? html('span', array('class'=>'error'), 'error: '.$errno.' '.mysql_error())
-        : (preg_match('@^[^A-Z]*(EXPLAIN|SELECT|SHOW) @i', $query)
-          ? mysql_num_rows($result).' results'
-          : mysql_affected_rows($database).' affected'
-          )
-        ).
-        '] '.
-        preg_replace(
-          array('@<@' , '@>@' , '@& @'  ),
-          array('&lt;', '&gt;', '&amp; '),
-          $query
+    addlog(
+      "query$metaordata",
+      '['.
+      sprintf('%.2f sec', ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).
+      ', '.
+      ($errno
+      ? html('span', array('class'=>'error'), 'error: '.$errno.' '.mysql_error())
+      : (preg_match('@^[^A-Z]*(EXPLAIN|SELECT|SHOW) @i', $query)
+        ? mysql_num_rows($result).' results'
+        : mysql_affected_rows(connection()).' affected'
         )
-      );
+      ).
+      '] '.
+      preg_replace(
+        array('@<@' , '@>@' , '@& @'  ),
+        array('&lt;', '&gt;', '&amp; '),
+        $query
+      )
+    );
 
     if ($result)
       return $result;
@@ -129,8 +140,6 @@
   }
   
   function page($action, $content) {
-    global $sessionparts, $allqueries;
-    
     $title = str_replace('_', ' ', $action);
 
     $error = parameter('get', 'error');
@@ -146,11 +155,11 @@
         ).
         html('body', array(),
           html('h1', array('class'=>'title'), $title).
-          ($sessionparts ? html('div', array('class'=>'id'), "$sessionparts[1]@$sessionparts[2] | ".internalreference(array('action'=>'logout'), 'logout')) : '').
+          (username() ? html('div', array('class'=>'id'), username().'@'.host()." &ndash; ".internalreference(array('action'=>'logout'), 'logout')) : '').
           html('hr').
           ($error ? html('div', array('class'=>'error'), $error) : '').
           $content.
-          ($allqueries ? html('ol', array('class'=>'debug'), join('', $allqueries)) : '').
+          html('ol', array('class'=>'logs'), join('', getlogs())).
           html('script', array('type'=>'text/javascript'), 'onload();')
         )
       );
@@ -158,11 +167,9 @@
   }
 
   function form($content) {
-    global $session;
-
     return
       html('form', array('action'=>parameter('server', 'SCRIPT_NAME'), 'method'=>'post'),
-        html('input', array('type'=>'hidden', 'name'=>'session', 'value'=>$session)).
+        html('input', array('type'=>'hidden', 'name'=>'session', 'value'=>session())).
         $content
       );
   }
@@ -218,7 +225,7 @@
   }
   
   function description($metabasename, $databasename, $tableid, $reference, $tableids = array()) {
-    global $descriptors;
+    static $descriptors;
     if (!$descriptors[$tableid])
       $descriptors[$tableid] = fieldsforpurpose($metabasename, $tableid, array('desc'));
     for (mysql_data_reset($descriptors[$tableid]); $descriptor = mysql_fetch_assoc($descriptors[$tableid]); ) {
@@ -402,11 +409,8 @@
     return array(query('data', "SELECT ".($limit ? "SQL_CALC_FOUND_ROWS " : "")."$tablename.$uniquefieldname AS $uniquefieldname".($fieldnamelist[$purpose] ? ", $fieldnamelist[$purpose]" : '').($purpose == 'desc' ? ', '.descriptor($metabasename, $tableid, $tablename)." AS ${tablename}_descriptor" : '')." FROM `$databasename`.$tablename$joinstext".($foreignvalue ? " WHERE $tablename.$foreignfieldname = '$foreignvalue'" : '').($fieldnamelist['sort'] ? " ORDER BY $fieldnamelist[sort]" : '').($limit ? " LIMIT $limit".($offset ? " OFFSET $offset" : '') : '')), $fields, $orderfieldid, $limit ? query1('data', 'SELECT FOUND_ROWS() AS number') : null);
   }
 
-  $descriptions = array();
-  
   function descriptor($metabasename, $tableid, $tablealias) {
-    global $descriptions;
-    
+    static $descriptions = array();
     $descriptor = $descriptions[$tableid];
     if (!$descriptor) {
       $descriptorfields = fieldsforpurpose($metabasename, $tableid, array('desc'));
@@ -422,53 +426,100 @@
     return html('input', array_merge(array('type'=>'checkbox'), $name ? array('class'=>'checkboxedit', 'name'=>$name) : array('class'=>'checkboxlist', 'readonly'=>'readonly', 'disabled'=>'disabled'), $value == 'Y' ? array('checked'=>'checked') : array()));
   }
 
-  function login($username, $host, $password) {
-    global $session;
-    do {
-      $session = '';
-      for ($i = 0; $i < 20; $i++)
-        $session .= rand(0, 9);
-      $file = fopen("session/$session", 'x');
-      if ($file) {
-        if (!fwrite($file, "$username $host $password"))
-          logout('error writing session');
-        if (!fclose($file))
-          logout('error closing session');
+  function username($newusername = null) {
+    static $username = null;
+    if (!is_null($newusername))
+      $username = $newusername ? $newusername : null;
+    return $username;
+  }
+
+  function host($newhost = null) {
+    static $host = null;
+    if (!is_null($newhost))
+      $host = $newhost ? $newhost : null;
+    return $host;
+  }
+
+  function password($newpassword = null) {
+    static $password = null;
+    if (!is_null($newpassword))
+      $password = $newpassword ? $newpassword : null;
+    return $password;
+  }
+
+  function session($what = null, $newsession = null, $username = null, $host = null, $password = null) {
+    static $session = null;
+    switch ($what) {
+    case 'new':
+      $tries = 0;
+      while (true) {
+        $newsession = '';
+        for ($i = 0; $i < 20; $i++)
+          $newsession .= rand(0, 9);
+        $file = fopen("session/$newsession", 'x');
+        if ($file) {
+          if (!fwrite($file, "$username\n$host\n$password\n"))
+            logout('error writing session');
+          if (!fclose($file))
+            logout('error closing session');
+          break;
+        }
+        $tries++;
+        if ($tries > 5)
+          logout('error finding unique session id');
       }
-    } while (!$file);
+      //no break in the switch, so continue
+    case 'get':
+      $session = $newsession ? $newsession : null;
+      if (!$session)
+        logout('missing session id');
+      $sessionlines = @file("session/$session");
+      if (!$sessionlines)
+        logout('corrupt session id');
+      if (count($sessionlines) != 3)
+        logout('corrupt session');
+      username(chop($sessionlines[0]));
+      host(chop($sessionlines[1]));
+      password(chop($sessionlines[2]));
+      break;
+    case 'del':
+      $session = null;
+      break;
+    }
+    return $session;
+  }
+
+  function login($username, $host, $password) {
+    session('new', null, $username, $host, $password);
+  }
+
+  function connection() {
+    static $connection = null;
+    if (!$connection)
+      $connection = mysql_connect(host(), username(), password());
+    if (!$connection)
+      logout('problem connecting to the databasemanager: '.mysql_error());
+    return $connection;
   }
 
   function connect() {
-    global $session, $sessionparts;
-    $session = parameter('get', 'session');
-    if (!$session)
-      logout('missing session id');
-
-    $sessionlines = @file("session/$session");
-
-    if (!$sessionlines || count($sessionlines) != 1 || !preg_match('/^(\S*) (\S*) (\S*)$/', $sessionlines[0], $sessionparts))
-      logout('corrupted session id');
-
-    if (!@mysql_connect($sessionparts[2], $sessionparts[1], $sessionparts[3]))
-      logout('problem connecting to the databasemanager: '.mysql_error());
+    session('get', parameter('get', 'session'));
+    connection();
   }
 
   function logout($error = null) {
-    global $session;
-    if ($session)
-      @unlink("session/$session");
-    $session = null;
+    if (session())
+      @unlink('session/'.session());
+    session('del');
     internalredirect(array('action'=>'login', 'error'=>$error));
   }
 
-  $grants = null;
-
   function grant($databasename, $privilege) {
-    global $grants, $sessionparts;
+    static $grants = null;
     if (!$grants)
-      $grants = query('top', "SHOW GRANTS FOR '$sessionparts[1]'@'$sessionparts[2]'");
+      $grants = query('root', "SHOW GRANTS FOR '".username()."'@'".host()."'");
     for (mysql_data_reset($grants); $grant = mysql_fetch_assoc($grants); )
-      if (preg_match("/^GRANT (.*?) ON (.*?) /", $grant["Grants for $sessionparts[1]@$sessionparts[2]"], $matches) && ($matches[1] == 'ALL PRIVILEGES' || preg_match("/\b$privilege\b/", $matches[1])) && (preg_match("/^(`$databasename`|\*)/", $matches[2])))
+      if (preg_match("/^GRANT (.*?) ON (.*?) /", $grant["Grants for ".username()."@".host()], $matches) && ($matches[1] == 'ALL PRIVILEGES' || preg_match("/\b$privilege\b/", $matches[1])) && (preg_match("/^(`$databasename`|\*)/", $matches[2])))
         return TRUE;
     return FALSE;
   }

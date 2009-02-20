@@ -6,6 +6,7 @@
 //  print_r($HTTP_SERVER_VARS);
 
   $action = parameter('get', 'action', 'login');
+  addlog('action', $action.' '.preg_replace('/^Array/', '', print_r(parameter('get'), true)));
 
   /********************************************************************************************/
 
@@ -50,7 +51,7 @@
   /********************************************************************************************/
 
   if ($action == 'index') {
-    $metabases = query('top', 'SHOW DATABASES');
+    $metabases = query('root', 'SHOW DATABASES');
     $rows = array();
     while ($metabase = mysql_fetch_assoc($metabases)) {
       $metabasename = $metabase['Database'];
@@ -86,7 +87,7 @@
 
   if ($action == 'new_metabase_from_database') {
     $rows = html('tr', array(), html('th', array(), array('database', 'tables', '')));
-    $databases = query('top', 'SHOW DATABASES');
+    $databases = query('root', 'SHOW DATABASES');
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['Database'];
       $tables = query('data', "SHOW TABLES FROM `$databasename`");
@@ -111,13 +112,13 @@
         $userprivs .= ($userprivs ? ', ' : '')."user.$privilege AS user_$title";
         $dbprivs   .= ($dbprivs   ? ', ' : '')."db.$privilege AS db_$title";
       }
-//    $tableprivs = query('top', "SHOW GRANTS FOR '$sessionparts[1]'@'$sessionparts[2]'");
+//    $tableprivs = query('root', "SHOW GRANTS FOR '$sessionparts[1]'@'$sessionparts[2]'");
 //    while ($tablepriv = mysql_fetch_assoc($tableprivs)) {
 //      print_r($tablepriv);
 //      echo html('br');
 //    }
 //    echo html('hr');
-//    $tableprivs = query1('top', "SELECT $userprivs, $dbprivs FROM mysql.user LEFT JOIN mysql.db ON db.Host=user.Host AND db.User=user.User AND db.Db='$databasename' WHERE user.Host='$sessionparts[2]' AND user.User='$sessionparts[1]'");
+//    $tableprivs = query1('root', "SELECT $userprivs, $dbprivs FROM mysql.user LEFT JOIN mysql.db ON db.Host=user.Host AND db.User=user.User AND db.Db='$databasename' WHERE user.Host='$sessionparts[2]' AND user.User='$sessionparts[1]'");
 //    print_r($tableprivs);
 //    echo html('hr');
       $rows .=
@@ -160,7 +161,7 @@
 
   if ($action == 'drop_database_really') {
     $databasename = parameter('get', 'databasename');
-    query('top', "DROP DATABASE $databasename");
+    query('root', "DROP DATABASE $databasename");
     back();
   }
 
@@ -172,7 +173,7 @@
 
     if (!$metabasename) {
       $mbnames = array();
-      $metabases = query('top', 'SHOW DATABASES');
+      $metabases = query('root', 'SHOW DATABASES');
       while ($metabase = mysql_fetch_assoc($metabases)) {
         $mbname = $metabase['Database'];
         if ($mbname != 'mysql') {
@@ -454,13 +455,6 @@
           ")"
     );
 
-    query('meta', "CREATE TABLE `$metabasename`.metapresentation (".
-          "  presentationid  INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,".
-          "  presentation    VARCHAR(100) NOT NULL,".
-          "  UNIQUE KEY (presentation)".
-          ")"
-    );
-
     query('meta', "CREATE TABLE `$metabasename`.metatype (".
           "  typeid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,".
           "  typename        VARCHAR(100) NOT NULL,".
@@ -470,6 +464,13 @@
           "  typezerofill    INT UNSIGNED         ,".
           "  presentationid  INT UNSIGNED         ,".
           "  UNIQUE KEY (typename)".
+          ")"
+    );
+
+    query('meta', "CREATE TABLE `$metabasename`.metapresentation (".
+          "  presentationid  INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,".
+          "  presentation    VARCHAR(100) NOT NULL,".
+          "  UNIQUE KEY (presentation)".
           ")"
     );
 
@@ -565,7 +566,7 @@
   /********************************************************************************************/
 
   if ($action == 'form_metabase_to_database') {
-    $metabases = query('top', 'SHOW DATABASES');
+    $metabases = query('root', 'SHOW DATABASES');
     while ($metabase = mysql_fetch_assoc($metabases)) {
       $metabasename = $metabase['Database'];
       $databasenames = databasenames($metabasename);
@@ -829,7 +830,7 @@
   /********************************************************************************************/
 
   if ($action == 'show_users') {
-    $users = query('top', "SELECT * FROM mysql.user ORDER BY host, user");
+    $users = query('root', "SELECT * FROM mysql.user ORDER BY host, user");
     while ($user = mysql_fetch_assoc($users)) {
       $privcols = '';
       foreach ($privileges as $title=>$privilege)
@@ -853,13 +854,13 @@
     $host     = parameter('get', 'host');
     $username = parameter('get', 'username');
 
-    $user = $host || $username ? query1('top', "SELECT * FROM mysql.user WHERE host='$host' AND user='$username'") : array();
+    $user = $host || $username ? query1('root', "SELECT * FROM mysql.user WHERE host='$host' AND user='$username'") : array();
 
     foreach ($privileges as $title=>$privilege)
       $privrows .= html('tr', array(), html('td', array(), array($title, checkboxyn($user[$privilege], $title))));
 
     if ($host || $username) {
-      $databases = query('top', "SELECT * FROM mysql.db WHERE host='$host' AND user='$username'");
+      $databases = query('root', "SELECT * FROM mysql.db WHERE host='$host' AND user='$username'");
       while ($database = mysql_fetch_assoc($databases)) {
         $privcols = '';
         foreach ($privileges as $title=>$privilege)
@@ -923,8 +924,8 @@
     foreach ($privileges as $title=>$privilege)
       $privsets .= ($privsets ? ', ' : '')."$privilege='".(parameter('get', $title) ? 'Y' : 'N')."'";
 
-    query('top', "INSERT INTO mysql.user SET Host='$host', User='$username', ".($password1 ? "Password=password('$password1'), " : '').$privsets);
-    query('top', "FLUSH PRIVILEGES");
+    query('root', "INSERT INTO mysql.user SET Host='$host', User='$username', ".($password1 ? "Password=password('$password1'), " : '').$privsets);
+    query('root', "FLUSH PRIVILEGES");
     internalredirect(array('action'=>'show_users'));
   }
 
@@ -943,14 +944,14 @@
     foreach ($privileges as $title=>$privilege)
       $privsets .= ($privsets ? ', ' : '')."$privilege='".(parameter('get', $title) ? 'Y' : 'N')."'";
 
-    query('top', "UPDATE mysql.user SET ".($host != $oldhost ? "Host='$host', " : '').($username != $oldusername ? "User='$username', " : '').($password1 ? "Password=password('$password1'), " : '').$privsets." WHERE Host='$oldhost' AND User='$oldusername'");
+    query('root', "UPDATE mysql.user SET ".($host != $oldhost ? "Host='$host', " : '').($username != $oldusername ? "User='$username', " : '').($password1 ? "Password=password('$password1'), " : '').$privsets." WHERE Host='$oldhost' AND User='$oldusername'");
     if ($host != $oldhost || $username != $oldusername) {
-      query('top', "UPDATE mysql.db SET Host='$host', User='$username' WHERE Host='$oldhost' AND User='$oldusername'");
-      query('top', "UPDATE mysql.tables_priv SET Host='$host', User='$username' WHERE Host='$oldhost' AND User='$oldusername'");
-      query('top', "UPDATE mysql.columns_priv SET Host='$host', User='$username' WHERE Host='$oldhost' AND User='$oldusername'");
-      query('top', "FLUSH PRIVILEGES");
+      query('root', "UPDATE mysql.db SET Host='$host', User='$username' WHERE Host='$oldhost' AND User='$oldusername'");
+      query('root', "UPDATE mysql.tables_priv SET Host='$host', User='$username' WHERE Host='$oldhost' AND User='$oldusername'");
+      query('root', "UPDATE mysql.columns_priv SET Host='$host', User='$username' WHERE Host='$oldhost' AND User='$oldusername'");
+      query('root', "FLUSH PRIVILEGES");
     }
-    query('top', "FLUSH PRIVILEGES");
+    query('root', "FLUSH PRIVILEGES");
     internalredirect(array('action'=>'show_users'));
   }
 
@@ -960,11 +961,11 @@
     $host     = parameter('get', 'host');
     $username = parameter('get', 'username');
 
-    query('top', "DELETE FROM mysql.user WHERE Host='$host' AND User='$username'");
-    query('top', "DELETE FROM mysql.db WHERE Host='$host' AND User='$username'");
-    query('top', "DELETE FROM mysql.tables_priv WHERE Host='$host' AND User='$username'");
-    query('top', "DELETE FROM mysql.columns_priv WHERE Host='$host' AND User='$username'");
-    query('top', "FLUSH PRIVILEGES");
+    query('root', "DELETE FROM mysql.user WHERE Host='$host' AND User='$username'");
+    query('root', "DELETE FROM mysql.db WHERE Host='$host' AND User='$username'");
+    query('root', "DELETE FROM mysql.tables_priv WHERE Host='$host' AND User='$username'");
+    query('root', "DELETE FROM mysql.columns_priv WHERE Host='$host' AND User='$username'");
+    query('root', "FLUSH PRIVILEGES");
     internalredirect(array('action'=>'show_users'));
   }
 
@@ -975,10 +976,10 @@
     $username     = parameter('get', 'username');
     $databasename = parameter('get', 'databasename');
 
-    $database = $databasename ? query1('top', "SELECT * FROM mysql.db WHERE Host='$host' AND User='$username' AND Db='$databasename'") : array();
+    $database = $databasename ? query1('root', "SELECT * FROM mysql.db WHERE Host='$host' AND User='$username' AND Db='$databasename'") : array();
 
     if (!$databasename) {
-      $dbs = query('top', 'SHOW DATABASES');
+      $dbs = query('root', 'SHOW DATABASES');
       while ($db = mysql_fetch_assoc($dbs)) {
         $dbname = $db['Database'];
         $checkoption = $databasename == $dbname;
@@ -1025,8 +1026,8 @@
     foreach ($privileges as $title=>$privilege)
       $privsets .= ($privsets ? ', ' : '')."$privilege='".(parameter('get', $title) ? 'Y' : 'N')."'";
 
-    query('top', "INSERT INTO mysql.db SET Host='$host', User='$username', Db='$databasename', ".$privsets);
-    query('top', "FLUSH PRIVILEGES");
+    query('root', "INSERT INTO mysql.db SET Host='$host', User='$username', Db='$databasename', ".$privsets);
+    query('root', "FLUSH PRIVILEGES");
     internalredirect(array('action'=>'edit_user', 'host'=>$host, 'username'=>$username, 'databasename'=>$databasename));
   }
 
@@ -1040,8 +1041,8 @@
     foreach ($privileges as $title=>$privilege)
       $privsets .= ($privsets ? ', ' : '')."$privilege='".(parameter('get', $title) ? 'Y' : 'N')."'";
 
-    query('top', "UPDATE mysql.db SET ".$privsets." WHERE Host='$host' AND User='$username' AND Db='$databasename'");
-    query('top', "FLUSH PRIVILEGES");
+    query('root', "UPDATE mysql.db SET ".$privsets." WHERE Host='$host' AND User='$username' AND Db='$databasename'");
+    query('root', "FLUSH PRIVILEGES");
     page($action, '');
     internalredirect(array('action'=>'edit_user', 'host'=>$host, 'username'=>$username));
   }
@@ -1053,8 +1054,8 @@
     $username     = parameter('get', 'username');
     $databasename = parameter('get', 'databasename');
 
-    query('top', "DELETE FROM mysql.db WHERE Host='$host' AND User='$username' AND Db='$databasename'");
-    query('top', "FLUSH PRIVILEGES");
+    query('root', "DELETE FROM mysql.db WHERE Host='$host' AND User='$username' AND Db='$databasename'");
+    query('root', "FLUSH PRIVILEGES");
     internalredirect(array('action'=>'edit_user', 'host'=>$host, 'username'=>$username));
   }
 
