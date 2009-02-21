@@ -361,10 +361,10 @@
                   ($type != 'int' && $type != 'varchar' && $type != 'datetime' ? html('option', array('value'=>$type, 'selected'=>'selected'), $type) : '')
                 ),
                 html('input', array('type'=>'text', 'class'=>'integer', 'name'=>"$tablename:$fieldname:typelength", 'value'=>$typelength)),
-                $numeric ? html('input', array_merge(array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:typeunsigned"), $typeunsigned ? array('checked'=>'checked') : array())) : '',
-                $numeric ? html('input', array_merge(array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:typezerofill"), $typezerofill ? array('checked'=>'checked') : array())) : '',
+                $numeric ? html('input', array_merge(array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:typeunsigned"), $typeunsigned ? array('checked'=>'checked') : array())) : '&nbsp;',
+                $numeric ? html('input', array_merge(array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:typezerofill"), $typezerofill ? array('checked'=>'checked') : array())) : '&nbsp;',
                 html('input', array_merge(array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:nullallowed"), $nullallowed ? array('checked'=>'checked') : array())),
-                $numeric ? html('input', array_merge(array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:autoincrement"), $autoincrement ? array('checked'=>'checked') : array())) : '',
+                $numeric ? html('input', array_merge(array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:autoincrement"), $autoincrement ? array('checked'=>'checked') : array())) : '&nbsp;',
                 join(' ', array($typeinfo, $extrainfo)),
                 html('input', array('type'=>'text', 'class'=>'typename', 'name'=>"$tablename:$fieldname:typename", 'value'=>$typename)),
                 html('select', array('name'=>"$tablename:$fieldname:presentation", 'class'=>'presentation'), $presentationoptions),
@@ -374,7 +374,7 @@
                   ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename"),
                       $tableoptions
                     )
-                  : ''
+                  : '&nbsp;'
                   )
                 ),
                 html('input', array('type'=>'text', 'class'=>'integer', 'name'=>"$tablename:$fieldname:desc", 'value'=>$inpurpose['desc'])),

@@ -75,7 +75,7 @@
   }
   
   function addlog($class, $text) {
-    $text = html('li', array('class'=>$class), $text);
+    $text = html('li', array('class'=>$class), htmlspecialchars(preg_replace("/\r/", '\\n', $text)));
     $file = fopen('tmp/log', 'a');
     if (!$file)
       error('error opening log file');
@@ -154,12 +154,13 @@
           html('script', array('type'=>'text/javascript', 'src'=>'script.js'), '')
         ).
         html('body', array(),
-          html('h1', array('class'=>'title'), $title).
-          (username() ? html('div', array('class'=>'id'), username().'@'.host()." &ndash; ".internalreference(array('action'=>'logout'), 'logout')) : '').
-          html('hr').
-          ($error ? html('div', array('class'=>'error'), $error) : '').
+          html('h1', array('id'=>'title'), $title).
+          (username() ? html('div', array('id'=>'id'), username().'@'.host()." &ndash; ".internalreference(array('action'=>'logout'), 'logout')) : '').
+          html('div', array('id'=>'messages'),
+            $error ? html('div', array('class'=>'error'), $error) : ''
+          ).
           $content.
-          html('ol', array('class'=>'logs'), join('', getlogs())).
+          html('ol', array('id'=>'logs'), join('', getlogs())).
           html('script', array('type'=>'text/javascript'), 'onload();')
         )
       );
@@ -350,12 +351,12 @@
   
   function totaltype($metafield) {
     return
-      $metafield['type'].
+      strtoupper($metafield['type']).
       ($metafield['typelength']                             ? "($metafield[typelength])" : '').
-      ($metafield['typeunsigned']                           ? " unsigned"                : '').
-      ($metafield['autoincrement']                          ? " auto_increment"          : '').
-      ($metafield['uniquefieldid'] == $metafield['fieldid'] ? " primary key"             : '').
-      (!$metafield['nullallowed']                           ? " not null"                : '');
+      ($metafield['typeunsigned']                           ? " UNSIGNED"                : '').
+      ($metafield['autoincrement']                          ? " AUTO_INCREMENT"          : '').
+      ($metafield['uniquefieldid'] == $metafield['fieldid'] ? " PRIMARY KEY"             : '').
+      (!$metafield['nullallowed']                           ? " NOT NULL"                : '');
   }
   
   function mysql_data_reset($results) {

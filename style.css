@@ -1,30 +1,24 @@
-form { margin: 0; background-color: #ddf; }
+form { margin: 0; padding: 0.5em; background-color: #ddf; }
 
 table { border: 1px solid #999; }
 th { text-align: left; background: #eee; }
 td { vertical-align: top; }
 td.number { text-align: right; }
 td.center { text-align: center; }
-.rowodd { background: #fff; }
-.roweven { background: #eee; }
+tr.rowodd { background: #fff; }
+tr.roweven { background: #eee; }
 
-ul { margin: 0; padding: 0; }
-ul li { list-style-type: none; }
+ul.compact { margin: 0; padding: 0; width: 30em; overflow: hidden; }
+ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 
-ul.compact { width: 30em; overflow: hidden; }
-ul.compact li { display: inline; margin-right: 1em; }
-.rowgroup { }
-.top { vertical-align: top; padding-top: 0.3em; }
-.thisrecord { } /* display: none; } */
-
-.textareablur { width: 30em; height: 5em; white-space: pre-wrap; }
-.textareafocus { width: 100%; height: 15em; white-space: pre-wrap; }
-
+.text, .textwithpreview { white-space: pre-wrap; height: 10em; float: left; }
+.preview { background-color: #eee; color: #666; width: 20em; height: 10em; border: 3px double #999; margin: 1px; margin-left: 21em; }
+.varchar, .text, .textwithpreview { width: 20em; }
 .integer { width: 2em; text-align: right; }
 .static { color: #666; }
 .boolean { margin: 0; }
 
-input, select { font-size: 1em; }
+input, select, textarea { font-size: 1em; font-family: inherit; }
 
 .column { white-space: nowrap; }
 .lookup { width: 10em; }
@@ -33,19 +27,17 @@ input, select { font-size: 1em; }
 
 .typename { width: 8em; }
 
-h1 { margin: 0; }
-.title { float: left; }
-.id { float: right; }
-hr { clear: both; visibility: hidden; }
+#title { float: left; margin: 0; }
+#id { float: right; }
+#messages { clear: both; }
 
 .important { font-weight: bold; }
 
-.error, 
-.problem { font-weight: bold; color: #f00; }
+.error, .problem { font-weight: bold; color: #f00; }
 
 .trace { white-space: nowrap; }
 
-.logs { border: 1px solid #ccc; background-color: #eee; color: #999; white-space: nowrap; }
-.logs .queryroot { padding-left: 2em; }
-.logs .querymeta { padding-left: 4em; }
-.logs .querydata { padding-left: 6em; }
+#logs { border: 1px solid #ccc; background-color: #eee; color: #999; white-space: nowrap; }
+#logs .queryroot { padding-left: 2em; }
+#logs .querymeta { padding-left: 4em; }
+#logs .querydata { padding-left: 6em; }
