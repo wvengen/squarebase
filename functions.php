@@ -535,4 +535,20 @@
   function show_array($arr) {
     return html('pre', array(), print_r($arr, true));
   }
+
+  function get_presentations() {
+    static $presentations = array();
+    if ($presentations)
+      return $presentations;
+    $dir = opendir('presentation');
+    while ($file = readdir($dir)) {
+      if (preg_match('/^(.*)\.php$/', $file, $matches)) {
+        $presentations[] = $matches[1];
+        include("presentation/$file");
+      }
+    }
+    closedir($dir);
+    sort($presentations);
+    return $presentations;
+  }
 ?>

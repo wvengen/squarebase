@@ -186,17 +186,11 @@
       }
     }
 
-    $presentations = array();
-    $dir = opendir('presentation');
-    while ($file = readdir($dir))
-      if (preg_match('/^(.*)\.php$/', $file, $matches))
-        array_push($presentations, $matches[1]);
-    closedir($dir);
+    $presentations = get_presentations();
 
     $fields = array();
     $alltables = array();
     $primarykeyfieldname = array();
-    $fitness = array();
     $tables = query('data', "SHOW TABLES FROM `$databasename`");
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table["Tables_in_$databasename"];
@@ -205,7 +199,6 @@
 
       $allprimarykeyfieldnames = array();
       $fields[$tablename] = query('data', "SHOW COLUMNS FROM `$databasename`.$tablename");
-      $fitness[$tablename] = array();
       while ($field = mysql_fetch_assoc($fields[$tablename])) {
         $fieldname = $field['Field'];
         if ($field['Key'] == 'PRI')
@@ -214,15 +207,6 @@
         $typeinfo = $field['Type'];
         list($typeinfo, $type          ) = preg_delete('/^(\w+) */',     $typeinfo);
         list($typeinfo, $typelength    ) = preg_delete('/^\((\d+)\) */', $typeinfo);
-
-        $fitness[$tablename][$fieldname] =
-          $type == 'varchar'
-          ? 1 +
-            (preg_match('/(naam|titel|schrijving|name|title|description)/i', $fieldname) ? 1 : 0) +
-            (strpos($fieldname, $tablename) !== FALSE ? 1 : 0) +
-            ($typelength < 40 ? 1 : 0) +
-            (mysql_num_rows(query('data', "SELECT * FROM `$databasename`.$tablename WHERE $fieldname IS NULL OR $fieldname = '' LIMIT 1")) == 0 ? 2 : 0)
-          : 0;
       }
       if (count($allprimarykeyfieldnames) == 1)
         $primarykeyfieldname[$tablename] = $allprimarykeyfieldnames[0];
@@ -242,7 +226,6 @@
     for (mysql_data_reset($tables); $table = mysql_fetch_assoc($tables); ) {
       $tablename = $table["Tables_in_$databasename"];
 
-      $maxfitness = max($fitness[$tablename]);
       $tablestructure = '';
       $desc = $sort = $list = $edit = 0;
       $inpurpose = array();
@@ -284,59 +267,34 @@
           $extrainfo = $field['Extra'];
           list($extrainfo, $autoincrement) = preg_delete('/(auto_increment) */', $extrainfo);
 
-          $linkedtable = null;
-          if ($numeric) {
-            $likeness = array();
-            foreach ($alltables as $onetable) {
-              $likeness[$onetable] =
-                ($fieldname == $onetable ? 10 : 0) +
-                (substr($fieldname, -strlen($primarykeyfieldname[$onetable])) == $primarykeyfieldname[$onetable] ? 5 : 0) +
-                (strpos($fieldname, $onetable) !== FALSE ? 5 : 0);
+          $augmentedfield = 
+            array_merge(
+              $field, 
+              array(
+                'Database'=>$databasename, 
+                'Table'=>$tablename, 
+                'Linkedtable'=>$linkedtable,
+                'Alltables'=>$alltables,
+                'Primarykeyfieldname'=>$primarykeyfieldname
+              )
+            );
+          $bestpresentation = null;
+          $bestprobability = 0;
+          foreach ($presentations as $onepresentation) {
+            $probability = call_user_func("probability_$onepresentation", $augmentedfield);
+            if ($probability > $bestprobability) {
+              $bestpresentation = $onepresentation;
+              $bestprobability = $probability;
             }
-            arsort($likeness);
-            reset($likeness);
-            list($table1, $likeness1) = each($likeness);
-            list($table2, $likeness2) = each($likeness);
-            $linkedtable = $likeness1 == $likeness2 ? null : $table1;
           }
+          $presentation = $bestpresentation;
+          $linkedtable = $presentation == 'lookup' ? linkedtable_lookup($tablename, $fieldname) : null;
+          $typename = call_user_func("typename_$presentation", $augmentedfield);
 
-          $typename =
-            ($autoincrement
-            ? 'ownid'
-            : ($linkedtable
-              ? 'foreignid'
-              : ($type == 'datetime'
-                ? 'datetime'
-                : $fieldname
-                )
-              )
-            );
-
-          $distinct =
-            $numeric
-            ? query1('data', "SELECT COUNT($fieldname) AS numberofrows, SUM(IF($fieldname = 0, 1, 0)) AS numberofzeros, SUM(IF($fieldname != 0, 1, 0)) AS numberofnonzeros, COUNT(DISTINCT($fieldname)) AS numberofdistinctvalues FROM `$databasename`.$tablename")
-            : array();
-
-          $presentation =
-            ($autoincrement
-            ? 'static'
-            : ($linkedtable
-              ? 'lookup'
-              : ($distinct['numberofrows'] > 2 && $distinct['numberofdistinctvalues'] == 2 && $distinct['numberofzeros'] > 1 && $distinct['numberofnonzeros'] > 1
-                ? 'boolean'
-                : $type
-                )
-              )
-            );
-
-          $text =
-            $fitness[$tablename][$fieldname] == $maxfitness ||
-            $fitness[$tablename][$fieldname] >= 3;
-
-          $inpurpose['desc'] = !$autoincrement && $presentation != 'boolean' && $text ? ++$desc : '';
-          $inpurpose['sort'] = !$autoincrement && $presentation != 'boolean' && $text ? ++$sort : '';
-          $inpurpose['list'] = !$autoincrement && $presentation != 'boolean' && ($text || $linkedtable) ? ++$list : '';
-          $inpurpose['edit'] = ++$edit;
+          $inpurpose['desc'] = call_user_func("in_desc_$presentation") ? ++$desc : '';
+          $inpurpose['sort'] = call_user_func("in_sort_$presentation") ? ++$sort : '';
+          $inpurpose['list'] = call_user_func("in_list_$presentation") ? ++$list : '';
+          $inpurpose['edit'] = call_user_func("in_edit_$presentation") ? ++$edit : '';
         }
 
         $tableoptions = '';
@@ -502,12 +460,10 @@
       'edit'=>insertorupdate($metabasename, 'metapurpose', array('purpose'=>'edit'), 'purposeid')
     );
 
+    $presentations = get_presentations();
     $presentationids = array();
-    $dir = opendir('presentation');
-    while ($file = readdir($dir))
-      if (preg_match('/^(.*)\.php$/', $file, $matches))
-        $presentationids[$matches[1]] = insertorupdate($metabasename, 'metapresentation', array('presentation'=>$matches[1]));
-    closedir($dir);
+    foreach ($presentations as $presentation)
+      $presentationids[$presentation] = insertorupdate($metabasename, 'metapresentation', array('presentation'=>$presentation));
 
     $tables = query('data', "SHOW TABLES FROM `$databasename`");
     $tableids = array();
@@ -726,13 +682,13 @@
     if (!is_null($uniquevalue))
       $row = query1('data', "SELECT * FROM `$databasename`.$tablename WHERE $uniquefieldname = '$uniquevalue'");
 
+    get_presentations();
+
     $line = '';
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
       $value = parameter('get', "field:$field[fieldname]");
       if (!$value && $row)
         $value = $row[$field['fieldname']];
-//    print $field['fieldname'].' '.$field['presentation'].html('br');
-      include_once("presentation/$field[presentation].php");
       $cell = call_user_func("formfield_$field[presentation]", $metabasename, $databasename, $field, $value, $action == 'delete_record');
       $lines .=
         html('tr', array(),
@@ -814,10 +770,11 @@
 
     list($tablename, $uniquefieldname) = tableanduniquefieldname($metabasename, $tableid);
 
+    get_presentations();
+
     $fieldnamesandvalues = array();
     $fields = fieldsforpurpose($metabasename, $tableid, array('edit'));
     while ($field = mysql_fetch_assoc($fields)) {
-      include_once("presentation/$field[presentation].php");
       $fieldnamesandvalues[$field['fieldname']] = call_user_func("formvalue_$field[presentation]", $field);
     }
 

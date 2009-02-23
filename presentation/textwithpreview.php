@@ -1,6 +1,19 @@
 <?php
   require_once('text.php');
 
+  function probability_textwithpreview($field) {
+    return preg_match('/^(tiny||medium|long)text\b/', $field['Type']) ? 0.6 : 0;
+  }
+
+  function typename_textwithpreview($field) {
+    return $field['Field'];
+  }
+
+  function in_desc_textwithpreview() { return 0; }
+  function in_sort_textwithpreview() { return 0; }
+  function in_list_textwithpreview() { return 0; }
+  function in_edit_textwithpreview() { return 1; }
+
   function formfield_textwithpreview($metabasename, $databasename, $field, $value, $readonly) {
     return
       html('div', array('class'=>'textwithpreviewbox'),

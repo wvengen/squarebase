@@ -1,4 +1,17 @@
 <?php
+  function probability_datetime($field) {
+    return preg_match('/^datetime\b/', $field['Type']) ? 0.5 : 0;
+  }
+
+  function typename_datetime($field) {
+    return 'datetime';
+  }
+
+  function in_desc_datetime() { return 0; }
+  function in_sort_datetime() { return 0; }
+  function in_list_datetime() { return 0; }
+  function in_edit_datetime() { return 1; }
+
   function formfield_datetime($metabasename, $databasename, $field, $value, $readonly) {
     return html('input', array('type'=>'text', 'class'=>$field['presentation'], 'name'=>"field:$field[fieldname]", 'value'=>swap_datetime($value), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null));
   }

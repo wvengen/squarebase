@@ -1,4 +1,36 @@
 <?php
+  function linkedtable_lookup($tablename, $fieldname, $alltables = null, $primarykeyfieldname = null) {
+    static $linkedtables = array();
+    if (is_null($linkedtables["$tablename:$fieldname"])) {
+      $likeness = array();
+      foreach ($alltables as $onetable) {
+        $likeness[$onetable] =
+          ($fieldname == $onetable ? 10 : 0) +
+          (substr($fieldname, -strlen($primarykeyfieldname[$onetable])) == $primarykeyfieldname[$onetable] ? 5 : 0) +
+          (strpos($fieldname, $onetable) !== FALSE ? 5 : 0);
+      }
+      arsort($likeness);
+      reset($likeness);
+      list($table1, $likeness1) = each($likeness);
+      list($table2, $likeness2) = each($likeness);
+      $linkedtables["$tablename:$fieldname"] = $likeness1 == $likeness2 ? '' : $table1;
+    }
+    return $linkedtables["$tablename:$fieldname"] ? $linkedtables["$tablename:$fieldname"] : null;
+  }
+
+  function probability_lookup($field) {
+    return probability_int($field) && linkedtable_lookup($field['Table'], $field['Field'], $field['Alltables'], $field['Primarykeyfieldname']) ? 0.6 : 0;
+  }
+
+  function typename_lookup($field) {
+    return 'lookup'.linkedtable_lookup($field['Table'], $field['Field']);
+  }
+
+  function in_desc_lookup() { return 0; }
+  function in_sort_lookup() { return 0; }
+  function in_list_lookup() { return 1; }
+  function in_edit_lookup() { return 1; }
+
   function formfield_lookup($metabasename, $databasename, $field, $value, $readonly) {
     if (!$field['foreigntableid'])
       error("no foreigntableid for $field[fieldname]");
