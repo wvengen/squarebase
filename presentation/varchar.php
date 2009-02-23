@@ -23,4 +23,8 @@
   function cell_varchar($metabasename, $databasename, $field, $value) {
     return $value;
   }
+  
+  function css_varchar() {
+    return ".varchar { width: 20em; }\n";
+  }
 ?>

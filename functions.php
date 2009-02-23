@@ -150,7 +150,7 @@
       html('html', array(),
         html('head', array(),
           html('title', array(), $title).
-          html('link', array('href'=>'style.css', 'type'=>'text/css', 'rel'=>'stylesheet')).
+          html('link', array('href'=>'style.php', 'type'=>'text/css', 'rel'=>'stylesheet')).
           html('script', array('type'=>'text/javascript', 'src'=>'script.js'), '')
         ).
         html('body', array(),
@@ -160,7 +160,7 @@
             $error ? html('div', array('class'=>'error'), $error) : ''
           ).
           $content.
-          html('ol', array('id'=>'logs'), join('', getlogs())).
+          html('ol', array('id'=>'logs'), join(getlogs())).
           html('script', array('type'=>'text/javascript'), 'onload();')
         )
       );

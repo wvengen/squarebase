@@ -74,4 +74,8 @@
         )
       );
   }
+  
+  function css_lookup() {
+    return ".lookup { width: 10em; }\n";
+  }
 ?>

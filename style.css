@@ -11,17 +11,11 @@ tr.roweven { background: #eee; }
 ul.compact { margin: 0; padding: 0; width: 30em; overflow: hidden; }
 ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 
-.text, .textwithpreview { white-space: pre-wrap; height: 10em; float: left; }
-.preview { background-color: #eee; color: #666; width: 20em; height: 10em; border: 3px double #999; margin: 1px; margin-left: 21em; }
-.varchar, .text, .textwithpreview { width: 20em; }
 .integer { width: 2em; text-align: right; }
-.static { color: #666; }
-.boolean { margin: 0; }
 
 input, select, textarea { font-size: 1em; font-family: inherit; }
 
 .column { white-space: nowrap; }
-.lookup { width: 10em; }
 
 .foreigntable { margin-bottom: 1em; }
 

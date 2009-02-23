@@ -23,4 +23,8 @@
   function cell_autoincrement($metabasename, $databasename, $field, $value) {
     return $value;
   }
+  
+  function css_autoincrement() {
+    return ".autoincrement { color: #666; }\n";
+  }
 ?>

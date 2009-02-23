@@ -23,4 +23,8 @@
   function cell_text($metabasename, $databasename, $field, $value) {
     return $value;
   }
+  
+  function css_text() {
+    return ".text { width: 20em; height: 10em; white-space: pre-wrap; float: left; }\n";
+  }
 ?>

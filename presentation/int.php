@@ -23,4 +23,8 @@
   function cell_int($metabasename, $databasename, $field, $value) {
     return $value;
   }
+  
+  function css_int() {
+    return ".int { text-align: right; }\n";
+  }
 ?>

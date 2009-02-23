@@ -29,4 +29,10 @@
   function cell_textwithpreview($metabasename, $databasename, $field, $value) {
     return cell_text($metabasename, $databasename, $field, $value);
   }
+  
+  function css_textwithpreview() {
+    return
+      ".textwithpreview { width: 20em; height: 10em; white-space: pre-wrap; float: left; }\n".
+      ".preview { background-color: #eee; color: #666; width: 20em; height: 10em; border: 3px double #999; margin: 1px; margin-left: 21em; }\n";
+  }
 ?>

@@ -26,4 +26,8 @@
   function cell_boolean($metabasename, $databasename, $field, $value) {
     return formfield_boolean($metabasename, $databasename, $field, $value, true);
   }
+  
+  function css_boolean() {
+    return ".boolean { margin: 0; }\n";
+  }
 ?>

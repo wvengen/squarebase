@@ -29,4 +29,8 @@
       return $value;
     return "$matches[3]-$matches[2]-$matches[1] $matches[4]:$matches[5]:$matches[6]";
   }
+  
+  function css_datetime() {
+    return '';
+  }
 ?>
