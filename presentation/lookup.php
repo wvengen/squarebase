@@ -56,7 +56,7 @@
         html('option', array_merge(array('value'=>''), $checked ? array() : array('selected'=>'selected')), '').
         $options;
     return
-      html('select', array('name'=>"field:$field[fieldname]", 'class'=>$field['presentation']), $options).' '.
+      html('select', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>$field['presentation']), $options).' '.
       html('input', array('type'=>'submit', 'name'=>'action', 'value'=>"new_record_$field[foreigntablename]", 'onclick'=>"this.form.newtableid.value = $field[foreigntableid]; return true;", 'class'=>'button'));
   }
 

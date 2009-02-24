@@ -1,10 +1,10 @@
 <?php
   function probability_autoincrement($field) {
-    return preg_match('/(auto_increment)/', $field['Extra']) ? 0.5 : 0;
+    return preg_match('/(auto_increment)/', $field['Extra']) ? 0.7 : 0;
   }
 
   function typename_autoincrement($field) {
-    return 'autoincrement';
+    return html('span', array('id'=>"field:$field[fieldname]"), 'autoincrement');
   }
 
   function in_desc_autoincrement() { return 0; }

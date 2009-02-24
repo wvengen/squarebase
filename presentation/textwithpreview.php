@@ -17,7 +17,7 @@
   function formfield_textwithpreview($metabasename, $databasename, $field, $value, $readonly) {
     return
       html('div', array('class'=>'textwithpreviewbox'),
-        html('textarea', array('name'=>"field:$field[fieldname]", 'class'=>$field['presentation'], 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null, 'onkeyup'=>"document.getElementById('preview:$field[fieldname]').innerHTML = this.value; return true;"), preg_replace('/<(.*?)>/', '&lt;$1&gt;', $value)).
+        html('textarea', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>$field['presentation'], 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null, 'onkeyup'=>"document.getElementById('preview:$field[fieldname]').innerHTML = this.value; return true;"), preg_replace('/<(.*?)>/', '&lt;$1&gt;', $value)).
         html('div', array('id'=>"preview:$field[fieldname]", 'class'=>'preview'), $value)
       );
   }
@@ -33,6 +33,6 @@
   function css_textwithpreview() {
     return
       ".textwithpreview { width: 20em; height: 10em; white-space: pre-wrap; float: left; }\n".
-      ".preview { background-color: #eee; color: #666; width: 20em; height: 10em; border: 3px double #999; margin: 1px; margin-left: 21em; }\n";
+      ".preview { background-color: #eee; color: #666; width: 20em; height: 10em; border: 3px double #999; margin: 1px; margin-left: 21em; overflow: auto; }\n";
   }
 ?>

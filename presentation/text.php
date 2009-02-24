@@ -13,7 +13,7 @@
   function in_edit_text() { return 1; }
 
   function formfield_text($metabasename, $databasename, $field, $value, $readonly) {
-    return html('textarea', array('name'=>"field:$field[fieldname]", 'class'=>$field['presentation'], 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null), preg_replace('/<(.*?)>/', '&lt;$1&gt;', $value));
+    return html('textarea', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>$field['presentation'], 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null), preg_replace('/<(.*?)>/', '&lt;$1&gt;', $value));
   }
 
   function formvalue_text($field) {

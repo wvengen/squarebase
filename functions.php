@@ -288,7 +288,7 @@
           $line .= 
             html('th', $foreignvalue && $field['fieldname'] == $foreignfieldname ? array('class'=>'thisrecord') : array(), 
               ($foreignvalue && $foreignfieldname) || $field['fieldid'] == $orderfieldid || !$field['sortable']
-              ? preg_replace('/(?<=[a-z_])id$/', '', $field['fieldname'])
+              ? preg_replace('/(?<=\w)id$/i', '', $field['fieldname'])
               : internalreference(
                   array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'orderfieldid'=>$field['fieldid']), 
                   $field['fieldname']
@@ -323,7 +323,7 @@
       : ($foreignvalue ? $tablename : '')
       ).
       $lines.
-      join(' &minus; ', $offsets);
+      join(' &nbsp; ', $offsets);
   }
   
   function insertorupdate($databasename, $tablename, $fieldnamesandvalues, $uniquefieldname = null, $uniquevalue = null) {

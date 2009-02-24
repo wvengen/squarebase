@@ -2,6 +2,13 @@ Hi, welcome to the wonderful world of Squarebase
 
 Squarebase gives you web-based access to your MySql databases without having to write a single line of programming code.
 
+The basic idea is that Squarebase builds a database (called the "metabase") that describes the structure of the database.
+The information in the metabase is used to format the forms to browse and edit the database.
+
+After changing the structure of the database or the contents of the metabase, they can be synchronized again.
+
+Interestingly, the metabase of a metabase (called the "squarebase") is the same for all metabases.
+
 Notes:
 
 1. Squarebase can be found in the Subversion repository at http://svn.xp-dev.com/svn/fransre-squarebase/

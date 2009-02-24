@@ -97,15 +97,16 @@
         while ($db = mysql_fetch_assoc($dbs))
           $contents .= ($contents ? ', ' : '').internalreference(array('action'=>'form_metabase_for_database', 'databasename'=>$db['value'], 'metabasename'=>$databasename), $db['value']);
       elseif ($tables) {
-        $numbertables = 0;
+        $tablelist = array();
         while ($table = mysql_fetch_assoc($tables)) {
-          if (++$numbertables > 5) {
-            $contents .= html('li', array(), '...');
-            break;
-          }
-          $contents .= html('li', array(), $table["Tables_in_$databasename"]);
+          $tablelist[] = $table["Tables_in_$databasename"];
         }
-        $contents = html('ul', array('class'=>'compact'), $contents);
+        $fulllist = null;
+        if (count($tablelist) > 5) {
+          $fulllist = join(' ', array_slice($tablelist, 5));
+          array_splice($tablelist, 5);
+        }
+        $contents = html('ul', array('class'=>'compact'), html('li', array(), $tablelist).($fulllist ? html('li', array('title'=>$fulllist), '&hellip') : ''));
       }
       $userprivs = $dbprivs = '';
       foreach ($privileges as $title=>$privilege) {
@@ -144,7 +145,7 @@
   if ($action == 'drop_database') {
     $databasename = parameter('get', 'databasename');
     page($action,
-      path('...', $databasename).
+      path('&hellip;', $databasename).
       form(
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>parameter('server', 'HTTP_REFERER'))).
@@ -347,7 +348,7 @@
     }
 
     page($action,
-      path('...', $databasename).
+      path('&hellip;', $databasename).
       form(
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('p', array(),
@@ -692,7 +693,7 @@
       $cell = call_user_func("formfield_$field[presentation]", $metabasename, $databasename, $field, $value, $action == 'delete_record');
       $lines .=
         html('tr', array(),
-          html('td', array('width'=>1, 'nowrap'=>'nowrap'), preg_replace('/(?<=[a-z_])id$/', '', $field['fieldname'])).
+          html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), preg_replace('/(?<=\w)id$/i', '', $field['fieldname']))).
           html('td', array(), $cell)
         );
     }
@@ -700,9 +701,10 @@
     if (!is_null($uniquevalue)) {
       $referringfields = query('meta', "SELECT mt.tableid, tablename, mf.fieldname AS fieldname, mfu.fieldname AS uniquefieldname FROM `$metabasename`.metafield mf LEFT JOIN `$metabasename`.metatable mt ON mt.tableid = mf.tableid LEFT JOIN `$metabasename`.metafield mfu ON mt.uniquefieldid = mfu.fieldid WHERE mf.foreigntableid = $tableid");
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
-        $referringtables .=
-          html('div', array('class'=>'foreigntable'),
-            rows($metabasename, $databasename, $referringfield['tableid'], $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tableid, $action != 'delete_record')
+        $lines .=
+          html('tr', array(),
+            html('td', array('class'=>'description'), $referringfield['tablename']).
+            html('td', array(), rows($metabasename, $databasename, $referringfield['tableid'], $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tableid, $action != 'delete_record'))
           );
       }
     }
@@ -727,8 +729,7 @@
             )
           ).
           html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'cancel', 'class'=>'button'))
-        ).
-        $referringtables
+        )
       )
     );
   }

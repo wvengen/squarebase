@@ -4,6 +4,7 @@ table { border: 1px solid #999; }
 th { text-align: left; background: #eee; }
 td { vertical-align: top; }
 td.number { text-align: right; }
+td.description { width: 1px; white-space: nowrap; }
 td.center { text-align: center; }
 tr.rowodd { background: #fff; }
 tr.roweven { background: #eee; }
