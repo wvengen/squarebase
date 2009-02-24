@@ -496,6 +496,8 @@
 
   function connection() {
     static $connection = null;
+    if (!extension_loaded('mysql'))
+      logout('mysql module not found');
     if (!$connection)
       $connection = mysql_connect(host(), username(), password());
     if (!$connection)
