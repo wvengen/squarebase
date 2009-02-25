@@ -282,12 +282,13 @@
           $bestpresentation = null;
           $bestprobability = 0;
           foreach ($presentations as $onepresentation) {
-            $probability = call_user_func("probability_$onepresentation", $augmentedfield);
+            $probability = $probabilities[$onepresentation] = call_user_func("probability_$onepresentation", $augmentedfield);
             if ($probability > $bestprobability) {
               $bestpresentation = $onepresentation;
               $bestprobability = $probability;
             }
           }
+          $presentations = array_keys($probabilities);
           $presentation = $bestpresentation;
           $linkedtable = $presentation == 'lookup' ? linkedtable_lookup($tablename, $fieldname) : null;
           $typename = call_user_func("typename_$presentation", $augmentedfield);
@@ -303,9 +304,22 @@
           $tableoptions .= html('option', array_merge(array('value'=>$onetable), $onetable == $linkedtable ? array('selected'=>'selected') : array()), $onetable);
         $tableoptions = html('option', array_merge(array('value'=>''), $linkedtable ? array() : array('selected'=>'selected')), '').$tableoptions;
 
-        $presentationoptions = '';
+        $presentationspositive = $presentationszero = array();
         foreach ($presentations as $onepresentation)
-          $presentationoptions .= html('option', array_merge(array('value'=>$onepresentation), $onepresentation == $presentation ? array('selected'=>'selected') : array()), $onepresentation);
+          if ($probabilities[$onepresentation])
+            $presentationspositive[$onepresentation] = $probabilities[$onepresentation];
+          else
+            $presentationszero[] = $onepresentation;
+        arsort($presentationspositive);
+        sort($presentationszero);
+
+        $positiveoptions = '';
+        foreach ($presentationspositive as $onepresentation=>$probability)
+          $positiveoptions .= html('option', array_merge(array('value'=>$onepresentation), $onepresentation == $presentation ? array('selected'=>'selected') : array()), $onepresentation);
+        $zerooptions = '';
+        foreach ($presentationszero as $onepresentation)
+          $zerooptions .= html('option', array_merge(array('value'=>$onepresentation), $onepresentation == $presentation ? array('selected'=>'selected') : array()), $onepresentation);
+        $presentationoptions = html('optgroup', array(), $positiveoptions).html('optgroup', array('label'=>'------------------------'), $zerooptions);
 
         $tablestructure .=
           html('tr', array(),

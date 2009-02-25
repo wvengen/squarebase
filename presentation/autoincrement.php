@@ -4,7 +4,7 @@
   }
 
   function typename_autoincrement($field) {
-    return html('span', array('id'=>"field:$field[fieldname]"), 'autoincrement');
+    return 'autoincrement';
   }
 
   function in_desc_autoincrement() { return 0; }

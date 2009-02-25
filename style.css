@@ -1,13 +1,13 @@
 form { margin: 0; padding: 0.5em; background-color: #ddf; }
 
 table { border: 1px solid #999; }
-th { text-align: left; background: #eee; }
-td { vertical-align: top; }
-td.number { text-align: right; }
-td.description { width: 1px; white-space: nowrap; }
-td.center { text-align: center; }
 tr.rowodd { background: #fff; }
 tr.roweven { background: #eee; }
+th { text-align: left; background: #eee; }
+td { vertical-align: top; }
+td.description { width: 1px; height: 1.5em; white-space: nowrap; }
+td.number { text-align: right; }
+td.center { text-align: center; }
 
 ul.compact { margin: 0; padding: 0; width: 30em; overflow: hidden; }
 ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
@@ -17,6 +17,7 @@ ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 input, select, textarea { font-size: 1em; font-family: inherit; }
 
 .column { white-space: nowrap; }
+.thisrecord { color: #666; }
 
 .foreigntable { margin-bottom: 1em; }
 

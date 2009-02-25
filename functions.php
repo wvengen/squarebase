@@ -319,7 +319,7 @@
 
     return 
       ($interactive
-      ? internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), "new $tablename")
+      ? internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), "new $tablename (changes to form fields are lost)")
       : ($foreignvalue ? $tablename : '')
       ).
       $lines.
