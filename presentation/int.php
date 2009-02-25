@@ -1,6 +1,12 @@
 <?php
   function probability_int($field) {
-    return preg_match('/^(tiny|small|medium||int|big)int\b/', $field['Type']) ? 0.4 : 0;
+    // ordinary integers
+    if (preg_match('/^(tinyint|smallint|mediumint|int|integer|bigint)\b/', $field['Type']))
+      return 0.4;
+    // real numbers without decimals
+    if (preg_match('/^(real|double|float|decimal|numeric)\s*\(\s*\d+\s*,\s*0\s*\)/', $field['Type']))
+      return 0.4;
+    return 0;
   }
 
   function typename_int($field) {
@@ -25,6 +31,7 @@
   }
   
   function css_int() {
+    $width = $field[''];
     return ".int { text-align: right; width: 3em; }\n";
   }
 ?>
