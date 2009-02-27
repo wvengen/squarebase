@@ -3,7 +3,8 @@
 
   $privileges = array('select'=>'Select_priv', 'insert'=>'Insert_priv', 'update'=>'Update_priv', 'delete'=>'Delete_priv', 'create'=>'Create_priv', 'drop'=>'Drop_priv', 'alter'=>'Alter_priv', 'grant'=>'Grant_priv');
 
-//  print_r($HTTP_SERVER_VARS);
+  session_save_path('session');
+  session_start();
 
   $action = parameter('get', 'action', 'login');
   addlog('action', $action.' '.preg_replace('/^Array/', '', print_r(parameter('get'), true)));
@@ -37,10 +38,6 @@
     login($username, $host, $password);
     internalredirect(array('action'=>'index'));
   }
-
-  /********************************************************************************************/
-
-  connect();
 
   /********************************************************************************************/
 

@@ -23,7 +23,6 @@
   }
 
   function httpurl($parameters) {
-    $parameters['session'] = session();
     foreach ($parameters as $name=>$value)
       if (!is_null($value))
         $parameterlist .= ($parameterlist ? '&' : '').$name.'='.rawurlencode($value);
@@ -75,23 +74,27 @@
   }
   
   function addlog($class, $text) {
-    $text = html('li', array('class'=>$class), htmlspecialchars(preg_replace("/\r/", '\\n', $text)));
-    $file = fopen('tmp/log', 'a');
-    if (!$file)
-      error('error opening log file');
-    if (!fwrite($file, $text))
-      error('error writing to log file');
-    if (!fclose($file))
-      error('error closing log file');
+    if (!$_SESSION['logs'])
+      $_SESSION['logs'] = array();
+    $_SESSION['logs'][] = html('li', array('class'=>$class), htmlspecialchars(preg_replace("/\r/", '\\n', $text)));
   }
 
   function getlogs() {
-    $logs = @file('tmp/log');
-    @unlink('tmp/log');
+    $logs = $_SESSION['logs'];
+    unset($_SESSION['logs']);
     return $logs;
   }
 
   function query($metaordata, $query) {
+    static $connection = null;
+    if (!$connection) {
+      if (!extension_loaded('mysql'))
+        logout('mysql module not found');
+      $connection = mysql_connect($_SESSION['host'], $_SESSION['username'], $_SESSION['password']);
+      if ($connection === FALSE)
+        logout('problem connecting to the databasemanager: '.mysql_error());
+    }
+
     $before = microtime();
     $result = mysql_query($query);
     $after = microtime();
@@ -109,7 +112,7 @@
       ? html('span', array('class'=>'error'), 'error: '.$errno.' '.mysql_error())
       : (preg_match('@^[^A-Z]*(EXPLAIN|SELECT|SHOW) @i', $query)
         ? mysql_num_rows($result).' results'
-        : mysql_affected_rows(connection()).' affected'
+        : mysql_affected_rows($connection).' affected'
         )
       ).
       '] '.
@@ -155,7 +158,7 @@
         ).
         html('body', array(),
           html('h1', array('id'=>'title'), $title).
-          (username() ? html('div', array('id'=>'id'), username().'@'.host()." &ndash; ".internalreference(array('action'=>'logout'), 'logout')) : '').
+          ($_SESSION['username'] ? html('div', array('id'=>'id'), "$_SESSION[username]@$_SESSION[host] &ndash; ".internalreference(array('action'=>'logout'), 'logout')) : '').
           html('div', array('id'=>'messages'),
             $error ? html('div', array('class'=>'error'), $error) : ''
           ).
@@ -168,11 +171,7 @@
   }
 
   function form($content) {
-    return
-      html('form', array('action'=>parameter('server', 'SCRIPT_NAME'), 'method'=>'post'),
-        html('input', array('type'=>'hidden', 'name'=>'session', 'value'=>session())).
-        $content
-      );
+    return html('form', array('action'=>parameter('server', 'SCRIPT_NAME'), 'method'=>'post'), $content);
   }
   
   function databasenames($metabasename) {
@@ -427,102 +426,26 @@
     return html('input', array_merge(array('type'=>'checkbox'), $name ? array('class'=>'checkboxedit', 'name'=>$name) : array('class'=>'checkboxlist', 'readonly'=>'readonly', 'disabled'=>'disabled'), $value == 'Y' ? array('checked'=>'checked') : array()));
   }
 
-  function username($newusername = null) {
-    static $username = null;
-    if (!is_null($newusername))
-      $username = $newusername ? $newusername : null;
-    return $username;
-  }
-
-  function host($newhost = null) {
-    static $host = null;
-    if (!is_null($newhost))
-      $host = $newhost ? $newhost : null;
-    return $host;
-  }
-
-  function password($newpassword = null) {
-    static $password = null;
-    if (!is_null($newpassword))
-      $password = $newpassword ? $newpassword : null;
-    return $password;
-  }
-
-  function session($what = null, $newsession = null, $username = null, $host = null, $password = null) {
-    static $session = null;
-    switch ($what) {
-    case 'new':
-      $tries = 0;
-      while (true) {
-        $newsession = '';
-        for ($i = 0; $i < 20; $i++)
-          $newsession .= rand(0, 9);
-        $file = fopen("session/$newsession", 'x');
-        if ($file) {
-          if (!fwrite($file, "$username\n$host\n$password\n"))
-            logout('error writing session');
-          if (!fclose($file))
-            logout('error closing session');
-          break;
-        }
-        $tries++;
-        if ($tries > 5)
-          logout('error finding unique session id');
-      }
-      //no break in the switch, so continue
-    case 'get':
-      $session = $newsession ? $newsession : null;
-      if (!$session)
-        logout('missing session id');
-      $sessionlines = @file("session/$session");
-      if (!$sessionlines)
-        logout('corrupt session id');
-      if (count($sessionlines) != 3)
-        logout('corrupt session');
-      username(chop($sessionlines[0]));
-      host(chop($sessionlines[1]));
-      password(chop($sessionlines[2]));
-      break;
-    case 'del':
-      $session = null;
-      break;
-    }
-    return $session;
-  }
-
   function login($username, $host, $password) {
-    session('new', null, $username, $host, $password);
-  }
-
-  function connection() {
-    static $connection = null;
-    if (!extension_loaded('mysql'))
-      logout('mysql module not found');
-    if (!$connection)
-      $connection = mysql_connect(host(), username(), password());
-    if (!$connection)
-      logout('problem connecting to the databasemanager: '.mysql_error());
-    return $connection;
-  }
-
-  function connect() {
-    session('get', parameter('get', 'session'));
-    connection();
+    $_SESSION['username'] = $username;
+    $_SESSION['host']     = $host;
+    $_SESSION['password'] = $password;
   }
 
   function logout($error = null) {
-    if (session())
-      @unlink('session/'.session());
-    session('del');
+    $_SESSION = array();
+    if (isset($_COOKIE[session_name()]))
+      setcookie(session_name(), '', time() - 24 * 60 * 60, '/');
+    session_destroy();
     internalredirect(array('action'=>'login', 'error'=>$error));
   }
 
   function grant($databasename, $privilege) {
     static $grants = null;
     if (!$grants)
-      $grants = query('root', "SHOW GRANTS FOR '".username()."'@'".host()."'");
+      $grants = query('root', "SHOW GRANTS FOR '$_SESSION[username]'@'$_SESSION[host]'");
     for (mysql_data_reset($grants); $grant = mysql_fetch_assoc($grants); )
-      if (preg_match("/^GRANT (.*?) ON (.*?) /", $grant["Grants for ".username()."@".host()], $matches) && ($matches[1] == 'ALL PRIVILEGES' || preg_match("/\b$privilege\b/", $matches[1])) && (preg_match("/^(`$databasename`|\*)/", $matches[2])))
+      if (preg_match("/^GRANT (.*?) ON (.*?) /", $grant["Grants for $_SESSION[username]@$_SESSION[host]"], $matches) && ($matches[1] == 'ALL PRIVILEGES' || preg_match("/\b$privilege\b/", $matches[1])) && (preg_match("/^(`$databasename`|\*)/", $matches[2])))
         return TRUE;
     return FALSE;
   }
