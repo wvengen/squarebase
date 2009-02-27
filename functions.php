@@ -1,6 +1,4 @@
 <?php
-  umask(0077); //no rwx for group and other, so only owner gets permissions
-
   function parameter($type, $name = null, $default = null) {
     $array = $type == 'get' ? ($_POST ? $_POST : $_GET) : ($type == 'server' ? $_SERVER : array());
     if (!$name)
@@ -154,7 +152,8 @@
         html('head', array(),
           html('title', array(), $title).
           html('link', array('href'=>'style.php', 'type'=>'text/css', 'rel'=>'stylesheet')).
-          html('script', array('type'=>'text/javascript', 'src'=>'script.js'), '')
+          html('script', array('type'=>'text/javascript', 'src'=>'http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js'), '').
+          html('script', array('type'=>'text/javascript', 'src'=>'script.php'), '')
         ).
         html('body', array(),
           html('h1', array('id'=>'title'), $title).
@@ -163,8 +162,7 @@
             $error ? html('div', array('class'=>'error'), $error) : ''
           ).
           $content.
-          html('ol', array('id'=>'logs'), join(getlogs())).
-          html('script', array('type'=>'text/javascript'), 'onload();')
+          html('ol', array('id'=>'logs'), join(getlogs()))
         )
       );
     exit;
@@ -475,5 +473,19 @@
     closedir($dir);
     sort($presentations);
     return $presentations;
+  }
+
+  function augment_file($filename, $function_prefix, $content_type) {
+    $content = join(file($filename));
+
+    $extra = '';
+    $presentations = get_presentations();
+    foreach ($presentations as $presentation) {
+      $extra .= @call_user_func("${function_prefix}_$presentation");
+    }
+
+    header("Content-Type: $content_type"); 
+    print preg_replace("@( *)// *${function_prefix}_presentation\b.*\n@e", '"\\1".preg_replace("@\n(?=.)@", "\n\\1", $extra)', $content);
+    exit;
   }
 ?>

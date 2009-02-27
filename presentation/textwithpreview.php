@@ -15,11 +15,7 @@
   function in_edit_textwithpreview() { return 1; }
 
   function formfield_textwithpreview($metabasename, $databasename, $field, $value, $readonly) {
-    return
-      html('div', array('class'=>'textwithpreviewbox'),
-        html('textarea', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>$field['presentation'], 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null, 'onkeyup'=>"document.getElementById('preview:$field[fieldname]').innerHTML = this.value; return true;"), preg_replace('/<(.*?)>/', '&lt;$1&gt;', $value)).
-        html('div', array('id'=>"preview:$field[fieldname]", 'class'=>'preview'), $value)
-      );
+    return formfield_text($metabasename, $databasename, $field, $value, $readonly);
   }
 
   function formvalue_textwithpreview($field) {
@@ -34,5 +30,23 @@
     return
       ".textwithpreview { width: 20em; height: 10em; white-space: pre-wrap; float: left; }\n".
       ".preview { background-color: #eee; color: #666; width: 20em; height: 10em; border: 3px double #999; margin: 1px; margin-left: 21em; overflow: auto; }\n";
+  }
+
+  function jquery_document_ready_textwithpreview() {
+    return
+      "$('.textwithpreview').".
+      "each(".
+        "function() {".
+          "$(this).".
+          "wrap('<div class=\"textwithpreviewbox\"></div>').".
+          "keyup(".
+            "function() {".
+              "$(this).next().html(this.value);".
+              "return true;".
+            "}".
+          ").".
+          "after('<div id=\"preview_' + this.id + '\" class=\"preview\">' + this.value + '</div>');".
+        "}".
+      ");\n";
   }
 ?>
