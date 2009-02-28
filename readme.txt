@@ -16,5 +16,5 @@ Notes:
    $ svn checkout http://svn.xp-dev.com/svn/fransre-squarebase/
 
 2. After checking out, perform the following commands, because Subversion doesn't set the permissions right.
-   $ sudo chown :www-data session tmp
-   $ chmod g+w session tmp
+   $ sudo chown :www-data session
+   $ chmod g+w session

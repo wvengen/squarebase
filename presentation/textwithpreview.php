@@ -28,8 +28,12 @@
   
   function css_textwithpreview() {
     return
-      ".textwithpreview { width: 20em; height: 10em; white-space: pre-wrap; float: left; }\n".
-      ".preview { background-color: #eee; color: #666; width: 20em; height: 10em; border: 3px double #999; margin: 1px; margin-left: 21em; overflow: auto; }\n";
+      ".textwithpreview { width: 20em; height: 10em; white-space: pre-wrap; }\n".
+      ".textwithpreview.focus { color: #000; }\n".
+      ".textwithpreview.blur { color: #fff; }\n".
+      ".preview { width: 20em; height: 10em; margin: -10em 3px 0; overflow: auto; }\n".
+      ".preview.focus { visibility: visible; }\n".
+      ".preview.blur { visibility: hidden; }\n";
   }
 
   function jquery_document_ready_textwithpreview() {
@@ -38,14 +42,10 @@
       "each(".
         "function() {".
           "$(this).".
-          "wrap('<div class=\"textwithpreviewbox\"></div>').".
-          "keyup(".
-            "function() {".
-              "$(this).next().html(this.value);".
-              "return true;".
-            "}".
-          ").".
-          "after('<div id=\"preview_' + this.id + '\" class=\"preview\">' + this.value + '</div>');".
+          "addClass('blur').".
+          "focus(function() { $(this).removeClass('blur').next().addClass('blur'); }).".
+          "blur( function() { $(this).addClass('blur').next().removeClass('blur').html(this.value); }).".
+          "after('<div id=\"preview_' + this.id + '\" class=\"preview focus\">' + this.value + '</div>');".
         "}".
       ");\n";
   }
