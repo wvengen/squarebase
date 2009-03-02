@@ -13,22 +13,32 @@ jQuery.fn.ajaxify = function() {
   $(this).each(
     function() {
       $(this).
+      prepend('<div class="ajaxcontent"></div>');
+
+      $(this).
+      find('.changeslost').
+      css('display', 'none');
+
+      $(this).
       find('a.newrecord').
+      add('a.editrecord').
+      add('a.deleterecord').
       click(
         function() {
-          var id = this.href.match(/tableid=(\d+)&field:\w+=(\d+)/, 'ajax-newrecord-{$1}-{$2}');
-          if ($('#' + id).length)
-            $('#' + id).
-            remove();
+          var ajaxcontent = $(this).closest('.ajax').find('.ajaxcontent');
+          if (ajaxcontent.attr('id') == this.href)
+            ajaxcontent.
+            attr('id', null).
+            empty();
           else
-            $(this).
-            after('<div id="' + id + '"></div>').
-            next().
+            ajaxcontent.
+            attr('id', this.href).
             load(
               this.href + ' #content', 
               null, 
               function() { 
-                $('#' + id + ' form').
+                $(this).
+                find('form').
                 submit(
                   function() {
                     $(this).
@@ -40,8 +50,6 @@ jQuery.fn.ajaxify = function() {
                       attr('id')
                     );
 
-//                  alert($(this).serialize());
-
                     $(this).
                     closest('td').
                     load(
@@ -49,6 +57,7 @@ jQuery.fn.ajaxify = function() {
                       $(this).serialize(),
                       function() {
                         $(this).
+                        find('.ajax').
                         ajaxify();
                       }
                     );
@@ -56,22 +65,24 @@ jQuery.fn.ajaxify = function() {
                     return false;
                   }
                 ).
-                // the following lines are needed because jquery doesn't include the name=value of the submit button in form.serialize()
+                // the following line is needed because jquery doesn't include the name=value of the submit button in form.serialize()
                 append('<input type="hidden" name="action" value="' + $(this).find('.mainsubmit').val() + '"/>').
-                find(':submit').
+                find('.cancel').
                 click(
                   function() {
-                    this.form.action.value = this.value;
+                    $(this).
+                    closest('.ajax').
+                    find('.ajaxcontent').
+                    attr('id', null).
+                    empty();
+                    return false;
                   }
                 );
               }
             );
           return false;
         }
-      ).
-      end().
-      find('.changeslost').
-      css('display', 'none');
+      );
     }
   );
   return this;

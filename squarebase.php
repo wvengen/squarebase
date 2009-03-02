@@ -149,7 +149,7 @@
           'Drop database '.html('strong', array(), $databasename).'?'
         ).
         html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'drop_database_really', 'class'=>'button')).
-        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'cancel', 'class'=>'button'))
+        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'cancel', 'class'=>'button cancel'))
       )
     );
   }
@@ -724,7 +724,7 @@
         html('input', array('type'=>'hidden', 'name'=>'newtableid', 'value'=>'')).
         html('p', array(),
           html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'delete_record' ? 'delete_record_really' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>'mainsubmit button')).
-          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'cancel', 'class'=>'button'))
+          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'cancel', 'class'=>'button cancel'))
         ).
         html('table', array('class'=>'tableedit'), $referringtables)
       )
