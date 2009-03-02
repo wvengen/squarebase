@@ -12,7 +12,7 @@
   /********************************************************************************************/
 
   if ($action == 'login') {
-    page($action,
+    page($action, null,
       form(
         html('table', array(),
           html('tr', array(),
@@ -66,7 +66,7 @@
           );
       }
     }
-    page($action,
+    page($action, null,
       internalreference(array('action'=>'new_metabase_from_database'), 'new metabase from database').
       html('table', array(),
         html('tr', array(),
@@ -130,7 +130,7 @@
           )
         );
     }
-    page($action,
+    page($action, null,
       form(
         html('table', array(), $rows)
       )
@@ -141,8 +141,7 @@
 
   if ($action == 'drop_database') {
     $databasename = parameter('get', 'databasename');
-    page($action,
-      path('&hellip;', $databasename).
+    page($action, path('&hellip;', $databasename),
       form(
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>parameter('server', 'HTTP_REFERER'))).
@@ -358,8 +357,7 @@
       $totalstructure .= $header.$tablestructure;
     }
 
-    page($action,
-      path('&hellip;', $databasename).
+    page($action, path('&hellip;', $databasename),
       form(
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('p', array(),
@@ -525,8 +523,7 @@
       error(join(', ', $errors));
 
     internalredirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
-    page($action,
-      path($metabasename, $databasename).
+    page($action, path($metabasename, $databasename),
       internalreference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), 'show_database')
     );
   }
@@ -541,7 +538,7 @@
       if ($databasenames)
         $rows .= html('tr', array(), html('td', array(), internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$metabasename), $metabasename)));
     }
-    page($action,
+    page($action, null,
       html('table', array(), $rows)
     );
   }
@@ -571,8 +568,7 @@
           )
         );
     }
-    page($action,
-      path($metabasename).
+    page($action, path($metabasename),
       form(
         html('table', array(), $rows)
       )
@@ -626,8 +622,7 @@
     if (!$rows)
       internalredirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
 
-    page($action,
-      path($metabasename, $databasename).
+    page($action, path($metabasename, $databasename),
       html('table', array(), $rows).
       internalreference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), 'show_database')
     );
@@ -649,8 +644,7 @@
           query1field('data', "SELECT COUNT(*) AS count FROM `$databasename`.$table[tablename]", 'count')
         );
     }
-    page($action,
-      path($metabasename, $databasename).
+    page($action, path($metabasename, $databasename),
       html('table', array(),
         html('tr', array(),
           array_concat(
@@ -672,8 +666,7 @@
     $orderfieldid = parameter('get', 'orderfieldid');
     list($tablename, $uniquefieldname) = tableanduniquefieldname($metabasename, $tableid);
 
-    page($action,
-      path($metabasename, $databasename, $tablename, $tableid).
+    page($action, path($metabasename, $databasename, $tablename, $tableid),
       rows($metabasename, $databasename, $tableid, $tablename, 10, $offset, $uniquefieldname, $orderfieldid)
     );
   }
@@ -712,7 +705,7 @@
     if (!is_null($uniquevalue)) {
       $referringfields = query('meta', "SELECT mt.tableid, tablename, mf.fieldname AS fieldname, mfu.fieldname AS uniquefieldname FROM `$metabasename`.metafield mf LEFT JOIN `$metabasename`.metatable mt ON mt.tableid = mf.tableid LEFT JOIN `$metabasename`.metafield mfu ON mt.uniquefieldid = mfu.fieldid WHERE mf.foreigntableid = $tableid");
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
-        $lines .=
+        $referringtables .=
           html('tr', array(),
             html('td', array('class'=>'description'), $referringfield['tablename']).
             html('td', array(), rows($metabasename, $databasename, $referringfield['tableid'], $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tableid, $action != 'delete_record'))
@@ -720,8 +713,7 @@
       }
     }
 
-    page($action,
-      path($metabasename, $databasename, $tablename, $tableid, description($metabasename, $databasename, $tableid, $row)).
+    page($action, path($metabasename, $databasename, $tablename, $tableid, description($metabasename, $databasename, $tableid, $row)),
       form(
         html('table', array('class'=>'tableedit'), $lines).
         html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
@@ -731,16 +723,10 @@
         html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back ? $back : parameter('server', 'HTTP_REFERER'))).
         html('input', array('type'=>'hidden', 'name'=>'newtableid', 'value'=>'')).
         html('p', array(),
-          ($action == 'delete_record'
-          ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record_really', 'class'=>'button'))
-          : ($uniquevalue
-            ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_record', 'class'=>'button'))
-            : html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'class'=>'button')).
-              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'button'))
-            )
-          ).
+          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'delete_record' ? 'delete_record_really' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>'mainsubmit button')).
           html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'cancel', 'class'=>'button'))
-        )
+        ).
+        html('table', array('class'=>'tableedit'), $referringtables)
       )
     );
   }
@@ -793,6 +779,7 @@
     $uniquevalue = insertorupdate($databasename, $tablename, $fieldnamesandvalues, $uniquevalue ? $uniquefieldname : null, $uniquevalue);
     if ($action == 'add_record_and_edit')
       internalredirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
+
     back();
   }
 
@@ -808,7 +795,7 @@
     }
     foreach ($privileges as $title=>$privilege)
       $privheader .= html('th', array(), $title);
-    page($action,
+    page($action, null,
       internalreference(array('action'=>'edit_user'), 'new user').
       html('table', array(),
         html('tr', array(), html('th', array(), array('username', 'host')).$privheader.html('th', array(), array('', ''))).
@@ -845,7 +832,7 @@
         $privheader .= html('th', array(), $title);
     }
 
-    page($action,
+    page($action, null,
       form(
         html('input', array('type'=>'hidden', 'name'=>'old_username', 'value'=>$username)).
         html('input', array('type'=>'hidden', 'name'=>'old_host', 'value'=>$host)).
@@ -964,7 +951,7 @@
     foreach ($privileges as $title=>$privilege)
       $privrows .= html('tr', array(), html('td', array(), array($title, checkboxyn($database[$privilege], $title))));
 
-    page($action,
+    page($action, null,
       form(
         html('table', array(),
           html('tr', array(),
@@ -1012,7 +999,7 @@
 
     query('root', "UPDATE mysql.db SET ".$privsets." WHERE Host='$host' AND User='$username' AND Db='$databasename'");
     query('root', "FLUSH PRIVILEGES");
-    page($action, '');
+    page($action, null, '');
     internalredirect(array('action'=>'edit_user', 'host'=>$host, 'username'=>$username));
   }
 

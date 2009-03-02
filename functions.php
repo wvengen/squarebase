@@ -21,10 +21,7 @@
   }
 
   function httpurl($parameters) {
-    foreach ($parameters as $name=>$value)
-      if (!is_null($value))
-        $parameterlist .= ($parameterlist ? '&' : '').$name.'='.rawurlencode($value);
-    return parameter('server', 'SCRIPT_NAME').'?'.$parameterlist;
+    return parameter('server', 'SCRIPT_NAME').'?'.http_build_query($parameters);
   }
 
   function internalurl($parameters) {
@@ -36,7 +33,7 @@
   }
 
   function internalreference($parameters, $text) {
-    return html('a', array('href'=>internalurl($parameters)), $text);
+    return html('a', array('href'=>internalurl($parameters), 'class'=>preg_replace('@_@', '', $parameters['action'])), $text);
   }
 
   function redirect($url) {
@@ -49,6 +46,17 @@
   }
   
   function back() {
+    $ajax = parameter('get', 'ajax');
+    if ($ajax) {
+      print $parameters['function'];
+      parse_str($ajax, $parameters);
+      switch ($parameters['function']) {
+      case 'rows_table':
+        $output = rows($parameters['metabasename'], $parameters['databasename'], $parameters['tableid'], $parameters['tablename'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['orderfieldid'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
+        break;
+      }
+      page($parameters['function'], null, $output);
+    }
     $url = parameter('get', 'back');
     redirect($url ? $url : parameter('server', 'HTTP_REFERER'));
   }
@@ -64,7 +72,7 @@
       }
       $traces[] = html('div', array('class'=>'trace'), "$element[file]:$element[line] $element[function](".join(',', $args).")");
     }
-    page('error',
+    page('error', null,
       html('p', array('class'=>'error'), $error).
       html('p', array('class'=>'trace'), html('ol', array(), html('li', array(), $traces)))
     );
@@ -107,7 +115,7 @@
       sprintf('%.2f sec', ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).
       ', '.
       ($errno
-      ? html('span', array('class'=>'error'), 'error: '.$errno.' '.mysql_error())
+      ? $errno.' '.mysql_error()
       : (preg_match('@^[^A-Z]*(EXPLAIN|SELECT|SHOW) @i', $query)
         ? mysql_num_rows($result).' results'
         : mysql_affected_rows($connection).' affected'
@@ -125,6 +133,9 @@
       return $result;
     if ($errno == 1044) // Access denied for user '%s'@'%s' to database '%s'
       return null;
+    if ($errno == 1062) { // Duplicate entry '%s' for key %d
+      return null;
+    }
     error('problem while querying the databasemanager'.html('p', array('class'=>'error'), "$errno: ".mysql_error()).$query);
   }
   
@@ -140,7 +151,7 @@
     return $result[$field];
   }
   
-  function page($action, $content) {
+  function page($action, $path, $content) {
     $title = str_replace('_', ' ', $action);
 
     $error = parameter('get', 'error');
@@ -152,7 +163,7 @@
         html('head', array(),
           html('title', array(), $title).
           html('link', array('href'=>'style.php', 'type'=>'text/css', 'rel'=>'stylesheet')).
-          html('script', array('type'=>'text/javascript', 'src'=>'http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js'), '').
+          html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
           html('script', array('type'=>'text/javascript', 'src'=>'script.php'), '')
         ).
         html('body', array(),
@@ -161,7 +172,8 @@
           html('div', array('id'=>'messages'),
             $error ? html('div', array('class'=>'error'), $error) : ''
           ).
-          $content.
+          $path.
+          html('div', array('id'=>'content'), $content).
           html('ol', array('id'=>'logs'), join(getlogs()))
         )
       );
@@ -315,12 +327,14 @@
     }
 
     return 
-      ($interactive
-      ? internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), "new $tablename (changes to form fields are lost)")
-      : ($foreignvalue ? $tablename : '')
-      ).
-      $lines.
-      join(' &nbsp; ', $offsets);
+      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'rows_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'tablename'=>$tablename, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldid'=>$orderfieldid, 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttableid'=>$parenttableid, 'interactive'=>$interactive))), 
+        ($interactive
+        ? internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), "new $tablename").html('span', array('class'=>'changeslost'), ' (changes to form fields are lost)')
+        : ($foreignvalue ? $tablename : '')
+        ).
+        $lines.
+        join(' &nbsp; ', $offsets)
+      );
   }
   
   function insertorupdate($databasename, $tablename, $fieldnamesandvalues, $uniquefieldname = null, $uniquevalue = null) {
