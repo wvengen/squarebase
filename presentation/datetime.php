@@ -13,7 +13,7 @@
   function in_edit_datetime() { return 1; }
 
   function formfield_datetime($metabasename, $databasename, $field, $value, $readonly) {
-    return html('input', array('type'=>'text', 'class'=>$field['presentation'], 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>swap_datetime($value), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null));
+    return html('input', array('type'=>'text', 'class'=>$field['presentation'].' '.($readonly ? 'readonly' : ''), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>swap_datetime($value), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null));
   }
 
   function formvalue_datetime($field) {

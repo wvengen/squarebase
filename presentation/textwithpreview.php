@@ -31,7 +31,7 @@
       ".textwithpreview { width: 20em; height: 10em; white-space: pre-wrap; }\n".
       ".textwithpreview.focus { color: #000; }\n".
       ".textwithpreview.blur { color: #fff; }\n".
-      ".preview { width: 20em; height: 10em; margin: -10em 3px 0; overflow: auto; }\n".
+      ".preview { width: 20em; height: 10em; margin-top: -10em; overflow: auto; }\n".
       ".preview.focus { visibility: visible; }\n".
       ".preview.blur { visibility: hidden; }\n";
   }
@@ -45,7 +45,9 @@
           "addClass('blur').".
           "focus(function() { $(this).removeClass('blur').next().addClass('blur'); }).".
           "blur( function() { $(this).addClass('blur').next().removeClass('blur').html(this.value); }).".
-          "after('<div id=\"preview_' + this.id + '\" class=\"preview focus\">' + this.value + '</div>');".
+          "after('<div id=\"preview_' + this.id + '\" class=\"preview focus\">' + this.value + '</div>').".
+          "next().".
+          "click(function() { $(this).prev().focus(); });".
         "}".
       ");\n";
   }

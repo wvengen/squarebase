@@ -1,20 +1,29 @@
-form { margin: 0; padding: 0.5em; background-color: #ddf; }
+* { margin: 0; border: 0; padding: 0; }
+body { margin: 0.5em; }
+form { background-color: #ddf; }
 
 table { border: 1px solid #999; }
 tr.rowodd { background: #fff; }
 tr.roweven { background: #eee; }
+th, td { padding: 0.1em; vertical-align: top; }
 th { text-align: left; background: #eee; }
-td { vertical-align: top; }
 td.description { width: 1px; height: 1.5em; white-space: nowrap; }
 td.number { text-align: right; }
 td.center { text-align: center; }
 
+ul, ol { padding: 0.5em 2em; }
 ul.compact { margin: 0; padding: 0; width: 30em; overflow: hidden; }
 ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 
 .integer { width: 2em; text-align: right; }
 
 input, select, textarea { font-size: 1em; font-family: inherit; }
+input, select { border: 0.15em solid #fff; }
+input.readonly, select.readonly { border-color: #ddd; }
+input.button { border-color: #fff #999 #999 #fff; padding: 0 0.2em; }
+input.cancel, input.mainsubmit { margin: 0.5em 1em 0.5em 0; }
+input.cancel:hover { background-color: #f00; color: #fff; }
+input.mainsubmit:hover { background-color: #000; color: #fff; }
 
 .column { white-space: nowrap; }
 .thisrecord { color: #666; }
@@ -23,7 +32,7 @@ input, select, textarea { font-size: 1em; font-family: inherit; }
 
 .typename { width: 8em; }
 
-#title { float: left; margin: 0; }
+#title { float: left; }
 #id { float: right; }
 #messages { clear: both; }
 

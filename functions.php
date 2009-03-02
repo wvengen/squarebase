@@ -166,7 +166,7 @@
           html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
           html('script', array('type'=>'text/javascript', 'src'=>'script.php'), '')
         ).
-        html('body', array(),
+        html('body', array('class'=>preg_replace('@_@', '', $action)),
           html('h1', array('id'=>'title'), $title).
           ($_SESSION['username'] ? html('div', array('id'=>'id'), "$_SESSION[username]@$_SESSION[host] &ndash; ".internalreference(array('action'=>'logout'), 'logout')) : '').
           html('div', array('id'=>'messages'),

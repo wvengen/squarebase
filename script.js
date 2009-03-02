@@ -20,16 +20,15 @@ jQuery.fn.ajaxify = function() {
       css('display', 'none');
 
       $(this).
-      find('a.newrecord').
-      add('a.editrecord').
-      add('a.deleterecord').
+      find('a.newrecord, a.editrecord, a.deleterecord').
       click(
         function() {
           var ajaxcontent = $(this).closest('.ajax').find('.ajaxcontent');
-          if (ajaxcontent.attr('id') == this.href)
+          if (ajaxcontent.attr('id') == this.href) {
             ajaxcontent.
-            attr('id', null).
+            attr('id', '').
             empty();
+          }
           else
             ajaxcontent.
             attr('id', this.href).
@@ -90,7 +89,7 @@ jQuery.fn.ajaxify = function() {
 
 $(document).ready(
   function() {
-    $('.ajax').
+    $('body.editrecord .ajax').
     ajaxify();
 
     $(':text:first').
