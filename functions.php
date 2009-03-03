@@ -48,8 +48,8 @@
   function back() {
     $ajax = parameter('get', 'ajax');
     if ($ajax) {
-      print $parameters['function'];
       parse_str($ajax, $parameters);
+      addtolist('logs', '', 'ajax_'.$parameters['function'].' '.preg_replace('/^Array/', '', print_r($parameters, true)));
       switch ($parameters['function']) {
       case 'rows_table':
         $output = rows($parameters['metabasename'], $parameters['databasename'], $parameters['tableid'], $parameters['tablename'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['orderfieldid'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
@@ -79,16 +79,16 @@
     exit;
   }
   
-  function addlog($class, $text) {
-    if (!$_SESSION['logs'])
-      $_SESSION['logs'] = array();
-    $_SESSION['logs'][] = html('li', array('class'=>$class), htmlspecialchars(preg_replace("/\r/", '\\n', $text)));
+  function addtolist($list, $class, $text) {
+    if (!$_SESSION[$list])
+      $_SESSION[$list] = array();
+    $_SESSION[$list][] = html('li', array('class'=>$class), htmlspecialchars(preg_replace("/\r/", '\\n', $text)));
   }
 
-  function getlogs() {
-    $logs = $_SESSION['logs'];
-    unset($_SESSION['logs']);
-    return $logs;
+  function getlist($list) {
+    $result = $_SESSION[$list];
+    unset($_SESSION[$list]);
+    return $result ? $result : array();
   }
 
   function query($metaordata, $query) {
@@ -109,7 +109,7 @@
 
     $errno = mysql_errno();
 
-    addlog(
+    addtolist('logs', 
       "query$metaordata",
       '['.
       sprintf('%.2f sec', ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).
@@ -134,6 +134,25 @@
     if ($errno == 1044) // Access denied for user '%s'@'%s' to database '%s'
       return null;
     if ($errno == 1062) { // Duplicate entry '%s' for key %d
+      $tablename = preg_match1('@^INSERT INTO (\S+)@', $query);
+      $error = mysql_error();
+      $keyvalues = preg_match1('@Duplicate entry (\'.*\')@', $error);
+      $keynr = preg_match1('@for key (\d+)@', $error);
+      $warning = "tablename=$tablename, keyvalues=$keyvalues, keynr=$keynr, $error: $query";
+      if ($tablename && $keynr) {
+        $keyfields = array();
+        $keys = query($metaordata, "SHOW INDEX FROM $tablename");
+        while ($key = mysql_fetch_assoc($keys)) {
+          if ($key['Seq_in_index'] == 1)
+            $keynr--;
+          if ($keynr < 0)
+            break;
+          if ($keynr == 0)
+            $keyfields[] = $key['Column_name'];
+        }
+        $warning = ucfirst(preg_match1('@\.(.*)@', $tablename)).' with '.join(', ', $keyfields)." = $keyvalues already exists";
+      }
+      addtolist('warnings', 'warning', $warning);
       return null;
     }
     error('problem while querying the databasemanager'.html('p', array('class'=>'error'), "$errno: ".mysql_error()).$query);
@@ -173,8 +192,11 @@
             $error ? html('div', array('class'=>'error'), $error) : ''
           ).
           $path.
-          html('div', array('id'=>'content'), $content).
-          html('ol', array('id'=>'logs'), join(getlogs()))
+          html('div', array('id'=>'content'),
+            html('ol', array('id'=>'warnings'), join(getlist('warnings'))).
+            $content
+          ).
+          html('ol', array('id'=>'logs'), join(getlist('logs')))
         )
       );
     exit;
@@ -347,6 +369,10 @@
       : "INSERT INTO `$databasename`.$tablename SET $sets"
     );
     return $uniquevalue ? $uniquevalue : mysql_insert_id();
+  }
+  
+  function preg_match1($pattern, $subject) {
+    return preg_match($pattern, $subject, $matches) ? (count($matches) == 2 ? $matches[1] : $matches[0]) : null;
   }
   
   function preg_delete($pattern, $subject) {

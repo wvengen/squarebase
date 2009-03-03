@@ -7,7 +7,7 @@
   session_start();
 
   $action = parameter('get', 'action', 'login');
-  addlog('action', $action.' '.preg_replace('/^Array/', '', print_r(parameter('get'), true)));
+  addtolist('logs', 'action', $action.' '.preg_replace('/^Array/', '', print_r(parameter('get'), true)));
 
   /********************************************************************************************/
 

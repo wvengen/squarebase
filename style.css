@@ -38,7 +38,9 @@ input.mainsubmit:hover { background-color: #000; color: #fff; }
 
 .important { font-weight: bold; }
 
-.error, .problem { font-weight: bold; color: #f00; }
+#warnings { padding: 0; }
+#warnings li { list-style-type: none; }
+.error, .problem, .warning { font-weight: bold; color: #f00; }
 
 .trace { white-space: nowrap; }
 
