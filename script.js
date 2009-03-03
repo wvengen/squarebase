@@ -64,8 +64,14 @@ jQuery.fn.ajaxify = function() {
                     return false;
                   }
                 ).
+
                 // the following line is needed because jquery doesn't include the name=value of the submit button in form.serialize()
                 append('<input type="hidden" name="action" value="' + $(this).find('.mainsubmit').val() + '"/>').
+
+                find('.minorsubmit, .newsubrecord').
+                css('display', 'none').
+                end().
+
                 find('.cancel').
                 click(
                   function() {
@@ -79,6 +85,7 @@ jQuery.fn.ajaxify = function() {
                 );
               }
             );
+
           return false;
         }
       );

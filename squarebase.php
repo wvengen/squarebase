@@ -724,6 +724,7 @@
         html('input', array('type'=>'hidden', 'name'=>'newtableid', 'value'=>'')).
         html('p', array(),
           html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'delete_record' ? 'delete_record_really' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>'mainsubmit button')).
+          (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit button')) : '').
           html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'cancel', 'class'=>'button cancel'))
         ).
         html('table', array('class'=>'tableedit'), $referringtables)
