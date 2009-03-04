@@ -13,9 +13,6 @@ jQuery.fn.ajaxify = function() {
   $(this).each(
     function() {
       $(this).
-      prepend('<div class="ajaxcontent"></div>');
-
-      $(this).
       find('.changeslost').
       css('display', 'none');
 

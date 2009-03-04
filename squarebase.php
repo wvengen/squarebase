@@ -667,7 +667,7 @@
     list($tablename, $uniquefieldname) = tableanduniquefieldname($metabasename, $tableid);
 
     page($action, path($metabasename, $databasename, $tablename, $tableid),
-      rows($metabasename, $databasename, $tableid, $tablename, 10, $offset, $uniquefieldname, $orderfieldid)
+      rows($metabasename, $databasename, $tableid, $tablename, 0, $offset, $uniquefieldname, $orderfieldid)
     );
   }
 

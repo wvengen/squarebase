@@ -354,6 +354,7 @@
         ? internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), "new $tablename").html('span', array('class'=>'changeslost'), ' (changes to form fields are lost)')
         : ($foreignvalue ? $tablename : '')
         ).
+        html('div', array('class'=>'ajaxcontent'), '').
         $lines.
         join(' &nbsp; ', $offsets)
       );
