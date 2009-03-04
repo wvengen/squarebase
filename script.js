@@ -20,10 +20,10 @@ jQuery.fn.ajaxify = function() {
       css('display', 'none');
 
       $(this).
-      find('a.newrecord, a.editrecord, a.deleterecord').
+      find('a').
       click(
         function() {
-          var ajaxcontent = $(this).closest('.ajax').find('.ajaxcontent');
+          var ajaxcontent = $(this).closest('.ajax').find('.ajaxcontent:first');
           if (ajaxcontent.attr('id') == this.href) {
             ajaxcontent.
             attr('id', '').
@@ -82,7 +82,11 @@ jQuery.fn.ajaxify = function() {
                     empty();
                     return false;
                   }
-                );
+                ).
+                end().
+                
+                find('.ajax').
+                ajaxify();
               }
             );
 

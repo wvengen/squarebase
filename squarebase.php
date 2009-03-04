@@ -705,7 +705,7 @@
     if (!is_null($uniquevalue)) {
       $referringfields = query('meta', "SELECT mt.tableid, tablename, mf.fieldname AS fieldname, mfu.fieldname AS uniquefieldname FROM `$metabasename`.metafield mf LEFT JOIN `$metabasename`.metatable mt ON mt.tableid = mf.tableid LEFT JOIN `$metabasename`.metafield mfu ON mt.uniquefieldid = mfu.fieldid WHERE mf.foreigntableid = $tableid");
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
-        $referringtables .=
+        $lines .=
           html('tr', array(),
             html('td', array('class'=>'description'), $referringfield['tablename']).
             html('td', array(), rows($metabasename, $databasename, $referringfield['tableid'], $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tableid, $action != 'delete_record'))
@@ -726,8 +726,7 @@
           html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'delete_record' ? 'delete_record_really' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>'mainsubmit button')).
           (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit button')) : '').
           html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'cancel', 'class'=>'button cancel'))
-        ).
-        html('table', array('class'=>'tableedit'), $referringtables)
+        )
       )
     );
   }

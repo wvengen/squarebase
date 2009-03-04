@@ -28,6 +28,6 @@
   }
   
   function css_boolean() {
-    return ".boolean { margin: 0; }\n";
+    return '';
   }
 ?>
