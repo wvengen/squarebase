@@ -22,10 +22,10 @@ ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 input, select, textarea { font-size: 1em; font-family: inherit; background-color: #ffe; }
 select { height: 1.15em; }
 input.readonly, select.readonly { border-color: #ddd; }
-input.button { border: 0.15em solid #fff; border-color: #fff #999 #999 #fff; padding: 0 0.2em; }
+input.button { border: 0.15em solid #fff; border-color: #fff #999 #999 #fff; color: #33f; padding: 0 0.2em; }
 input.cancel, input.mainsubmit, input.minorsubmit { margin-right: 1em; }
-input.cancel:hover { background-color: #c00; color: #fff; }
-input.mainsubmit:hover, input.minorsubmit:hover { background-color: #090; color: #fff; }
+input.cancel:hover { background-color: #c00; }
+input.mainsubmit:hover, input.minorsubmit:hover { background-color: #090; }
 
 .column { white-space: nowrap; }
 .thisrecord { color: #666; }

@@ -3,6 +3,7 @@
 
   $privileges = array('select'=>'Select_priv', 'insert'=>'Insert_priv', 'update'=>'Update_priv', 'delete'=>'Delete_priv', 'create'=>'Create_priv', 'drop'=>'Drop_priv', 'alter'=>'Alter_priv', 'grant'=>'Grant_priv');
 
+  session_set_cookie_params(7 * 24 * 60 * 60);
   session_save_path('session');
   session_start();
 
@@ -75,8 +76,7 @@
             $rows
           )
         )
-      ).
-      internalreference(array('action'=>'show_users'), 'show users')
+      )
     );
   }
 
@@ -100,25 +100,11 @@
         }
         $fulllist = null;
         if (count($tablelist) > 5) {
-          $fulllist = join(' ', array_slice($tablelist, 5));
-          array_splice($tablelist, 5);
+          $fulllist = join(' ', array_slice($tablelist, 4));
+          array_splice($tablelist, 4);
         }
         $contents = html('ul', array('class'=>'compact'), html('li', array(), $tablelist).($fulllist ? html('li', array('title'=>$fulllist), '&hellip') : ''));
       }
-      $userprivs = $dbprivs = '';
-      foreach ($privileges as $title=>$privilege) {
-        $userprivs .= ($userprivs ? ', ' : '')."user.$privilege AS user_$title";
-        $dbprivs   .= ($dbprivs   ? ', ' : '')."db.$privilege AS db_$title";
-      }
-//    $tableprivs = query('root', "SHOW GRANTS FOR '$sessionparts[1]'@'$sessionparts[2]'");
-//    while ($tablepriv = mysql_fetch_assoc($tableprivs)) {
-//      print_r($tablepriv);
-//      echo html('br');
-//    }
-//    echo html('hr');
-//    $tableprivs = query1('root', "SELECT $userprivs, $dbprivs FROM mysql.user LEFT JOIN mysql.db ON db.Host=user.Host AND db.User=user.User AND db.Db='$databasename' WHERE user.Host='$sessionparts[2]' AND user.User='$sessionparts[1]'");
-//    print_r($tableprivs);
-//    echo html('hr');
       $rows .=
         html('tr', array(),
           html('td', array(),
@@ -494,7 +480,6 @@
 
         $typename = parameter('get', "$tablename:$fieldname:typename");
         if (!$typeids[$typename]) {
-//        print "$tablename:$fieldname:presentation" . ' - ' . parameter('get', "$tablename:$fieldname:presentation") . html('br');
           $typeids[$typename] = insertorupdate($metabasename, 'metatype', array('typename'=>$typename, 'type'=>parameter('get', "$tablename:$fieldname:type"), 'typelength'=>parameter('get', "$tablename:$fieldname:typelength"), 'typeunsigned'=>parameter('get', "$tablename:$fieldname:typeunsigned") ? 1 : 0, 'typezerofill'=>parameter('get', "$tablename:$fieldname:typezerofill") ? 1 : 0, 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentation")]), 'typeid');
         }
 
@@ -523,9 +508,6 @@
       error(join(', ', $errors));
 
     internalredirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
-    page($action, path($metabasename, $databasename),
-      internalreference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), 'show_database')
-    );
   }
 
   /********************************************************************************************/
@@ -769,238 +751,6 @@
       internalredirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
 
     back();
-  }
-
-  /********************************************************************************************/
-
-  if ($action == 'show_users') {
-    $users = query('root', "SELECT * FROM mysql.user ORDER BY host, user");
-    while ($user = mysql_fetch_assoc($users)) {
-      $privcols = '';
-      foreach ($privileges as $title=>$privilege)
-        $privcols .= html('td', array('class'=>'center'), checkboxyn($user[$privilege]));
-      $table .= html('tr', array(), html('td', array(), array($user['User'], $user['Host'])).$privcols.html('td', array(), array(internalreference(array('action'=>'edit_user', 'host'=>$user['Host'], 'username'=>$user['User']), 'edit'), internalreference(array('action'=>'delete_user', 'host'=>$user['Host'], 'username'=>$user['User']), 'delete'))));
-    }
-    foreach ($privileges as $title=>$privilege)
-      $privheader .= html('th', array(), $title);
-    page($action, null,
-      internalreference(array('action'=>'edit_user'), 'new user').
-      html('table', array(),
-        html('tr', array(), html('th', array(), array('username', 'host')).$privheader.html('th', array(), array('', ''))).
-        $table
-      )
-    );
-  }
-
-  /********************************************************************************************/
-
-  if ($action == 'edit_user') {
-    $host     = parameter('get', 'host');
-    $username = parameter('get', 'username');
-
-    $user = $host || $username ? query1('root', "SELECT * FROM mysql.user WHERE host='$host' AND user='$username'") : array();
-
-    foreach ($privileges as $title=>$privilege)
-      $privrows .= html('tr', array(), html('td', array(), array($title, checkboxyn($user[$privilege], $title))));
-
-    if ($host || $username) {
-      $databases = query('root', "SELECT * FROM mysql.db WHERE host='$host' AND user='$username'");
-      while ($database = mysql_fetch_assoc($databases)) {
-        $privcols = '';
-        foreach ($privileges as $title=>$privilege)
-          $privcols .= html('td', array('class'=>'center'), checkboxyn($database[$privilege]));
-        $table .=
-          html('tr', array(),
-            html('td', array(), $database['Db']).
-            $privcols.
-            html('td', array(), array(internalreference(array('action'=>'edit_privileges_on_db', 'host'=>$host, 'username'=>$username, 'databasename'=>$database['Db']), 'edit'), internalreference(array('action'=>'delete_privileges_on_db', 'host'=>$host, 'username'=>$username, 'databasename'=>$database['Db']), 'delete')))
-          );
-      }
-      foreach ($privileges as $title=>$privilege)
-        $privheader .= html('th', array(), $title);
-    }
-
-    page($action, null,
-      form(
-        html('input', array('type'=>'hidden', 'name'=>'old_username', 'value'=>$username)).
-        html('input', array('type'=>'hidden', 'name'=>'old_host', 'value'=>$host)).
-        html('table', array(),
-          html('tr', array(),
-            array(
-              html('td', array(), array('username'       , html('input', array('type'=>'text', 'name'=>'username', 'value'=>$user['User'])))),
-              html('td', array(), array('host'           , html('input', array('type'=>'text', 'name'=>'host', 'value'=>$user['Host'])))),
-              html('td', array(), array('new password'   , html('input', array('type'=>'password', 'name'=>'password1')))),
-              html('td', array(), array('retype password', html('input', array('type'=>'password', 'name'=>'password2'))))
-            )
-          ).
-          $privrows
-        ).
-        html('p', array(),
-          $host || $username
-          ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_user', 'class'=>'button'))
-          : html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_user', 'class'=>'button'))
-        ).
-        ($host || $username
-        ? internalreference(array('action'=>'edit_privileges_on_db', 'host'=>$host, 'username'=>$username), 'privileges for other database').
-          ($table
-          ? html('table', array(),
-              html('tr', array(), html('th', array(), 'db').$privheader.html('th', array(), array('', ''))).
-              $table
-            )
-          : ''
-          )
-        : ''
-        )
-      )
-    );
-  }
-
-  /********************************************************************************************/
-
-  if ($action == 'add_user') {
-    $host     = parameter('get', 'host');
-    $username = parameter('get', 'username');
-    $password1 = parameter('get', 'password1');
-    $password2 = parameter('get', 'password2');
-    if (($password1 || $password2) && $password1 != $password2)
-      error('two different passwords');
-
-    foreach ($privileges as $title=>$privilege)
-      $privsets .= ($privsets ? ', ' : '')."$privilege='".(parameter('get', $title) ? 'Y' : 'N')."'";
-
-    query('root', "INSERT INTO mysql.user SET Host='$host', User='$username', ".($password1 ? "Password=password('$password1'), " : '').$privsets);
-    query('root', "FLUSH PRIVILEGES");
-    internalredirect(array('action'=>'show_users'));
-  }
-
-  /********************************************************************************************/
-
-  if ($action == 'update_user') {
-    $host     = parameter('get', 'host');
-    $username = parameter('get', 'username');
-    $oldhost     = parameter('get', 'old_host');
-    $oldusername = parameter('get', 'old_username');
-    $password1 = parameter('get', 'password1');
-    $password2 = parameter('get', 'password2');
-    if (($password1 || $password2) && $password1 != $password2)
-      error('two different passwords');
-
-    foreach ($privileges as $title=>$privilege)
-      $privsets .= ($privsets ? ', ' : '')."$privilege='".(parameter('get', $title) ? 'Y' : 'N')."'";
-
-    query('root', "UPDATE mysql.user SET ".($host != $oldhost ? "Host='$host', " : '').($username != $oldusername ? "User='$username', " : '').($password1 ? "Password=password('$password1'), " : '').$privsets." WHERE Host='$oldhost' AND User='$oldusername'");
-    if ($host != $oldhost || $username != $oldusername) {
-      query('root', "UPDATE mysql.db SET Host='$host', User='$username' WHERE Host='$oldhost' AND User='$oldusername'");
-      query('root', "UPDATE mysql.tables_priv SET Host='$host', User='$username' WHERE Host='$oldhost' AND User='$oldusername'");
-      query('root', "UPDATE mysql.columns_priv SET Host='$host', User='$username' WHERE Host='$oldhost' AND User='$oldusername'");
-      query('root', "FLUSH PRIVILEGES");
-    }
-    query('root', "FLUSH PRIVILEGES");
-    internalredirect(array('action'=>'show_users'));
-  }
-
-  /********************************************************************************************/
-
-  if ($action == 'delete_user') {
-    $host     = parameter('get', 'host');
-    $username = parameter('get', 'username');
-
-    query('root', "DELETE FROM mysql.user WHERE Host='$host' AND User='$username'");
-    query('root', "DELETE FROM mysql.db WHERE Host='$host' AND User='$username'");
-    query('root', "DELETE FROM mysql.tables_priv WHERE Host='$host' AND User='$username'");
-    query('root', "DELETE FROM mysql.columns_priv WHERE Host='$host' AND User='$username'");
-    query('root', "FLUSH PRIVILEGES");
-    internalredirect(array('action'=>'show_users'));
-  }
-
-  /********************************************************************************************/
-
-  if ($action == 'edit_privileges_on_db') {
-    $host         = parameter('get', 'host');
-    $username     = parameter('get', 'username');
-    $databasename = parameter('get', 'databasename');
-
-    $database = $databasename ? query1('root', "SELECT * FROM mysql.db WHERE Host='$host' AND User='$username' AND Db='$databasename'") : array();
-
-    if (!$databasename) {
-      $dbs = query('root', 'SHOW DATABASES');
-      while ($db = mysql_fetch_assoc($dbs)) {
-        $dbname = $db['Database'];
-        $checkoption = $databasename == $dbname;
-        $checked = $checked || $checkoption;
-        $options .= html('option', array_merge(array('value'=>$dbname), $checkoption ? array('selected'=>'selected') : array()), $dbname);
-      }
-      if (!$checked)
-        $options =
-          html('option', array_merge(array('value'=>''), $checked ? array() : array('selected'=>'selected')), '').
-          $options;
-    }
-
-    foreach ($privileges as $title=>$privilege)
-      $privrows .= html('tr', array(), html('td', array(), array($title, checkboxyn($database[$privilege], $title))));
-
-    page($action, null,
-      form(
-        html('table', array(),
-          html('tr', array(),
-            array(
-              html('td', array(), array('host'           , $host.html('input', array('type'=>'hidden', 'name'=>'host', 'value'=>$host)))),
-              html('td', array(), array('username'       , $username.html('input', array('type'=>'hidden', 'name'=>'username', 'value'=>$username)))),
-              html('td', array(), array('databasename'   , $databasename ? $databasename.html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)) : html('select', array('name'=>'databasename'), $options)))
-            )
-          ).
-          $privrows
-        ).
-        html('p', array(),
-          $databasename
-          ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_privileges_on_db', 'class'=>'button'))
-          : html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_privileges_on_db', 'class'=>'button'))
-        )
-      )
-    );
-  }
-
-  /********************************************************************************************/
-
-  if ($action == 'add_privileges_on_db') {
-    $host     = parameter('get', 'host');
-    $username = parameter('get', 'username');
-    $databasename = parameter('get', 'databasename');
-
-    foreach ($privileges as $title=>$privilege)
-      $privsets .= ($privsets ? ', ' : '')."$privilege='".(parameter('get', $title) ? 'Y' : 'N')."'";
-
-    query('root', "INSERT INTO mysql.db SET Host='$host', User='$username', Db='$databasename', ".$privsets);
-    query('root', "FLUSH PRIVILEGES");
-    internalredirect(array('action'=>'edit_user', 'host'=>$host, 'username'=>$username, 'databasename'=>$databasename));
-  }
-
-  /********************************************************************************************/
-
-  if ($action == 'update_privileges_on_db') {
-    $host     = parameter('get', 'host');
-    $username = parameter('get', 'username');
-    $databasename = parameter('get', 'databasename');
-
-    foreach ($privileges as $title=>$privilege)
-      $privsets .= ($privsets ? ', ' : '')."$privilege='".(parameter('get', $title) ? 'Y' : 'N')."'";
-
-    query('root', "UPDATE mysql.db SET ".$privsets." WHERE Host='$host' AND User='$username' AND Db='$databasename'");
-    query('root', "FLUSH PRIVILEGES");
-    page($action, null, '');
-    internalredirect(array('action'=>'edit_user', 'host'=>$host, 'username'=>$username));
-  }
-
-  /********************************************************************************************/
-
-  if ($action == 'delete_privileges_on_db') {
-    $host         = parameter('get', 'host');
-    $username     = parameter('get', 'username');
-    $databasename = parameter('get', 'databasename');
-
-    query('root', "DELETE FROM mysql.db WHERE Host='$host' AND User='$username' AND Db='$databasename'");
-    query('root', "FLUSH PRIVILEGES");
-    internalredirect(array('action'=>'edit_user', 'host'=>$host, 'username'=>$username));
   }
 
   /********************************************************************************************/
