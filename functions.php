@@ -52,7 +52,10 @@
       addtolist('logs', '', 'ajax_'.$parameters['function'].' '.preg_replace('/^Array/', '', print_r($parameters, true)));
       switch ($parameters['function']) {
       case 'rows_table':
-        $output = rows($parameters['metabasename'], $parameters['databasename'], $parameters['tableid'], $parameters['tablename'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['orderfieldid'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
+        $output = rows_table($parameters['metabasename'], $parameters['databasename'], $parameters['tableid'], $parameters['tablename'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['orderfieldid'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
+        break;
+      case 'ajax_lookup':
+        $output = ajax_lookup($parameters['metabasename'], $parameters['databasename'], $parameters['fieldname'], $parameters['presentation'], $parameters['foreigntableid'], $parameters['foreigntablename'], $parameters['foreignuniquefieldname'], $parameters['nullallowed'], $parameters['readonly']);
         break;
       }
       page($parameters['function'], null, $output);
@@ -280,7 +283,7 @@
     return $description;
   }
   
-  function rows($metabasename, $databasename, $tableid, $tablename, $limit, $offset, $uniquefieldname, $orderfieldid, $foreignfieldname = null, $foreignvalue = null, $parenttableid = null, $interactive = TRUE) {
+  function rows_table($metabasename, $databasename, $tableid, $tablename, $limit, $offset, $uniquefieldname, $orderfieldid, $foreignfieldname = null, $foreignvalue = null, $parenttableid = null, $interactive = TRUE) {
     $originalorderfieldid = $orderfieldid;
     list($rows, $fields, $orderfieldid, $foundrows) = orderedrows($metabasename, $databasename, $tableid, $tablename, $limit, $offset, $uniquefieldname, 'list', $foreignfieldname, $foreignvalue, $orderfieldid);
     while ($row = mysql_fetch_assoc($rows)) {

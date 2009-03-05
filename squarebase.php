@@ -667,7 +667,7 @@
     list($tablename, $uniquefieldname) = tableanduniquefieldname($metabasename, $tableid);
 
     page($action, path($metabasename, $databasename, $tablename, $tableid),
-      rows($metabasename, $databasename, $tableid, $tablename, 0, $offset, $uniquefieldname, $orderfieldid)
+      rows_table($metabasename, $databasename, $tableid, $tablename, 0, $offset, $uniquefieldname, $orderfieldid)
     );
   }
 
@@ -708,7 +708,7 @@
         $lines .=
           html('tr', array(),
             html('td', array('class'=>'description'), $referringfield['tablename']).
-            html('td', array(), rows($metabasename, $databasename, $referringfield['tableid'], $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tableid, $action != 'delete_record'))
+            html('td', array(), rows_table($metabasename, $databasename, $referringfield['tableid'], $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tableid, $action != 'delete_record'))
           );
       }
     }
@@ -743,18 +743,6 @@
     query('data', "DELETE FROM `$databasename`.$tablename WHERE $uniquefieldname = '$uniquevalue'");
 
     back();
-  }
-
-  /********************************************************************************************/
-
-  if (preg_match('/^new_record_/', $action)) {
-    $metabasename = parameter('get', 'metabasename');
-    $databasename = parameter('get', 'databasename');
-    $newtableid   = parameter('get', 'newtableid');
-    $parameters = parameter('get');
-    $parameters['action'] = 'edit_record';
-
-    internalredirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$newtableid, 'back'=>internalurl($parameters)));
   }
 
   /********************************************************************************************/

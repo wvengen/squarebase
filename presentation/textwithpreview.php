@@ -29,7 +29,7 @@
   function css_textwithpreview() {
     return
       ".textwithpreview { width: 20em; height: 10em; white-space: pre-wrap; }\n".
-      ".textwithpreview.blur { color: #fff; overflow: hidden; }\n".
+      ".textwithpreview.blur { color: #ffe; overflow: hidden; }\n".
       ".preview { width: 20em; height: 10em; margin-top: -10em; overflow: auto; }\n".
       ".preview.blur { visibility: hidden; }\n";
   }

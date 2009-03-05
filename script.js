@@ -18,9 +18,15 @@ jQuery.fn.ajaxify = function() {
 
       $(this).
       find('a').
+      css('background-color', '#cff').
       click(
         function() {
           var ajaxcontent = $(this).closest('.ajax').find('.ajaxcontent:first');
+          if (ajaxcontent.length == 0)
+            $(this).closest('.ajax').css('background-color', '#fcc'); //error
+
+          ajaxcontent.css('background-color', '#cff');
+
           if (ajaxcontent.attr('id') == this.href) {
             ajaxcontent.
             attr('id', '').
@@ -39,6 +45,7 @@ jQuery.fn.ajaxify = function() {
                   function() {
                     $(this).
                     find(':input[name=back]').
+                    css('background-color', '#cff').
                     attr('name', 'ajax').
                     val(
                       $(this).
@@ -65,11 +72,16 @@ jQuery.fn.ajaxify = function() {
                 // the following line is needed because jquery doesn't include the name=value of the submit button in form.serialize()
                 append('<input type="hidden" name="action" value="' + $(this).find('.mainsubmit').val() + '"/>').
 
-                find('.minorsubmit, .newsubrecord').
+                find('.mainsubmit').
+                css('background-color', '#cff').
+                end().
+
+                find('.minorsubmit').
                 css('display', 'none').
                 end().
 
                 find('.cancel').
+                css('background-color', '#cff').
                 click(
                   function() {
                     $(this).
