@@ -21,7 +21,7 @@
               html('td', array(), array(html('label', array('for'=>'username'), 'username'), html('input', array('type'=>'text',     'id'=>'username', 'name'=>'username', 'value'=>'root')))),
               html('td', array(), array(html('label', array('for'=>'host'    ), 'host'    ), html('input', array('type'=>'text',     'id'=>'host',     'name'=>'host',     'value'=>'localhost')))),
               html('td', array(), array(html('label', array('for'=>'password'), 'password'), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password')))),
-              html('td', array(), array('&nbsp;',                                            html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>'button'))))
+              html('td', array(), array('&nbsp;',                                            html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>'button mainsubmit'))))
             )
           )
         )
@@ -135,7 +135,7 @@
           'Drop database '.html('strong', array(), $databasename).'?'
         ).
         html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'drop_database_really', 'class'=>'button')).
-        internalreference(parameter('server', 'HTTP_REFERER'), 'cancel')
+        internalreference(parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel'))
       )
     );
   }
@@ -708,7 +708,7 @@
         html('p', array(),
           html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'delete_record' ? 'delete_record_really' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>'mainsubmit button')).
           (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit button')) : '').
-          internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel')
+          internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel'))
         )
       )
     );

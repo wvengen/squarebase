@@ -32,8 +32,8 @@
     return html('a', array('href'=>htmlentities($url)), $text);
   }
 
-  function internalreference($parameters, $text) {
-    return html('a', array('href'=>is_array($parameters) ? internalurl($parameters) : $parameters), $text);
+  function internalreference($parameters, $text, $extra = array()) {
+    return html('a', array_merge($extra, array('href'=>is_array($parameters) ? internalurl($parameters) : $parameters)), $text);
   }
 
   function redirect($url) {
@@ -306,7 +306,7 @@
           ($interactive
           ? html('td', array(),
               array(
-                internalreference(array('action'=>'edit_record',   'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'uniquevalue'=>$row[$uniquefieldname], 'back'=>parameter('server', 'REQUEST_URI')), 'edit'  ),
+                internalreference(array('action'=>'edit_record',   'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), 'edit'  ),
                 internalreference(array('action'=>'delete_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'uniquevalue'=>$row[$uniquefieldname], 'back'=>parameter('server', 'REQUEST_URI')), 'delete')
               )
             )

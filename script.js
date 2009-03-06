@@ -1,23 +1,88 @@
-jQuery.fn.checkform = function() {
+jQuery.fn.enhanceform = function() {
   $(this).
-  each(
+  filter(':not(.enhancedform)').
+  addClass('enhancedform').
+
+  find(':input').
+  keyup(
     function() {
       $(this).
-      submit(
+      checkform();
+    }
+  ).
+  end().
+
+  find('select').
+  change(
+    function() {
+      $(this).
+      checkform();
+    }
+  ).
+  end().
+
+  checkform().
+
+  find('input:enabled, select:enabled').
+  eq(0).
+  focus();
+
+  return this;
+}
+
+jQuery.fn.checkform = function() {
+  $(this).
+  closest('form').
+  find('.ajaxproblem').
+  removeClass('ajaxproblem').
+  end().
+
+  find('.notempty:enabled:not([value])').
+  addClass('ajaxproblem');
+
+  return this;
+}
+
+jQuery.fn.ajaxsubmit = function() {
+  $(this).
+  closest('form').
+  filter(':not(.ajaxified)').
+  addClass('ajaxified').
+  submit(
+    function() {
+      if ($(this).checkform().find('.ajaxproblem:first').focus().length > 0)
+        return false;
+
+      $(this).
+      find(':input[name=back]').
+      attr('name', 'ajax').
+      val(
+        $(this).
+        closest('.ajax').
+        attr('id')
+      ).
+      end().
+
+      closest('form').
+      closest('.ajax').
+      load(
+        $(this).
+        attr('action') + ' #content',
+
+        $(this).
+        find(':disabled').
+        attr('disabled', null).
+        end().
+        serialize(),
+
         function() {
-          var problems =
-            $(this).
-            find('.notempty:enabled:not([value])');
-            //add('...')
-
-          problems.
-          css('border-color', '#f00').
-          eq(0).
-          focus();
-
-          return problems.length == 0;
+          $(this).
+          find('.ajax').
+          ajaxify();
         }
       );
+
+      return false;
     }
   );
   return this;
@@ -25,126 +90,90 @@ jQuery.fn.checkform = function() {
 
 jQuery.fn.ajaxify = function() {
   $(this).
-  each(
+  find('form').
+  enhanceform().
+  ajaxsubmit().
+  end().
+
+  find('.changeslost').
+  css('display', 'none').
+  end().
+
+  find('a:not(.ajaxified)').
+  addClass('ajaxified').
+  click(
     function() {
-      $(this).
-      find('.changeslost').
-      css('display', 'none');
+      var ajaxcontent =
+        $(this).
+        closest('.ajax').
+        find('.ajaxcontent:first');
 
-      $(this).
-      find('a').
-      css('background-color', '#cff').
-      click(
-        function() {
-          var ajaxcontent =
+      if (ajaxcontent.length == 0) //error
+        $(this).
+        closest('.ajax').
+        addClass('ajaxproblem');
+
+      if (ajaxcontent.attr('id') == this.href) {
+        ajaxcontent.
+        attr('id', '').
+        empty();
+      }
+      else {
+        ajaxcontent.
+        attr('id', this.href).
+        load(
+          this.href + ' #content',
+          null,
+          function() {
             $(this).
-            closest('.ajax').
-            find('.ajaxcontent:first');
-          if (ajaxcontent.length == 0) //error
-            $(this).
-            closest('.ajax').
-            css('background-color', '#fcc');
+            find('form').
+            ajaxsubmit().
 
-          ajaxcontent.
-          css('background-color', '#cff');
+            // the following line is needed because jquery doesn't include the name=value of the submit button in form.serialize()
+            append('<input type="hidden" name="action" value="' + $(this).find('.mainsubmit').val() + '"/>').
 
-          if (ajaxcontent.attr('id') == this.href) {
-            ajaxcontent.
-            attr('id', '').
-            empty();
-          }
-          else
-            ajaxcontent.
-            attr('id', this.href).
-            load(
-              this.href + ' #content', 
-              null, 
-              function() { 
+            find('.mainsubmit').
+            addClass('ajaxified').
+            end().
+
+            find('.minorsubmit').
+            addClass('ajaxified').
+            end().
+
+            find('.cancel').
+            addClass('ajaxified').
+            click(
+              function() {
                 $(this).
-                find('form').
-                checkform().
-                submit(
-                  function() {
-                    $(this).
-                    find(':input[name=back]').
-                    css('background-color', '#cff').
-                    attr('name', 'ajax').
-                    val(
-                      $(this).
-                      closest('.ajax').
-                      attr('id')
-                    );
-
-                    $(this).
-                    closest('td').
-                    load(
-                      $(this).
-                      attr('action') + ' #content',
-
-                      $(this).
-                      serialize(),
-
-                      function() {
-                        $(this).
-                        find('.ajax').
-                        ajaxify();
-                      }
-                    );
-
-                    return false;
-                  }
-                ).
-
-                // the following line is needed because jquery doesn't include the name=value of the submit button in form.serialize()
-                append('<input type="hidden" name="action" value="' + $(this).find('.mainsubmit').val() + '"/>').
-
-                find('.mainsubmit').
-                css('background-color', '#cff').
-                end().
-
-                find('.minorsubmit').
-                css('display', 'none').
-                end().
-
-                find('a:contains(cancel)').
-                css('background-color', '#cff').
-                click(
-                  function() {
-                    $(this).
-                    closest('.ajax').
-                    find('.ajaxcontent').
-                    attr('id', null).
-                    empty();
-                    return false;
-                  }
-                ).
-                end().
-                
-                find('.ajax').
-                ajaxify();
+                closest('.ajax').
+                find('.ajaxcontent').
+                attr('id', null).
+                empty();
+                return false;
               }
-            );
+            ).
+            end().
 
-          return false;
-        }
-      );
+            closest('.ajax').
+            ajaxify();
+          }
+        );
+      }
+
+      return false;
     }
   );
   return this;
 };
 
-$(document)
-.ready(
+$(document).
+ready(
   function() {
-    $('form').
-    checkform();
-
     $('body.editrecord .ajax, body.newrecord .ajax').
     ajaxify();
 
-    $('input:enabled, select:enabled').
-    eq(0).
-    focus();
+    $('form').
+    enhanceform();
 
     //jquery_document_ready_presentation goes here
   }
