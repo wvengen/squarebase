@@ -135,7 +135,7 @@
           'Drop database '.html('strong', array(), $databasename).'?'
         ).
         html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'drop_database_really', 'class'=>'button')).
-        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'cancel', 'class'=>'button cancel'))
+        internalreference(parameter('server', 'HTTP_REFERER'), 'cancel')
       )
     );
   }
@@ -238,10 +238,11 @@
         }
         else {
           $typeinfo = $field['Type'];
-          list($typeinfo, $type          ) = preg_delete('/^(\w+) */',     $typeinfo);
-          list($typeinfo, $typelength    ) = preg_delete('/^\((\d+)\) */', $typeinfo);
-          list($typeinfo, $typeunsigned  ) = preg_delete('/(unsigned) */', $typeinfo);
-          list($typeinfo, $typezerofill  ) = preg_delete('/(zerofill) */', $typeinfo);
+          list($typeinfo, $type          ) = preg_delete('/^(\w+) */',         $typeinfo);
+          list($typeinfo, $typelength    ) = preg_delete('/^\((\d+)\) */',     $typeinfo);
+          list($typeinfo, $typemd        ) = preg_delete('/^\((\d+,\d+)\) */', $typeinfo); //ignored non-standard syntax: "(M,D)" means than values can be stored with up to M digits in total, of which D digits may be after the decimal point
+          list($typeinfo, $typeunsigned  ) = preg_delete('/(unsigned) */',     $typeinfo);
+          list($typeinfo, $typezerofill  ) = preg_delete('/(zerofill) */',     $typeinfo);
 
           $numeric = $type == 'int';
 
@@ -275,10 +276,10 @@
           $linkedtable = $presentation == 'lookup' ? linkedtable_lookup($tablename, $fieldname) : null;
           $typename = call_user_func("typename_$presentation", $augmentedfield);
 
-          $inpurpose['desc'] = call_user_func("in_desc_$presentation") ? ++$desc : '';
-          $inpurpose['sort'] = call_user_func("in_sort_$presentation") ? ++$sort : '';
-          $inpurpose['list'] = call_user_func("in_list_$presentation") ? ++$list : '';
-          $inpurpose['edit'] = call_user_func("in_edit_$presentation") ? ++$edit : '';
+          $inpurpose['desc'] = call_user_func("in_desc_$presentation", $field) ? ++$desc : '';
+          $inpurpose['sort'] = call_user_func("in_sort_$presentation", $field) ? ++$sort : '';
+          $inpurpose['list'] = call_user_func("in_list_$presentation", $field) ? ++$list : '';
+          $inpurpose['edit'] = call_user_func("in_edit_$presentation", $field) ? ++$edit : '';
         }
 
         $tableoptions = '';
@@ -347,7 +348,7 @@
       form(
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('p', array(),
-          'metabasename '.html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename ? $metabasename : (count($mbnames) == 1 ? $mbnames[0] : '')))
+          'metabasename '.html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename ? $metabasename : (count($mbnames) == 1 ? $mbnames[0] : ''), 'class'=>'notempty'))
         ).
         html('table', array(),
           $totalstructure
@@ -673,10 +674,10 @@
 
     $line = '';
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
-      $value = parameter('get', "field:$field[fieldname]");
+      $fixedvalue = $value = parameter('get', "field:$field[fieldname]");
       if (!$value && $row)
         $value = $row[$field['fieldname']];
-      $cell = call_user_func("formfield_$field[presentation]", $metabasename, $databasename, $field, $value, $action == 'delete_record');
+      $cell = call_user_func("formfield_$field[presentation]", $metabasename, $databasename, $field, $value, $action == 'delete_record' || $fixedvalue);
       $lines .=
         html('tr', array(),
           html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), preg_replace('/(?<=\w)id$/i', '', $field['fieldname']))).
@@ -707,7 +708,7 @@
         html('p', array(),
           html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'delete_record' ? 'delete_record_really' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>'mainsubmit button')).
           (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit button')) : '').
-          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'cancel', 'class'=>'button cancel'))
+          internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel')
         )
       )
     );
@@ -750,12 +751,6 @@
     if ($action == 'add_record_and_edit')
       internalredirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
 
-    back();
-  }
-
-  /********************************************************************************************/
-
-  if ($action == 'cancel') {
     back();
   }
 

@@ -4,16 +4,16 @@
   }
 
   function typename_varchar($field) {
-    return $field['Field'];
+    return strtolower($field['Field']);
   }
 
-  function in_desc_varchar() { return 1; }
-  function in_sort_varchar() { return 1; }
-  function in_list_varchar() { return 1; }
-  function in_edit_varchar() { return 1; }
+  function in_desc_varchar($field) { return preg_match('/(name|acronym|abbr|abbreviation)$/i', $field['Field']); }
+  function in_sort_varchar($field) { return in_desc_varchar($field); }
+  function in_list_varchar($field) { return in_desc_varchar($field); }
+  function in_edit_varchar($field) { return 1; }
 
   function formfield_varchar($metabasename, $databasename, $field, $value, $readonly) {
-    return html('input', array('type'=>'text', 'class'=>$field['presentation'].' '.($readonly ? 'readonly' : ''), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null));
+    return html('input', array('type'=>'text', 'class'=>join(' ', cleanlist(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null));
   }
 
   function formvalue_varchar($field) {

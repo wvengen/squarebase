@@ -33,7 +33,7 @@
   }
 
   function internalreference($parameters, $text) {
-    return html('a', array('href'=>internalurl($parameters), 'class'=>preg_replace('@_@', '', $parameters['action'])), $text);
+    return html('a', array('href'=>is_array($parameters) ? internalurl($parameters) : $parameters), $text);
   }
 
   function redirect($url) {
@@ -55,7 +55,7 @@
         $output = rows_table($parameters['metabasename'], $parameters['databasename'], $parameters['tableid'], $parameters['tablename'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['orderfieldid'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
         break;
       case 'ajax_lookup':
-        $output = ajax_lookup($parameters['metabasename'], $parameters['databasename'], $parameters['fieldname'], $parameters['presentation'], $parameters['foreigntableid'], $parameters['foreigntablename'], $parameters['foreignuniquefieldname'], $parameters['nullallowed'], $parameters['readonly']);
+        $output = ajax_lookup($parameters['metabasename'], $parameters['databasename'], $parameters['fieldname'], $parameters['value'], $parameters['presentation'], $parameters['foreigntableid'], $parameters['foreigntablename'], $parameters['foreignuniquefieldname'], $parameters['nullallowed'], $parameters['readonly']);
         break;
       }
       page($parameters['function'], null, $output);
@@ -325,7 +325,7 @@
               ? preg_replace('/(?<=\w)id$/i', '', $field['fieldname'])
               : internalreference(
                   array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'orderfieldid'=>$field['fieldid']), 
-                  $field['fieldname']
+                  preg_replace('/(?<=\w)id$/i', '', $field['fieldname'])
                 )
             );
         }

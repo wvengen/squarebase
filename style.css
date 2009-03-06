@@ -4,12 +4,12 @@ h2 { margin-bottom: 0.5em; }
 form { background-color: #ddf; padding: 0.5em; }
 p { margin: 0.5em 0; }
 
-table { border: 1px solid #999; }
+table { border: 0.1em solid #999; }
 tr.rowodd { background: #eee; }
 tr.roweven { background: #ddd; }
 th, td { padding: 0.1em; vertical-align: top; }
 th { text-align: left; background: #ddd; }
-td.description { width: 1px; height: 1.5em; white-space: nowrap; }
+td.description { width: 0.1em; height: 1.5em; white-space: nowrap; }
 td.number { text-align: right; }
 td.center { text-align: center; }
 
@@ -19,7 +19,7 @@ ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 
 .integer { width: 2em; text-align: right; }
 
-input, select, textarea { font-size: 1em; font-family: inherit; background-color: #ffe; }
+input, select, textarea { font-size: 1em; font-family: inherit; background-color: #ffe; border: 0.1em solid #999; }
 select { height: 1.15em; }
 input.readonly, select.readonly { border-color: #ddd; }
 input.button { border: 0.15em solid #fff; border-color: #fff #999 #999 #fff; color: #33f; padding: 0 0.2em; }
@@ -46,7 +46,7 @@ input.mainsubmit:hover, input.minorsubmit:hover { background-color: #090; }
 
 .trace { white-space: nowrap; }
 
-#logs { border: 1px solid #ccc; background-color: #eee; color: #999; white-space: nowrap; margin-top: 1em; }
+#logs { border: 0.1em solid #ccc; background-color: #eee; color: #999; white-space: nowrap; margin-top: 1em; }
 #logs .queryroot { padding-left: 2em; }
 #logs .querymeta { padding-left: 4em; }
 #logs .querydata { padding-left: 6em; }

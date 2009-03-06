@@ -10,16 +10,16 @@
   }
 
   function typename_int($field) {
-    return $field['Field'];
+    return strtolower($field['Field']);
   }
 
-  function in_desc_int() { return 0; }
-  function in_sort_int() { return 0; }
-  function in_list_int() { return 0; }
-  function in_edit_int() { return 1; }
+  function in_desc_int($field) { return 0; }
+  function in_sort_int($field) { return 0; }
+  function in_list_int($field) { return 0; }
+  function in_edit_int($field) { return 1; }
 
   function formfield_int($metabasename, $databasename, $field, $value, $readonly) {
-    return html('input', array('type'=>'text', 'class'=>$field['presentation'].' '.($readonly ? 'readonly' : ''), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null));
+    return html('input', array('type'=>'text', 'class'=>join(' ', cleanlist(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null));
   }
 
   function formvalue_int($field) {

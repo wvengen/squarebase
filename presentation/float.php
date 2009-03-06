@@ -8,13 +8,13 @@
     return $field['Field'];
   }
 
-  function in_desc_float() { return 0; }
-  function in_sort_float() { return 0; }
-  function in_list_float() { return 0; }
-  function in_edit_float() { return 1; }
+  function in_desc_float($field) { return 0; }
+  function in_sort_float($field) { return 0; }
+  function in_list_float($field) { return 0; }
+  function in_edit_float($field) { return 1; }
 
   function formfield_float($metabasename, $databasename, $field, $value, $readonly) {
-    return html('input', array('type'=>'text', 'class'=>$field['presentation'].' '.($readonly ? 'readonly' : ''), 'name'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null));
+    return html('input', array('type'=>'text', 'class'=>join(' ', cleanlist(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null));
   }
 
   function formvalue_float($field) {

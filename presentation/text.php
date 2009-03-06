@@ -4,16 +4,16 @@
   }
 
   function typename_text($field) {
-    return $field['Field'];
+    return strtolower($field['Field']);
   }
 
-  function in_desc_text() { return 0; }
-  function in_sort_text() { return 0; }
-  function in_list_text() { return 0; }
-  function in_edit_text() { return 1; }
+  function in_desc_text($field) { return 0; }
+  function in_sort_text($field) { return 0; }
+  function in_list_text($field) { return 0; }
+  function in_edit_text($field) { return 1; }
 
   function formfield_text($metabasename, $databasename, $field, $value, $readonly) {
-    return html('textarea', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>$field['presentation'].' '.($readonly ? 'readonly' : ''), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null), preg_replace('/<(.*?)>/', '&lt;$1&gt;', $value));
+    return html('textarea', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>join(' ', cleanlist(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null), preg_replace('/<(.*?)>/', '&lt;$1&gt;', $value));
   }
 
   function formvalue_text($field) {

@@ -7,10 +7,10 @@
     return 'autoincrement';
   }
 
-  function in_desc_autoincrement() { return 0; }
-  function in_sort_autoincrement() { return 0; }
-  function in_list_autoincrement() { return 0; }
-  function in_edit_autoincrement() { return 1; }
+  function in_desc_autoincrement($field) { return 0; }
+  function in_sort_autoincrement($field) { return 0; }
+  function in_list_autoincrement($field) { return 0; }
+  function in_edit_autoincrement($field) { return 1; }
 
   function formfield_autoincrement($metabasename, $databasename, $field, $value, $readonly) {
     return html('span', array('class'=>$field['presentation']), $value);

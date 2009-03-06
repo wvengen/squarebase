@@ -1,16 +1,31 @@
-String.prototype.match = function match(regex, format) {
-  var matches = new RegExp(regex).exec(this);
-  if (!matches) return null;
-  if (!format && matches.length == 2) return matches[1];
-  if (!format) return matches[0];
-  var result = format;
-  for (var i = 0; i < matches.length; i++)
-    result = result.replace('\{\$' + i + '\}', matches[i]);
-  return result;
-}
+jQuery.fn.checkform = function() {
+  $(this).
+  each(
+    function() {
+      $(this).
+      submit(
+        function() {
+          var problems =
+            $(this).
+            find('.notempty:enabled:not([value])');
+            //add('...')
+
+          problems.
+          css('border-color', '#f00').
+          eq(0).
+          focus();
+
+          return problems.length == 0;
+        }
+      );
+    }
+  );
+  return this;
+};
 
 jQuery.fn.ajaxify = function() {
-  $(this).each(
+  $(this).
+  each(
     function() {
       $(this).
       find('.changeslost').
@@ -21,11 +36,17 @@ jQuery.fn.ajaxify = function() {
       css('background-color', '#cff').
       click(
         function() {
-          var ajaxcontent = $(this).closest('.ajax').find('.ajaxcontent:first');
-          if (ajaxcontent.length == 0)
-            $(this).closest('.ajax').css('background-color', '#fcc'); //error
+          var ajaxcontent =
+            $(this).
+            closest('.ajax').
+            find('.ajaxcontent:first');
+          if (ajaxcontent.length == 0) //error
+            $(this).
+            closest('.ajax').
+            css('background-color', '#fcc');
 
-          ajaxcontent.css('background-color', '#cff');
+          ajaxcontent.
+          css('background-color', '#cff');
 
           if (ajaxcontent.attr('id') == this.href) {
             ajaxcontent.
@@ -41,6 +62,7 @@ jQuery.fn.ajaxify = function() {
               function() { 
                 $(this).
                 find('form').
+                checkform().
                 submit(
                   function() {
                     $(this).
@@ -56,8 +78,12 @@ jQuery.fn.ajaxify = function() {
                     $(this).
                     closest('td').
                     load(
-                      $(this).attr('action') + ' #content',
-                      $(this).serialize(),
+                      $(this).
+                      attr('action') + ' #content',
+
+                      $(this).
+                      serialize(),
+
                       function() {
                         $(this).
                         find('.ajax').
@@ -80,7 +106,7 @@ jQuery.fn.ajaxify = function() {
                 css('display', 'none').
                 end().
 
-                find('.cancel').
+                find('a:contains(cancel)').
                 css('background-color', '#cff').
                 click(
                   function() {
@@ -107,12 +133,17 @@ jQuery.fn.ajaxify = function() {
   return this;
 };
 
-$(document).ready(
+$(document)
+.ready(
   function() {
-    $('body.editrecord .ajax').
+    $('form').
+    checkform();
+
+    $('body.editrecord .ajax, body.newrecord .ajax').
     ajaxify();
 
-    $(':text:first').
+    $('input:enabled, select:enabled').
+    eq(0).
     focus();
 
     //jquery_document_ready_presentation goes here

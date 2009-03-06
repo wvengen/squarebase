@@ -7,13 +7,13 @@
     return 'datetime';
   }
 
-  function in_desc_datetime() { return 0; }
-  function in_sort_datetime() { return 0; }
-  function in_list_datetime() { return 0; }
-  function in_edit_datetime() { return 1; }
+  function in_desc_datetime($field) { return 0; }
+  function in_sort_datetime($field) { return 0; }
+  function in_list_datetime($field) { return 0; }
+  function in_edit_datetime($field) { return 1; }
 
   function formfield_datetime($metabasename, $databasename, $field, $value, $readonly) {
-    return html('input', array('type'=>'text', 'class'=>$field['presentation'].' '.($readonly ? 'readonly' : ''), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>swap_datetime($value), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null));
+    return html('input', array('type'=>'text', 'class'=>join(' ', cleanlist(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>swap_datetime($value), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null));
   }
 
   function formvalue_datetime($field) {

@@ -26,12 +26,12 @@
     return 'lookup'.linkedtable_lookup($field['Table'], $field['Field']);
   }
 
-  function in_desc_lookup() { return 0; }
-  function in_sort_lookup() { return 0; }
-  function in_list_lookup() { return 1; }
-  function in_edit_lookup() { return 1; }
+  function in_desc_lookup($field) { return 0; }
+  function in_sort_lookup($field) { return 0; }
+  function in_list_lookup($field) { return 1; }
+  function in_edit_lookup($field) { return 1; }
 
-  function ajax_lookup($metabasename, $databasename, $fieldname, $presentation, $foreigntableid, $foreigntablename, $foreignuniquefieldname, $nullallowed, $readonly) {
+  function ajax_lookup($metabasename, $databasename, $fieldname, $value, $presentation, $foreigntableid, $foreigntablename, $foreignuniquefieldname, $nullallowed, $readonly) {
     if (!$foreigntableid)
       error("no foreigntableid for $fieldname");
     list($references) = orderedrows($metabasename, $databasename, $foreigntableid, $foreigntablename, 0, 0, $foreignuniquefieldname, 'desc');
@@ -42,20 +42,19 @@
       $checked = $checked || $checkoption;
       $options .= html('option', array_merge(array('value'=>$reference[$foreignuniquefieldname]), $checkoption ? array('selected'=>'selected') : array()), $option);
     }
-    if ($nullallowed)
-      $options =
-        html('option', array_merge(array('value'=>''), $checked ? array() : array('selected'=>'selected')), '').
-        $options;
+    $options =
+      html('option', array_merge(array('value'=>''), $checked ? array() : array('selected'=>'selected')), '').
+      $options;
     return
-      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'ajax_lookup', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'fieldname'=>$fieldname, 'presentation'=>$presentation, 'foreigntableid'=>$foreigntableid, 'foreigntablename'=>$foreigntablename, 'foreignuniquefieldname'=>$foreignuniquefieldname, 'nullallowed'=>$nullallowed, 'readonly'=>$readonly))),
-        html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>$presentation.' '.($readonly ? 'readonly' : ''), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null), $options).' '.
+      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'ajax_lookup', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'fieldname'=>$fieldname, 'value'=>$value, 'presentation'=>$presentation, 'foreigntableid'=>$foreigntableid, 'foreigntablename'=>$foreigntablename, 'foreignuniquefieldname'=>$foreignuniquefieldname, 'nullallowed'=>$nullallowed, 'readonly'=>$readonly))),
+        html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>join(' ', cleanlist(array($presentation, $readonly ? 'readonly' : null, $nullallowed ? null : 'notempty'))), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null), $options).' '.
         ($readonly ? '' : internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$foreigntableid, 'back'=>parameter('server', 'REQUEST_URI')), "new $foreigntablename").html('span', array('class'=>'changeslost'), ' (changes to form fields are lost)')).
         html('div', array('class'=>'ajaxcontent'), '')
       );
   }
 
   function formfield_lookup($metabasename, $databasename, $field, $value, $readonly) {
-    return ajax_lookup($metabasename, $databasename, $field['fieldname'], $field['presentation'], $field['foreigntableid'], $field['foreigntablename'], $field['foreignuniquefieldname'], $field['nullallowed'], $readonly);
+    return ajax_lookup($metabasename, $databasename, $field['fieldname'], $value, $field['presentation'], $field['foreigntableid'], $field['foreigntablename'], $field['foreignuniquefieldname'], $field['nullallowed'], $readonly);
   }
 
   function formvalue_lookup($field) {
