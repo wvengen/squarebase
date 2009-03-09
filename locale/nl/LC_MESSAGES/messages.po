@@ -1,0 +1,203 @@
+# translation of Squarebase.
+# Copyright (C) 2009 THE Squarebase'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the Squarebase package.
+# <>, 2009.
+# , fuzzy
+#  <>, 2009.
+# 
+# 
+msgid ""
+msgstr ""
+"Project-Id-Version: Squarebase 0.1\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2009-03-09 22:43+0100\n"
+"PO-Revision-Date: 2009-03-09 22:59+0100\n"
+"Last-Translator: Frans Reijnhoudt <fransre@gmail.com>\n"
+"Language-Team: Dutch <nl@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-15\n"
+"Content-Transfer-Encoding: 8bit"
+
+#: functions.php:101
+msgid "mysql module not found"
+msgstr "mysql module niet gevonden"
+
+#: functions.php:104
+#, php-format
+msgid "problem connecting to the databasemanager: %s"
+msgstr "probleem bij verbinden met de databasemanager: %s"
+
+#: functions.php:156
+#, php-format
+msgid "%s with %s = %s already exists"
+msgstr "%s met %s = %s bestaat al"
+
+#: functions.php:161
+msgid "problem while querying the databasemanager"
+msgstr "probleem bij bevragen databasemanager"
+
+#: functions.php:168
+#, php-format
+msgid "problem retrieving 1 result, because there are %s results"
+msgstr "probeem bij opvragen 1 resultaat omdat er %s resultaten zijn"
+
+#: functions.php:357
+#, php-format
+msgid "new %s"
+msgstr "nieuw %s"
+
+#: functions.php:357
+msgid "(changes to form fields are lost)"
+msgstr "(wijzigingen van formuliervelden gaan verloren)"
+
+#: functions.php:414
+#, php-format
+msgid "WAS %s"
+msgstr "WAS %s"
+
+#: squarebase.php:21
+msgid "username"
+msgstr "gebruikersnaam"
+
+#: squarebase.php:22
+msgid "host"
+msgstr "gastheer"
+
+#: squarebase.php:23
+msgid "password"
+msgstr "wachtwoord"
+
+#: squarebase.php:71
+msgid "new metabase from database"
+msgstr "nieuwe metabase voor database"
+
+#: squarebase.php:75
+msgid "metabase"
+msgstr "metabase"
+
+#: squarebase.php:86
+msgid "database"
+msgstr "database"
+
+#: squarebase.php:86
+msgid "tables"
+msgstr "tabellen"
+
+#: squarebase.php:134
+#, php-format
+msgid "Drop database %s?"
+msgstr "Verwijder database %s?"
+
+#: squarebase.php:202
+msgid "table"
+msgstr "tabel"
+
+#: squarebase.php:202
+msgid "field"
+msgstr "veld"
+
+#: squarebase.php:202
+msgid "type"
+msgstr "type"
+
+#: squarebase.php:202
+msgid "len"
+msgstr "len"
+
+#: squarebase.php:202
+msgid "unsg"
+msgstr "pos"
+
+#: squarebase.php:202
+msgid "fill"
+msgstr "vul"
+
+#: squarebase.php:202
+msgid "null"
+msgstr "null"
+
+#: squarebase.php:202
+msgid "auto"
+msgstr "auto"
+
+#: squarebase.php:202
+msgid "more"
+msgstr "meer"
+
+#: squarebase.php:202
+msgid "typename"
+msgstr "typenaam"
+
+#: squarebase.php:202
+msgid "presentation"
+msgstr "presentatie"
+
+#: squarebase.php:202
+msgid "key"
+msgstr "sleutel"
+
+#: squarebase.php:202
+msgid "desc"
+msgstr "omschr"
+
+#: squarebase.php:202
+msgid "sort"
+msgstr "sort"
+
+#: squarebase.php:202
+msgid "list"
+msgstr "lijst"
+
+#: squarebase.php:202
+msgid "edit"
+msgstr "wijzig"
+
+#: squarebase.php:351
+msgid "metabasename"
+msgstr "metabasenaam"
+
+#: squarebase.php:359
+#, php-format
+msgid "no single valued primary key for table(s) %s"
+msgstr "geen primaire sleutel met maar 1 veld voor tabel(len) %s"
+
+#: squarebase.php:372
+msgid "no name given for the metabase"
+msgstr "geen naam gegeven voor de metabase"
+
+#: squarebase.php:500
+#, php-format
+msgid "no fields to desc for %s"
+msgstr "geen velden voor omschr van %s"
+
+#: squarebase.php:502
+#, php-format
+msgid "no fields to sort for %s"
+msgstr "geen velden voor sort van %s"
+
+#: squarebase.php:504
+#, php-format
+msgid "no fields to list for %s"
+msgstr "geen velden voor lijst van %s"
+
+#: squarebase.php:506
+#, php-format
+msgid "no fields to edit for %s"
+msgstr "geen velden voor wijzig van %s"
+
+#: presentation/varchar.php:10
+msgid "name"
+msgstr "naam"
+
+#: presentation/varchar.php:10
+msgid "acronym"
+msgstr "verkorting"
+
+#: presentation/varchar.php:10
+msgid "abbr"
+msgstr "afk"
+
+#: presentation/varchar.php:10
+msgid "abbreviation"
+msgstr "afkorting"
+

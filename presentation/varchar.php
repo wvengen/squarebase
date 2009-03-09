@@ -7,7 +7,7 @@
     return strtolower($field['Field']);
   }
 
-  function in_desc_varchar($field) { return preg_match('/(name|acronym|abbr|abbreviation)$/i', $field['Field']); }
+  function in_desc_varchar($field) { return $field['FieldNr'] < 5 && preg_match('/('._('name').'|'._('acronym').'|'._('abbr').'|'._('abbreviation').')$/i', $field['Field']); }
   function in_sort_varchar($field) { return in_desc_varchar($field); }
   function in_list_varchar($field) { return in_desc_varchar($field); }
   function in_edit_varchar($field) { return 1; }

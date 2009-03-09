@@ -1,6 +1,9 @@
 <?php
   include('functions.php');
 
+  bindtextdomain('messages', './locale');
+  textdomain('messages');
+
   $privileges = array('select'=>'Select_priv', 'insert'=>'Insert_priv', 'update'=>'Update_priv', 'delete'=>'Delete_priv', 'create'=>'Create_priv', 'drop'=>'Drop_priv', 'alter'=>'Alter_priv', 'grant'=>'Grant_priv');
 
   session_set_cookie_params(7 * 24 * 60 * 60);
@@ -18,10 +21,10 @@
         html('table', array(),
           html('tr', array(),
             array(
-              html('td', array(), array(html('label', array('for'=>'username'), 'username'), html('input', array('type'=>'text',     'id'=>'username', 'name'=>'username', 'value'=>'root')))),
-              html('td', array(), array(html('label', array('for'=>'host'    ), 'host'    ), html('input', array('type'=>'text',     'id'=>'host',     'name'=>'host',     'value'=>'localhost')))),
-              html('td', array(), array(html('label', array('for'=>'password'), 'password'), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password')))),
-              html('td', array(), array('&nbsp;',                                            html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>'button mainsubmit'))))
+              html('td', array(), array(html('label', array('for'=>'username'), _('username')), html('input', array('type'=>'text',     'id'=>'username', 'name'=>'username', 'value'=>'root')))),
+              html('td', array(), array(html('label', array('for'=>'host'    ), _('host'    )), html('input', array('type'=>'text',     'id'=>'host',     'name'=>'host',     'value'=>'localhost')))),
+              html('td', array(), array(html('label', array('for'=>'password'), _('password')), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password')))),
+              html('td', array(), array('&nbsp;',                                               html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>'button mainsubmit'))))
             )
           )
         )
@@ -68,11 +71,11 @@
       }
     }
     page($action, null,
-      internalreference(array('action'=>'new_metabase_from_database'), 'new metabase from database').
+      internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')).
       html('table', array(),
         html('tr', array(),
           array_concat(
-            html('th', array(), array('metabase', 'database')),
+            html('th', array(), array(_('metabase'), _('database'))),
             $rows
           )
         )
@@ -83,7 +86,7 @@
   /********************************************************************************************/
 
   if ($action == 'new_metabase_from_database') {
-    $rows = html('tr', array(), html('th', array(), array('database', 'tables', '')));
+    $rows = html('tr', array(), html('th', array(), array(_('database'), _('tables'), '')));
     $databases = query('root', 'SHOW DATABASES');
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['Database'];
@@ -131,9 +134,7 @@
       form(
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>parameter('server', 'HTTP_REFERER'))).
-        html('p', array(),
-          'Drop database '.html('strong', array(), $databasename).'?'
-        ).
+        html('p', array(), sprintf(_('Drop database %s?'), html('strong', array(), $databasename))).
         html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'drop_database_really', 'class'=>'button')).
         internalreference(parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel'))
       )
@@ -201,7 +202,7 @@
       html('tr', array(),
         html('th', array(),
           array(
-            'table', 'field', 'type', 'len', 'unsg', 'fill', 'null', 'auto', 'more', 'typename', 'presentation', 'key', 'desc', 'sort', 'list', 'edit'
+            _('table'), _('field'), _('type'), _('len'), _('unsg'), _('fill'), _('null'), _('auto'), _('more'), _('typename'), _('presentation'), _('key'), _('desc'), _('sort'), _('list'), _('edit')
           )
         )
       );
@@ -210,7 +211,7 @@
       $tablename = $table["Tables_in_$databasename"];
 
       $tablestructure = '';
-      $desc = $sort = $list = $edit = 0;
+      $desc = $sort = $list = $edit = $fieldnr = 0;
       $inpurpose = array();
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
         $fieldname = $field['Field'];
@@ -259,7 +260,9 @@
                 'Table'=>$tablename, 
                 'Linkedtable'=>$linkedtable,
                 'Alltables'=>$alltables,
-                'Primarykeyfieldname'=>$primarykeyfieldname
+                'Primarykeyfieldname'=>$primarykeyfieldname,
+                'FieldNr'=>$fieldnr++,
+                'NumFields'=>mysql_num_rows($fields[$tablename])
               )
             );
           $bestpresentation = null;
@@ -276,10 +279,10 @@
           $linkedtable = $presentation == 'lookup' ? linkedtable_lookup($tablename, $fieldname) : null;
           $typename = call_user_func("typename_$presentation", $augmentedfield);
 
-          $inpurpose['desc'] = call_user_func("in_desc_$presentation", $field) ? ++$desc : '';
-          $inpurpose['sort'] = call_user_func("in_sort_$presentation", $field) ? ++$sort : '';
-          $inpurpose['list'] = call_user_func("in_list_$presentation", $field) ? ++$list : '';
-          $inpurpose['edit'] = call_user_func("in_edit_$presentation", $field) ? ++$edit : '';
+          $inpurpose['desc'] = call_user_func("in_desc_$presentation", $augmentedfield) ? ++$desc : '';
+          $inpurpose['sort'] = call_user_func("in_sort_$presentation", $augmentedfield) ? ++$sort : '';
+          $inpurpose['list'] = call_user_func("in_list_$presentation", $augmentedfield) ? ++$list : '';
+          $inpurpose['edit'] = call_user_func("in_edit_$presentation", $augmentedfield) ? ++$edit : '';
         }
 
         $tableoptions = '';
@@ -348,7 +351,7 @@
       form(
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('p', array(),
-          'metabasename '.html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename ? $metabasename : (count($mbnames) == 1 ? $mbnames[0] : ''), 'class'=>'notempty'))
+          _('metabasename').' '.html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename ? $metabasename : (count($mbnames) == 1 ? $mbnames[0] : ''), 'class'=>'notempty'))
         ).
         html('table', array(),
           $totalstructure
@@ -356,7 +359,7 @@
         ($metabasename ? "* = from $metabasename" : '').
         html('p', array(),
           $tableswithoutsinglevaluedprimarykey
-          ? html('span', array('class'=>'error'), 'no single valued primary key for table(s) '.$tableswithoutsinglevaluedprimarykey)
+          ? html('span', array('class'=>'error'), sprintf(_('no single valued primary key for table(s) %s'), $tableswithoutsinglevaluedprimarykey))
           : html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract_structure_from_database_to_metabase', 'class'=>'button'))
         )
       )
@@ -369,7 +372,7 @@
     $databasename = parameter('get', 'databasename');
     $metabasename = parameter('get', 'metabasename');
     if (!$metabasename)
-      error('no name given for the metabase');
+      error(_('no name given for the metabase'));
 
     query('meta', "DROP DATABASE IF EXISTS $metabasename");
 
@@ -497,13 +500,13 @@
         $edits += setelement($metabasename, $tablename, $fieldid, $fieldname, $purposeids, 'edit') ? 1 : 0;
       }
       if (!$descs)
-        $errors[] = "no fields to desc for $tablename";
+        $errors[] = sprintf(_('no fields to desc for %s'), $tablename);
       if (!$sorts)
-        $errors[] = "no fields to sort for $tablename";
+        $errors[] = sprintf(_('no fields to sort for %s'), $tablename);
       if (!$lists)
-        $errors[] = "no fields to list for $tablename";
+        $errors[] = sprintf(_('no fields to list for %s'), $tablename);
       if (!$edits)
-        $errors[] = "no fields to edit for $tablename";
+        $errors[] = sprintf(_('no fields to edit for %s'), $tablename);
     }
     if ($errors)
       error(join(', ', $errors));

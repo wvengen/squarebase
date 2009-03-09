@@ -98,10 +98,10 @@
     static $connection = null;
     if (!$connection) {
       if (!extension_loaded('mysql'))
-        logout('mysql module not found');
+        logout(_('mysql module not found'));
       $connection = mysql_connect($_SESSION['host'], $_SESSION['username'], $_SESSION['password']);
       if ($connection === FALSE)
-        logout('problem connecting to the databasemanager: '.mysql_error());
+        logout(sprintf(_('problem connecting to the databasemanager: %s'), mysql_error()));
     }
 
     $before = microtime();
@@ -153,19 +153,19 @@
           if ($keynr == 0)
             $keyfields[] = $key['Column_name'];
         }
-        $warning = ucfirst(preg_match1('@\.(.*)@', $tablename)).' with '.join(', ', $keyfields)." = $keyvalues already exists";
+        $warning = sprintf(_('%s with %s = %s already exists'), ucfirst(preg_match1('@\.(.*)@', $tablename)), join(', ', $keyfields), $keyvalues);
       }
       addtolist('warnings', 'warning', $warning);
       return null;
     }
-    error('problem while querying the databasemanager'.html('p', array('class'=>'error'), "$errno: ".mysql_error()).$query);
+    error(_('problem while querying the databasemanager').html('p', array('class'=>'error'), "$errno: ".mysql_error()).$query);
   }
   
   function query1($metaordata, $query) {
     $results = query($metaordata, $query);
     if ($results && mysql_num_rows($results) == 1)
       return mysql_fetch_assoc($results);
-    error('problem retrieving 1 result, because there are '.($results ? mysql_num_rows($results) : 'no').' results'.html('p', array(), $query));
+    error(sprintf(_('problem retrieving 1 result, because there are %s results'), $results ? mysql_num_rows($results) : 'no').html('p', array(), $query));
   }
 
   function query1field($metaordata, $query, $field) {
@@ -354,7 +354,7 @@
     return 
       html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'rows_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'tablename'=>$tablename, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldid'=>$orderfieldid, 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttableid'=>$parenttableid, 'interactive'=>$interactive))), 
         ($interactive
-        ? internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), "new $tablename").html('span', array('class'=>'changeslost'), ' (changes to form fields are lost)')
+        ? internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $tablename)).html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)'))
         : ($foreignvalue ? $tablename : '')
         ).
         html('div', array('class'=>'ajaxcontent'), '').
@@ -411,7 +411,7 @@
         html('td', array(), 
           array(
             $query,
-            "WAS $old"
+            sprintf(_('WAS %s'), $old)
           )
         )
       );

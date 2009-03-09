@@ -26,9 +26,9 @@
     return 'lookup'.linkedtable_lookup($field['Table'], $field['Field']);
   }
 
-  function in_desc_lookup($field) { return 0; }
-  function in_sort_lookup($field) { return 0; }
-  function in_list_lookup($field) { return 1; }
+  function in_desc_lookup($field) { return $field['FieldNr'] < 5; }
+  function in_sort_lookup($field) { return in_desc_lookup($field); }
+  function in_list_lookup($field) { return in_desc_lookup($field); }
   function in_edit_lookup($field) { return 1; }
 
   function ajax_lookup($metabasename, $databasename, $fieldname, $value, $presentation, $foreigntableid, $foreigntablename, $foreignuniquefieldname, $nullallowed, $readonly) {
