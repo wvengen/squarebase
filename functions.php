@@ -1,6 +1,6 @@
 <?php
   function parameter($type, $name = null, $default = null) {
-    $array = $type == 'get' ? ($_POST ? $_POST : $_GET) : ($type == 'server' ? $_SERVER : array());
+    $array = $type == 'get' ? ($_POST ? $_POST : $_GET) : ($type == 'server' ? $_SERVER : ($type == 'files' ? $_FILES : array()));
     if (!$name)
       return $array;
     $value = $array[$name];
@@ -206,7 +206,7 @@
   }
 
   function form($content) {
-    return html('form', array('action'=>parameter('server', 'SCRIPT_NAME'), 'method'=>'post'), $content);
+    return html('form', array('action'=>parameter('server', 'SCRIPT_NAME'), 'enctype'=>'multipart/form-data', 'method'=>'post'), $content);
   }
   
   function databasenames($metabasename) {
@@ -365,8 +365,7 @@
   
   function insertorupdate($databasename, $tablename, $fieldnamesandvalues, $uniquefieldname = null, $uniquevalue = null) {
     foreach ($fieldnamesandvalues as $fieldname=>$fieldvalue)
-      if (!is_null($fieldvalue))
-        $sets .= ($sets ? ', ' : '')."$fieldname = ".(is_null($fieldvalue) ? 'NULL' : (is_numeric($fieldvalue) ? $fieldvalue : "'$fieldvalue'"));
+      $sets .= ($sets ? ', ' : '')."$fieldname = ".(is_null($fieldvalue) ? 'NULL' : (is_numeric($fieldvalue) ? $fieldvalue : "'".addslashes($fieldvalue)."'"));
     query('data',
       $uniquevalue
       ? "UPDATE `$databasename`.$tablename SET $sets WHERE $uniquefieldname = '$uniquevalue'"

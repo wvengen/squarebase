@@ -674,6 +674,8 @@
 
     $line = '';
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
+      $field['uniquefieldname'] = $uniquefieldname;
+      $field['uniquevalue'] = $uniquevalue;
       $fixedvalue = $value = parameter('get', "field:$field[fieldname]");
       if (!$value && $row)
         $value = $row[$field['fieldname']];
@@ -752,6 +754,34 @@
       internalredirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
 
     back();
+  }
+
+  /********************************************************************************************/
+
+  if ($action == 'get_image') {
+    $metabasename = parameter('get', 'metabasename');
+    $databasename = parameter('get', 'databasename');
+    $tableid      = parameter('get', 'tableid');
+    $fieldname    = parameter('get', 'fieldname');
+    $uniquevalue  = parameter('get', 'uniquevalue');
+    list($tablename, $uniquefieldname) = tableanduniquefieldname($metabasename, $tableid);
+
+    $image = query1field('data', "SELECT $fieldname FROM `$databasename`.$tablename WHERE $uniquefieldname = '$uniquevalue'", $fieldname);
+
+//  As of PHP 5.3, Fileinfo will be shipped with the main distribution and enabled by default.
+//  $finfo = new finfo(FILEINFO_MIME);
+//  $mimedata = finfo_file($finfo, $image);
+//  print_r($mimedata);
+
+    header('Content-type: image/jpeg');
+    print $image;
+  }
+
+  /********************************************************************************************/
+
+  if ($action == 'phpinfo') {
+    phpinfo();
+    exit;
   }
 
   /********************************************************************************************/

@@ -13,11 +13,13 @@
   function in_edit_autoincrement($field) { return 1; }
 
   function formfield_autoincrement($metabasename, $databasename, $field, $value, $readonly) {
-    return html('span', array('class'=>$field['presentation']), $value);
+    return 
+      html('span', array('class'=>$field['presentation']), $value).
+      html('input', array('type'=>'hidden', 'name'=>"field:$field[fieldname]", 'value'=>$value));
   }
 
   function formvalue_autoincrement($field) {
-    return null;
+    return parameter('get', "field:$field[fieldname]");
   }
 
   function cell_autoincrement($metabasename, $databasename, $field, $value) {
