@@ -16,7 +16,7 @@
   function in_edit_boolean($field) { return 1; }
 
   function formfield_boolean($metabasename, $databasename, $field, $value, $readonly) {
-    return html('input', array('type'=>'checkbox', 'class'=>join(' ', cleanlist(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null, 'checked'=>$value ? 'checked' : null));
+    return html('input', array('type'=>'checkbox', 'class'=>join(' ', array_clean(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null, 'checked'=>$value ? 'checked' : null));
   }
 
   function formvalue_boolean($field) {

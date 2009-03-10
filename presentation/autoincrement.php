@@ -14,7 +14,7 @@
 
   function formfield_autoincrement($metabasename, $databasename, $field, $value, $readonly) {
     return 
-      html('span', array('class'=>$field['presentation']), $value).
+      html('span', array('class'=>$field['presentation']), is_null($value) ? '?' : $value).
       html('input', array('type'=>'hidden', 'name'=>"field:$field[fieldname]", 'value'=>$value));
   }
 

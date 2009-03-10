@@ -15,7 +15,7 @@
     return $value ? str_replace("\\'", "'", $value) : $default;
   }
 
-  function cleanlist($list) {
+  function array_clean($list) {
     return array_diff($list, array(null));
   }
 
@@ -25,7 +25,7 @@
         $parameterlist .= " $parameter=\"$value\"";
     $starttag = $tag ? '<'.$tag.$parameterlist.(is_null($text) ? ' /' : '').'>' : '';
     $endtag = $tag ? "</$tag>" : '';
-    return $starttag.(is_null($text) ? '' : (is_array($text) ? join($endtag.$starttag, cleanlist($text)) : $text).$endtag);
+    return $starttag.(is_null($text) ? '' : (is_array($text) ? join($endtag.$starttag, array_clean($text)) : $text).$endtag);
   }
 
   function httpurl($parameters) {
@@ -258,38 +258,22 @@
     );
   }
   
-  function array_plus($stack, $element) {
-    array_push($stack, $element);
-    return $stack;
-  }
-
-  function array_concat() {
-    $result = array();
-    for ($i = 0; $i < func_num_args(); ++$i) {
-      $param = func_get_arg($i);
-      if (!is_array($param))
-        $param = array($param);
-      $result = array_merge($result, $param);
-    }
-    return $result;
-  }
-  
   function description($metabasename, $databasename, $tableid, $reference, $tableids = array()) {
-    static $descriptors;
-    if (!$descriptors[$tableid])
-      $descriptors[$tableid] = fieldsforpurpose($metabasename, $tableid, array('desc'));
-    for (mysql_data_reset($descriptors[$tableid]); $descriptor = mysql_fetch_assoc($descriptors[$tableid]); ) {
-      $value = $reference[$descriptor['fieldname']];
-//      echo "$descriptor[fieldname] - $value".html('br');
+    static $fields = array();
+    if (!$fields[$tableid])
+      $fields[$tableid] = fieldsforpurpose($metabasename, $tableid, array('desc'));
+    for (mysql_data_reset($fields[$tableid]); $field = mysql_fetch_assoc($fields[$tableid]); ) {
+      $value = $reference[$field['fieldname']];
+//      echo "$field[fieldname] - $value".html('br');
       $description .= 
         ($description ? ' ' : '').
-//        $descriptor['fieldname'].':'.
-        ($descriptor['foreigntableid'] && $value
-        ? (in_array($descriptor['foreigntableid'], $tableids)
+//        $field['fieldname'].':'.
+        ($field['foreigntableid'] && $value
+        ? (in_array($field['foreigntableid'], $tableids)
           ? "[$value]"
-          : description($metabasename, $databasename, $descriptor['foreigntableid'], 
-              query1('data', "SELECT * FROM $databasename.$descriptor[foreigntablename] WHERE $descriptor[foreigntablename].$descriptor[foreignuniquefieldname] = '$value'"),
-              array_plus($tableids, $tableid)
+          : description($metabasename, $databasename, $field['foreigntableid'], 
+              query1('data', "SELECT * FROM $databasename.$field[foreigntablename] WHERE $field[foreigntablename].$field[foreignuniquefieldname] = '$value'"),
+              array_merge($tableids, array($tableid))
             )
           )
         : $value
@@ -439,28 +423,27 @@
   }
 
   function fieldsforpurpose($metabasename, $tableid, $purposes, $firstfieldid = null) {
-    $select = "SELECT me.rank AS myrank, mp.purpose AS purpose, mf.fieldid, mf.fieldname, mr.presentation, mf.tableid, mf.autoincrement, mf.foreigntableid, mf.nullallowed, mt.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname, me2.rank AS sortable FROM `$metabasename`.metaelement me LEFT JOIN `$metabasename`.metapurpose mp ON me.purposeid = mp.purposeid LEFT JOIN `$metabasename`.metafield mf ON mf.fieldid = me.fieldid LEFT JOIN `$metabasename`.metatype my ON my.typeid = mf.typeid LEFT JOIN `$metabasename`.metapresentation mr ON mr.presentationid = my.presentationid LEFT JOIN `$metabasename`.metatable mt ON mf.foreigntableid = mt.tableid LEFT JOIN `$metabasename`.metafield mf2 ON mf2.fieldid = mt.uniquefieldid LEFT JOIN `$metabasename`.metapurpose mp2 ON mp2.purpose = 'sort' LEFT JOIN `$metabasename`.metaelement me2 ON me2.fieldid = mf.fieldid AND me2.purposeid = mp2.purposeid WHERE mf.tableid = $tableid".($purposes ? " AND (".join(' OR ', array_map(create_function('$purpose', 'return "mp.purpose=\'$purpose\'";'), $purposes)).')' : '');
+    $select = "SELECT me.rank AS myrank, mp.purpose AS purpose, mf.fieldid, mf.fieldname, mr.presentation, mf.tableid, mf.autoincrement, mf.foreigntableid, mf.nullallowed, mt.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname FROM `$metabasename`.metaelement me LEFT JOIN `$metabasename`.metapurpose mp ON me.purposeid = mp.purposeid LEFT JOIN `$metabasename`.metafield mf ON mf.fieldid = me.fieldid LEFT JOIN `$metabasename`.metatype my ON my.typeid = mf.typeid LEFT JOIN `$metabasename`.metapresentation mr ON mr.presentationid = my.presentationid LEFT JOIN `$metabasename`.metatable mt ON mf.foreigntableid = mt.tableid LEFT JOIN `$metabasename`.metafield mf2 ON mf2.fieldid = mt.uniquefieldid WHERE mf.tableid = $tableid".($purposes ? " AND (".join(' OR ', array_map(create_function('$purpose', 'return "mp.purpose=\'$purpose\'";'), $purposes)).')' : '');
     if ($firstfieldid)
-      $select = "(SELECT 0 AS myrank, 'sort' AS purpose, mf.fieldid, mf.fieldname, mr.presentation, mf.tableid, mf.autoincrement, mf.foreigntableid, mf.nullallowed, mt.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname, me2.rank AS sortable FROM `$metabasename`.metafield mf LEFT JOIN `$metabasename`.metatype my ON my.typeid = mf.typeid LEFT JOIN `$metabasename`.metapresentation mr ON mr.presentationid = my.presentationid LEFT JOIN `$metabasename`.metatable mt ON mf.foreigntableid = mt.tableid LEFT JOIN `$metabasename`.metafield mf2 ON mf2.fieldid = mt.uniquefieldid LEFT JOIN `$metabasename`.metapurpose mp2 ON mp2.purpose = 'sort' LEFT JOIN `$metabasename`.metaelement me2 ON me2.fieldid = mf.fieldid AND me2.purposeid = mp2.purposeid WHERE mf.fieldid = $firstfieldid) UNION ($select)";
+      $select = "(SELECT 0 AS myrank, 'sort' AS purpose, mf.fieldid, mf.fieldname, mr.presentation, mf.tableid, mf.autoincrement, mf.foreigntableid, mf.nullallowed, mt.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname FROM `$metabasename`.metafield mf LEFT JOIN `$metabasename`.metatype my ON my.typeid = mf.typeid LEFT JOIN `$metabasename`.metapresentation mr ON mr.presentationid = my.presentationid LEFT JOIN `$metabasename`.metatable mt ON mf.foreigntableid = mt.tableid LEFT JOIN `$metabasename`.metafield mf2 ON mf2.fieldid = mt.uniquefieldid WHERE mf.fieldid = $firstfieldid) UNION ($select)";
     return query('meta', $select." ORDER BY purpose, myrank");
   }
   
   function orderedrows($metabasename, $databasename, $tableid, $tablename, $limit, $offset, $uniquefieldname, $purpose, $foreignfieldname = null, $foreignvalue = null, $orderfieldid = null) {
     $neworderfieldid = $orderfielid;
     $joins = $selectnames = $ordernames = array();
-    $fields = fieldsforpurpose($metabasename, $tableid, cleanlist(array($purpose == 'desc' ? null : $purpose, 'sort')), $orderfieldid);
+    $fields = fieldsforpurpose($metabasename, $tableid, array_clean(array($purpose == 'desc' ? null : $purpose, 'sort')), $orderfieldid);
     while ($field = mysql_fetch_assoc($fields)) {
+      $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
       if ($field['foreigntableid']) {
         $joins[] = " LEFT JOIN `$databasename`.$field[foreigntablename] AS $field[foreigntablename]_$field[fieldname] ON $field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname]=$tablename.$field[fieldname]";
         $selectnames[] = descriptor($metabasename, $field['foreigntableid'], "$field[foreigntablename]_$field[fieldname]")." AS $field[foreigntablename]_$field[fieldname]_descriptor";
-        if ($field['purpose'] == 'sort')
-          $ordernames[] = "$field[foreigntablename]_$field[fieldname]_descriptor";
       }
-      elseif ($field['purpose'] == 'sort')
-        $ordernames[] = "${tablename}_$field[fieldname]";
-      $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
-      if ($field['purpose'] == 'sort' && !$neworderfieldid)
-        $neworderfieldid = $field['fieldid'];
+      if ($field['purpose'] == 'sort') {
+        $ordernames[] = $field['foreigntableid'] ? "$field[foreigntablename]_$field[fieldname]_descriptor" : "${tablename}_$field[fieldname]";
+        if (!$neworderfieldid)
+          $neworderfieldid = $field['fieldid'];
+      }
     }
     return array(query('data', "SELECT ".($limit ? "SQL_CALC_FOUND_ROWS " : "")."$tablename.$uniquefieldname AS $uniquefieldname".($selectnames ? ', '.join(', ', $selectnames) : '').($purpose == 'desc' ? ', '.descriptor($metabasename, $tableid, $tablename)." AS ${tablename}_descriptor" : '')." FROM `$databasename`.$tablename".join(array_unique($joins)).($foreignvalue ? " WHERE $tablename.$foreignfieldname = '$foreignvalue'" : '').($ordernames ? " ORDER BY ".join(', ', $ordernames) : '').($limit ? " LIMIT $limit".($offset ? " OFFSET $offset" : '') : '')), $fields, $neworderfieldid, $limit ? query1('data', 'SELECT FOUND_ROWS() AS number') : null);
   }

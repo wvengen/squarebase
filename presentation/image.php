@@ -16,13 +16,13 @@
     return
       $readonly
       ? list_image($metabasename, $databasename, $field, $value)
-      : html('fieldset', array('class'=>join(' ', cleanlist(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty')))),
+      : html('fieldset', array('class'=>join(' ', array_clean(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty')))),
           html('ul', array(),
             html('li', array(),
               array(
                 $value ? html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$field[fieldname]", 'id'=>"radio:original:$field[fieldname]", 'value'=>'original', 'checked'=>'checked'), html('input', array('type'=>'hidden', 'name'=>"original:$field[fieldname]", 'value'=>base64_encode($value))).html('label', array('for'=>"radio:original:$field[fieldname]"), list_image($metabasename, $databasename, $field, $value))) : null,
                 html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$field[fieldname]", 'id'=>"radio:none:$field[fieldname]", 'value'=>'none', 'checked'=>$value ? null : 'checked'), html('label', array('for'=>"radio:none:$field[fieldname]"), 'none')),
-                html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$field[fieldname]", 'id'=>"radio:new:$field[fieldname]", 'value'=>'new'), html('label', array('for'=>"radio:new:$field[fieldname]"), html('input', array('type'=>'file', 'class'=>join(' ', cleanlist(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null))))
+                html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$field[fieldname]", 'id'=>"radio:new:$field[fieldname]", 'value'=>'new'), html('label', array('for'=>"radio:new:$field[fieldname]"), html('input', array('type'=>'file', 'class'=>join(' ', array_clean(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null))))
               )
             )
           )

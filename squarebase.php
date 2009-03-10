@@ -73,8 +73,8 @@
       internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')).
       html('table', array(),
         html('tr', array(),
-          array_concat(
-            html('th', array(), array(_('metabase'), _('database'))),
+          array_merge(
+            array(html('th', array(), array(_('metabase'), _('database')))),
             $rows
           )
         )
@@ -640,8 +640,8 @@
     page($action, path($metabasename, $databasename),
       html('table', array(),
         html('tr', array(),
-          array_concat(
-            html('th', array(), array('table', '#rows')),
+          array_merge(
+            array(html('th', array(), array('table', '#rows'))),
             $rows
           )
         )
