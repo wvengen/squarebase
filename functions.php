@@ -102,7 +102,7 @@
     return $result ? $result : array();
   }
 
-  function query($metaordata, $query) {
+  function query($metaordata, $query, $arguments = array()) {
     static $connection = null;
     if (!$connection) {
       if (!extension_loaded('mysql'))
@@ -112,8 +112,10 @@
         logout(sprintf(_('problem connecting to the databasemanager: %s'), mysql_error()));
     }
 
+    $fullquery = preg_replace(array("/'/", '/(["`])?<(\w+)>(["`])?/e'), array('"', '(is_null($arguments["\\2"]) ? "NULL" : (is_numeric($arguments["\\2"]) ? (int) $arguments["\\2"] : "\\1".mysql_escape_string($arguments["\\2"])."\\3"))'), $query);
+
     $before = microtime();
-    $result = mysql_query($query);
+    $result = mysql_query($fullquery);
     $after = microtime();
     list($beforemsec, $beforesec) = explode(' ', $before);
     list($aftermsec, $aftersec) = explode(' ', $after);
@@ -127,7 +129,7 @@
       ', '.
       ($errno
       ? $errno.' '.mysql_error()
-      : (preg_match('@^[^A-Z]*(EXPLAIN|SELECT|SHOW) @i', $query)
+      : (preg_match('@^[^A-Z]*(EXPLAIN|SELECT|SHOW) @i', $fullquery)
         ? mysql_num_rows($result).' results'
         : mysql_affected_rows($connection).' affected'
         )
@@ -136,7 +138,7 @@
       preg_replace(
         array('@<@' , '@>@' , '@& @'  ),
         array('&lt;', '&gt;', '&amp; '),
-        $query
+        $fullquery
       )
     );
 
@@ -145,14 +147,14 @@
     if ($errno == 1044) // Access denied for user '%s'@'%s' to database '%s'
       return null;
     if ($errno == 1062) { // Duplicate entry '%s' for key %d
-      $tablename = preg_match1('@^INSERT INTO (\S+)@', $query);
+      $tablename = preg_match1('@^INSERT INTO (\S+)@', $fullquery);
       $error = mysql_error();
       $keyvalues = preg_match1('@Duplicate entry (\'.*\')@', $error);
       $keynr = preg_match1('@for key (\d+)@', $error);
-      $warning = "tablename=$tablename, keyvalues=$keyvalues, keynr=$keynr, $error: $query";
+      $warning = "tablename=$tablename, keyvalues=$keyvalues, keynr=$keynr, $error: $fullquery";
       if ($tablename && $keynr) {
         $keyfields = array();
-        $keys = query($metaordata, "SHOW INDEX FROM $tablename");
+        $keys = query($metaordata, 'SHOW INDEX FROM `<tablename>`', array('tablename'=>$tablename));
         while ($key = mysql_fetch_assoc($keys)) {
           if ($key['Seq_in_index'] == 1)
             $keynr--;
@@ -166,19 +168,19 @@
       addtolist('warnings', 'warning', $warning);
       return null;
     }
-    error(_('problem while querying the databasemanager').html('p', array('class'=>'error'), "$errno: ".mysql_error()).$query);
+    error(_('problem while querying the databasemanager').html('p', array('class'=>'error'), "$errno: ".mysql_error()).$fullquery);
   }
   
-  function query1($metaordata, $query) {
-    $results = query($metaordata, $query);
+  function query1($metaordata, $query, $arguments = array()) {
+    $results = query($metaordata, $query, $arguments);
     if ($results && mysql_num_rows($results) == 1)
       return mysql_fetch_assoc($results);
     error(sprintf(_('problem retrieving 1 result, because there are %s results'), $results ? mysql_num_rows($results) : 'no').html('p', array(), $query));
   }
 
-  function query1field($metaordata, $query, $field) {
-    $result = query1($metaordata, $query);
-    return $result[$field];
+  function query1field($metaordata, $query, $arguments = array(), $field = null) {
+    $result = query1($metaordata, $query, $arguments);
+    return is_null($field) && count($result) == 1 ? array_shift(array_values($result)) : $result[$field];
   }
   
   function page($action, $path, $content) {
@@ -186,13 +188,12 @@
 
     $error = parameter('get', 'error');
 
-    header('Content-Type: text/html; charset=iso-8859-1');
+    header('Content-Type: text/html; charset=utf-8');
+    header('Content-Language: '.best_locale());
     echo
       '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'.
       html('html', array(),
         html('head', array(),
-          html('meta', array('http-equiv'=>'Content-Type', 'content'=>'text/html; charset=utf-8')).
-          html('meta', array('http-equiv'=>'Content-Language', 'content'=>best_locale())).
           html('title', array(), $title).
           html('link', array('href'=>'style.php', 'type'=>'text/css', 'rel'=>'stylesheet')).
           html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
@@ -224,12 +225,12 @@
   }
   
   function databasenames($metabasename) {
-    $tables = query('meta', "SHOW TABLES FROM `$metabasename`");
+    $tables = query('meta', 'SHOW TABLES FROM `<metabasename>`', array('metabasename'=>$metabasename));
     if ($tables)
       while ($table = mysql_fetch_assoc($tables)) {
         $tablename = $table["Tables_in_$metabasename"];
         if ($tablename == 'metaconstant')
-          return query('meta', "SELECT * FROM `$metabasename`.metavalue mv LEFT JOIN `$metabasename`.metaconstant mc ON mv.constantid = mc.constantid WHERE constantname = 'database'");
+          return query('meta', 'SELECT * FROM `<metabasename>`.metavalue mv LEFT JOIN `<metabasename>`.metaconstant mc ON mv.constantid = mc.constantid WHERE constantname = \'database\'', array('metabasename'=>$metabasename));
       }
     return null;
   }
@@ -335,7 +336,7 @@
         if ($field['purpose'] == 'list') {
           $line .= 
             html('th', $foreignvalue && $field['fieldname'] == $foreignfieldname ? array('class'=>'thisrecord') : array(), 
-              ($foreignvalue && $foreignfieldname) || $field['fieldid'] == $orderfieldid || !$field['sortable']
+              ($foreignvalue && $foreignfieldname) || $field['fieldid'] == $orderfieldid
               ? preg_replace('/(?<=\w)id$/i', '', $field['fieldname'])
               : internalreference(
                   array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'orderfieldid'=>$field['fieldid']), 
@@ -379,12 +380,17 @@
   }
   
   function insertorupdate($databasename, $tablename, $fieldnamesandvalues, $uniquefieldname = null, $uniquevalue = null) {
-    foreach ($fieldnamesandvalues as $fieldname=>$fieldvalue)
-      $sets .= ($sets ? ', ' : '')."$fieldname = ".(is_null($fieldvalue) ? 'NULL' : (is_numeric($fieldvalue) ? $fieldvalue : "'".addslashes($fieldvalue)."'"));
+    $arguments = array();
+    foreach ($fieldnamesandvalues as $fieldname=>$fieldvalue) {
+      $sets .= ($sets ? ', ' : '')."<_name_$fieldname> = '<_value_$fieldname>'";
+      $arguments["_name_$fieldname"] = $fieldname;
+      $arguments["_value_$fieldname"] = $fieldvalue;
+    }
     query('data',
       $uniquevalue
-      ? "UPDATE `$databasename`.$tablename SET $sets WHERE $uniquefieldname = '$uniquevalue'"
-      : "INSERT INTO `$databasename`.$tablename SET $sets"
+      ? "UPDATE `<databasename>`.`<tablename>` SET $sets WHERE <uniquefieldname> = '<uniquevalue>'"
+      : "INSERT INTO `<databasename>`.`<tablename>` SET $sets",
+      array_merge($arguments, array('databasename'=>$databasename, 'tablename'=>$tablename, 'sets'=>$sets, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue))
     );
     return $uniquevalue ? $uniquevalue : mysql_insert_id();
   }
@@ -433,47 +439,41 @@
   }
 
   function fieldsforpurpose($metabasename, $tableid, $purposes, $firstfieldid = null) {
-    return query('meta', "SELECT ".($firstfieldid ? "IF(mf.fieldid = $firstfieldid AND mp.purpose = 'sort', 0, me.rank)" : "me.rank")." AS myrank, mp.purpose, mf.fieldid, mf.fieldname, mr.presentation, mf.tableid, mf.autoincrement, mf.foreigntableid, mf.nullallowed, mt.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname, me2.rank AS sortable FROM `$metabasename`.metaelement me LEFT JOIN `$metabasename`.metapurpose mp ON me.purposeid = mp.purposeid LEFT JOIN `$metabasename`.metafield mf ON mf.fieldid = me.fieldid LEFT JOIN `$metabasename`.metatype my ON my.typeid = mf.typeid LEFT JOIN `$metabasename`.metapresentation mr ON mr.presentationid = my.presentationid LEFT JOIN `$metabasename`.metatable mt ON mf.foreigntableid = mt.tableid LEFT JOIN `$metabasename`.metafield mf2 ON mf2.fieldid = mt.uniquefieldid LEFT JOIN `$metabasename`.metapurpose mp2 ON mp2.purpose = 'sort' LEFT JOIN `$metabasename`.metaelement me2 ON me2.fieldid = mf.fieldid AND me2.purposeid = mp2.purposeid WHERE mf.tableid = $tableid".($purposes ? " AND ".(count($purposes) == 1 ? "mp.purpose = '$purposes[0]'" : "(mp.purpose = '".join("' OR mp.purpose = '", $purposes)."')") : '')." ORDER BY purpose, myrank");
-
+    $select = "SELECT me.rank AS myrank, mp.purpose AS purpose, mf.fieldid, mf.fieldname, mr.presentation, mf.tableid, mf.autoincrement, mf.foreigntableid, mf.nullallowed, mt.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname, me2.rank AS sortable FROM `$metabasename`.metaelement me LEFT JOIN `$metabasename`.metapurpose mp ON me.purposeid = mp.purposeid LEFT JOIN `$metabasename`.metafield mf ON mf.fieldid = me.fieldid LEFT JOIN `$metabasename`.metatype my ON my.typeid = mf.typeid LEFT JOIN `$metabasename`.metapresentation mr ON mr.presentationid = my.presentationid LEFT JOIN `$metabasename`.metatable mt ON mf.foreigntableid = mt.tableid LEFT JOIN `$metabasename`.metafield mf2 ON mf2.fieldid = mt.uniquefieldid LEFT JOIN `$metabasename`.metapurpose mp2 ON mp2.purpose = 'sort' LEFT JOIN `$metabasename`.metaelement me2 ON me2.fieldid = mf.fieldid AND me2.purposeid = mp2.purposeid WHERE mf.tableid = $tableid".($purposes ? " AND (".join(' OR ', array_map(create_function('$purpose', 'return "mp.purpose=\'$purpose\'";'), $purposes)).')' : '');
+    if ($firstfieldid)
+      $select = "(SELECT 0 AS myrank, 'sort' AS purpose, mf.fieldid, mf.fieldname, mr.presentation, mf.tableid, mf.autoincrement, mf.foreigntableid, mf.nullallowed, mt.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname, me2.rank AS sortable FROM `$metabasename`.metafield mf LEFT JOIN `$metabasename`.metatype my ON my.typeid = mf.typeid LEFT JOIN `$metabasename`.metapresentation mr ON mr.presentationid = my.presentationid LEFT JOIN `$metabasename`.metatable mt ON mf.foreigntableid = mt.tableid LEFT JOIN `$metabasename`.metafield mf2 ON mf2.fieldid = mt.uniquefieldid LEFT JOIN `$metabasename`.metapurpose mp2 ON mp2.purpose = 'sort' LEFT JOIN `$metabasename`.metaelement me2 ON me2.fieldid = mf.fieldid AND me2.purposeid = mp2.purposeid WHERE mf.fieldid = $firstfieldid) UNION ($select)";
+    return query('meta', $select." ORDER BY purpose, myrank");
   }
   
   function orderedrows($metabasename, $databasename, $tableid, $tablename, $limit, $offset, $uniquefieldname, $purpose, $foreignfieldname = null, $foreignvalue = null, $orderfieldid = null) {
-    $fields = fieldsforpurpose($metabasename, $tableid, array_merge($purpose == 'desc' ? array() : array($purpose), $foreignfieldname ? array() : array('sort')), $orderfieldid);
-    $joins = array();
-    $fieldnamelist = array();
-//  print "---".html('br');
+    $neworderfieldid = $orderfielid;
+    $joins = $selectnames = $ordernames = array();
+    $fields = fieldsforpurpose($metabasename, $tableid, cleanlist(array($purpose == 'desc' ? null : $purpose, 'sort')), $orderfieldid);
     while ($field = mysql_fetch_assoc($fields)) {
-//    print "$field[fieldname] $field[purpose] $field[fieldid] -> $field[myrank]".html('br');
-      if ($field['purpose'] != 'sort' || ($field['purpose'] == 'sort' && !$field['foreigntableid'])) {
-        $fieldnamelist[$field['purpose']] .= ($fieldnamelist[$field['purpose']] ? ', ' : '')."$tablename.$field[fieldname]".($field['purpose'] == 'sort' ? '' : " AS ${tablename}_$field[fieldname]");
-        if (!$orderfieldid && $field['purpose'] == 'sort')
-          $orderfieldid = $field['fieldid'];
-      }
       if ($field['foreigntableid']) {
-        $join = " LEFT JOIN `$databasename`.$field[foreigntablename] AS <table> ON <table>.$field[foreignuniquefieldname]=$tablename.$field[fieldname]";
-        if (!$joins[$join])
-          $joins[$join] = count($joins) + 1;
-        $uniquenumber = $joins[$join];
-
-        $fieldnamelist[$field['purpose']] .= ($fieldnamelist[$field['purpose']] ? ', ' : '').descriptor($metabasename, $field['foreigntableid'], "table$uniquenumber").($field['purpose'] == 'sort' ? '' : " AS $field[foreigntablename]_$field[fieldname]_descriptor");
+        $joins[] = " LEFT JOIN `$databasename`.$field[foreigntablename] AS $field[foreigntablename]_$field[fieldname] ON $field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname]=$tablename.$field[fieldname]";
+        $selectnames[] = descriptor($metabasename, $field['foreigntableid'], "$field[foreigntablename]_$field[fieldname]")." AS $field[foreigntablename]_$field[fieldname]_descriptor";
+        if ($field['purpose'] == 'sort')
+          $ordernames[] = "$field[foreigntablename]_$field[fieldname]_descriptor";
       }
+      elseif ($field['purpose'] == 'sort')
+        $ordernames[] = "${tablename}_$field[fieldname]";
+      $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
+      if ($field['purpose'] == 'sort' && !$neworderfieldid)
+        $neworderfieldid = $field['fieldid'];
     }
-
-    foreach ($joins as $join=>$number)
-      $joinstext .= preg_replace('/<table>/', "table$number", $join);
-    
-    return array(query('data', "SELECT ".($limit ? "SQL_CALC_FOUND_ROWS " : "")."$tablename.$uniquefieldname AS $uniquefieldname".($fieldnamelist[$purpose] ? ", $fieldnamelist[$purpose]" : '').($purpose == 'desc' ? ', '.descriptor($metabasename, $tableid, $tablename)." AS ${tablename}_descriptor" : '')." FROM `$databasename`.$tablename$joinstext".($foreignvalue ? " WHERE $tablename.$foreignfieldname = '$foreignvalue'" : '').($fieldnamelist['sort'] ? " ORDER BY $fieldnamelist[sort]" : '').($limit ? " LIMIT $limit".($offset ? " OFFSET $offset" : '') : '')), $fields, $orderfieldid, $limit ? query1('data', 'SELECT FOUND_ROWS() AS number') : null);
+    return array(query('data', "SELECT ".($limit ? "SQL_CALC_FOUND_ROWS " : "")."$tablename.$uniquefieldname AS $uniquefieldname".($selectnames ? ', '.join(', ', $selectnames) : '').($purpose == 'desc' ? ', '.descriptor($metabasename, $tableid, $tablename)." AS ${tablename}_descriptor" : '')." FROM `$databasename`.$tablename".join(array_unique($joins)).($foreignvalue ? " WHERE $tablename.$foreignfieldname = '$foreignvalue'" : '').($ordernames ? " ORDER BY ".join(', ', $ordernames) : '').($limit ? " LIMIT $limit".($offset ? " OFFSET $offset" : '') : '')), $fields, $neworderfieldid, $limit ? query1('data', 'SELECT FOUND_ROWS() AS number') : null);
   }
 
   function descriptor($metabasename, $tableid, $tablealias) {
-    static $descriptions = array();
-    $descriptor = $descriptions[$tableid];
+    static $descriptors = array();
+    $descriptor = $descriptors[$tableid];
     if (!$descriptor) {
-      $descriptorfields = fieldsforpurpose($metabasename, $tableid, array('desc'));
-      while($descriptorfield = mysql_fetch_assoc($descriptorfields) ) 
-        $descriptor .= ($descriptor ? ', ' : '')."<table>.$descriptorfield[fieldname]";
+        $descriptorfields = fieldsforpurpose($metabasename, $tableid, array('desc'));
+        while($descriptorfield = mysql_fetch_assoc($descriptorfields) ) 
+          $descriptor .= ($descriptor ? ', ' : '')."<table>.$descriptorfield[fieldname]";
       $descriptor  = "CONCAT_WS(' ', $descriptor)";
-      $descriptions[$tableid] = $descriptor;
+      $descriptors[$tableid] = $descriptor;
     }
     return preg_replace('/<table>/', $tablealias, $descriptor);
   }
@@ -495,16 +495,6 @@
       setcookie(session_name(), '', time() - 24 * 60 * 60, '/');
     session_destroy();
     internalredirect(array('action'=>'login', 'error'=>$error));
-  }
-
-  function grant($databasename, $privilege) {
-    static $grants = null;
-    if (!$grants)
-      $grants = query('root', "SHOW GRANTS FOR '$_SESSION[username]'@'$_SESSION[host]'");
-    for (mysql_data_reset($grants); $grant = mysql_fetch_assoc($grants); )
-      if (preg_match("/^GRANT (.*?) ON (.*?) /", $grant["Grants for $_SESSION[username]@$_SESSION[host]"], $matches) && ($matches[1] == 'ALL PRIVILEGES' || preg_match("/\b$privilege\b/", $matches[1])) && (preg_match("/^(`$databasename`|\*)/", $matches[2])))
-        return TRUE;
-    return FALSE;
   }
 
   function option($current, $value = null, $text = null) {
