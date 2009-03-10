@@ -199,17 +199,21 @@
           html('script', array('type'=>'text/javascript', 'src'=>'script.php'), '')
         ).
         html('body', array('class'=>preg_replace('@_@', '', $action)),
-          html('h1', array('id'=>'title'), $title).
-          ($_SESSION['username'] ? html('div', array('id'=>'id'), join(' &ndash; ', array(strtolower(best_locale()), "$_SESSION[username]@$_SESSION[host]", internalreference(array('action'=>'logout'), 'logout')))) : '').
-          html('div', array('id'=>'messages'),
-            $error ? html('div', array('class'=>'error'), $error) : ''
+          html('div', array('id'=>'header'),
+            html('h1', array('id'=>'title'), $title).
+            ($_SESSION['username'] ? html('div', array('id'=>'id'), join(' &ndash; ', array(strtolower(best_locale()), "$_SESSION[username]@$_SESSION[host]", internalreference(array('action'=>'logout'), 'logout')))) : '').
+            html('div', array('id'=>'messages'),
+              $error ? html('div', array('class'=>'error'), $error) : ''
+            ).
+            $path
           ).
-          $path.
           html('div', array('id'=>'content'),
             html('ol', array('id'=>'warnings'), join(getlist('warnings'))).
             $content
           ).
-          html('ol', array('id'=>'logs'), join(getlist('logs')))
+          html('div', array('id'=>'footer'),
+            html('ol', array('id'=>'logs'), join(getlist('logs')))
+          )
         )
       );
     exit;

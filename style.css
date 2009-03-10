@@ -54,7 +54,8 @@ input.minorsubmit.ajaxified { display: none; }
 
 .trace { white-space: nowrap; }
 
-#logs { border: 0.1em solid #ccc; background-color: #eee; color: #999; white-space: nowrap; margin-top: 1em; }
+#footer { margin-top: 1em; }
+#logs { border: 0.1em solid #ccc; background-color: #eee; color: #999; white-space: nowrap; }
 #logs .queryroot { padding-left: 2em; }
 #logs .querymeta { padding-left: 4em; }
 #logs .querydata { padding-left: 6em; }

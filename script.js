@@ -175,6 +175,19 @@ ready(
     $('form').
     enhanceform();
 
+    $('#logs').
+    before('<a href="" id="togglelogs" class="ajaxified">logs</a>');
+
+    $('#togglelogs').
+    click(
+      function() {
+        $('#logs').
+        toggle();
+        return false;
+      }
+    ).
+    click();
+
     //jquery_document_ready_presentation goes here
   }
 );
