@@ -13,21 +13,25 @@
   function in_edit_date($field) { return 1; }
 
   function formfield_date($metabasename, $databasename, $field, $value, $readonly) {
-    return html('input', array('type'=>'text', 'class'=>join(' ', cleanlist(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'value'=>swap_date($value), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null));
+    return 
+      html('input', array('type'=>'text', 'class'=>join(' ', cleanlist(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'value'=>date2local($value), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null)).
+      html('span', array('class'=>'help'), strftime(_('e.g. %x')));
   }
 
   function formvalue_date($field) {
-    return swap_date(parameter('get', "field:$field[fieldname]"));
+    return local2date(parameter('get', "field:$field[fieldname]"));
   }
 
-  function cell_date($metabasename, $databasename, $field, $value) {
-    return swap_date($value);
+  function list_date($metabasename, $databasename, $field, $value) {
+    return date2local($value);
   }
 
-  function swap_date($value) {
-    if (!preg_match('/^(\d+)-(\d+)-(\d+)$/', $value, $matches))
-      return $value;
-    return "$matches[3]-$matches[2]-$matches[1]";
+  function date2local($value) {
+    return change_datetime_format($value, '%Y-%m-%d', '%x');
+  }
+  
+  function local2date($value) {
+    return change_datetime_format($value, '%x', '%Y-%m-%d');
   }
   
   function css_date() {

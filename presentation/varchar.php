@@ -20,7 +20,7 @@
     return parameter('get', "field:$field[fieldname]");
   }
 
-  function cell_varchar($metabasename, $databasename, $field, $value) {
+  function list_varchar($metabasename, $databasename, $field, $value) {
     return $value;
   }
   

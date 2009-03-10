@@ -23,7 +23,7 @@
     return parameter('get', "field:$field[fieldname]") ? 1 : 0;
   }
 
-  function cell_boolean($metabasename, $databasename, $field, $value) {
+  function list_boolean($metabasename, $databasename, $field, $value) {
     return formfield_boolean($metabasename, $databasename, $field, $value, true);
   }
   

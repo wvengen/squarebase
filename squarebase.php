@@ -1,14 +1,11 @@
 <?php
   include('functions.php');
 
-  bindtextdomain('messages', './locale');
-  textdomain('messages');
-
-  $privileges = array('select'=>'Select_priv', 'insert'=>'Insert_priv', 'update'=>'Update_priv', 'delete'=>'Delete_priv', 'create'=>'Create_priv', 'drop'=>'Drop_priv', 'alter'=>'Alter_priv', 'grant'=>'Grant_priv');
-
   session_set_cookie_params(7 * 24 * 60 * 60);
   session_save_path('session');
   session_start();
+
+  best_locale();
 
   $action = parameter('get', 'action', 'login');
   addtolist('logs', 'action', $action.' '.preg_replace('/^Array/', '', print_r(parameter('get'), true)));
@@ -24,6 +21,7 @@
               html('td', array(), array(html('label', array('for'=>'username'), _('username')), html('input', array('type'=>'text',     'id'=>'username', 'name'=>'username', 'value'=>'root')))),
               html('td', array(), array(html('label', array('for'=>'host'    ), _('host'    )), html('input', array('type'=>'text',     'id'=>'host',     'name'=>'host',     'value'=>'localhost')))),
               html('td', array(), array(html('label', array('for'=>'password'), _('password')), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password')))),
+              html('td', array(), array(html('label', array('for'=>'language'), _('language')), html('select', array('id'=>'language', 'name'=>'language'), html('option', array(), 'en_US').html('option', array(), 'nl_NL')))),
               html('td', array(), array('&nbsp;',                                               html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>'button mainsubmit'))))
             )
           )
@@ -38,8 +36,9 @@
     $username = parameter('get', 'username');
     $host     = parameter('get', 'host');
     $password = parameter('get', 'password');
+    $language = parameter('get', 'language');
 
-    login($username, $host, $password);
+    login($username, $host, $password, $language);
     internalredirect(array('action'=>'index'));
   }
 
@@ -653,7 +652,7 @@
     list($tablename, $uniquefieldname) = tableanduniquefieldname($metabasename, $tableid);
 
     page($action, path($metabasename, $databasename, $tablename, $tableid),
-      rows_table($metabasename, $databasename, $tableid, $tablename, 0, $offset, $uniquefieldname, $orderfieldid)
+      list_table($metabasename, $databasename, $tableid, $tablename, 0, $offset, $uniquefieldname, $orderfieldid)
     );
   }
 
@@ -696,7 +695,7 @@
         $lines .=
           html('tr', array(),
             html('td', array('class'=>'description'), $referringfield['tablename']).
-            html('td', array(), rows_table($metabasename, $databasename, $referringfield['tableid'], $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tableid, $action != 'delete_record'))
+            html('td', array(), list_table($metabasename, $databasename, $referringfield['tableid'], $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tableid, $action != 'delete_record'))
           );
       }
     }

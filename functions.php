@@ -1,6 +1,14 @@
 <?php
   function parameter($type, $name = null, $default = null) {
-    $array = $type == 'get' ? ($_POST ? $_POST : $_GET) : ($type == 'server' ? $_SERVER : ($type == 'files' ? $_FILES : array()));
+    $arrays = array(
+      'get'=>$_POST ? $_POST : $_GET,
+      'server'=>$_SERVER,
+      'files'=>$_FILES,
+      'session'=>$_SESSION
+    );
+    $array = $arrays[$type];
+    if (!$array)
+      $array = array();
     if (!$name)
       return $array;
     $value = $array[$name];
@@ -51,8 +59,8 @@
       parse_str($ajax, $parameters);
       addtolist('logs', '', 'ajax_'.$parameters['function'].' '.preg_replace('/^Array/', '', print_r($parameters, true)));
       switch ($parameters['function']) {
-      case 'rows_table':
-        $output = rows_table($parameters['metabasename'], $parameters['databasename'], $parameters['tableid'], $parameters['tablename'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['orderfieldid'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
+      case 'list_table':
+        $output = list_table($parameters['metabasename'], $parameters['databasename'], $parameters['tableid'], $parameters['tablename'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['orderfieldid'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
         break;
       case 'ajax_lookup':
         $output = ajax_lookup($parameters['metabasename'], $parameters['databasename'], $parameters['fieldname'], $parameters['value'], $parameters['presentation'], $parameters['foreigntableid'], $parameters['foreigntablename'], $parameters['foreignuniquefieldname'], $parameters['nullallowed'], $parameters['readonly']);
@@ -183,6 +191,8 @@
       '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'.
       html('html', array(),
         html('head', array(),
+          html('meta', array('http-equiv'=>'Content-Type', 'content'=>'text/html; charset=utf-8')).
+          html('meta', array('http-equiv'=>'Content-Language', 'content'=>best_locale())).
           html('title', array(), $title).
           html('link', array('href'=>'style.php', 'type'=>'text/css', 'rel'=>'stylesheet')).
           html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
@@ -190,7 +200,7 @@
         ).
         html('body', array('class'=>preg_replace('@_@', '', $action)),
           html('h1', array('id'=>'title'), $title).
-          ($_SESSION['username'] ? html('div', array('id'=>'id'), "$_SESSION[username]@$_SESSION[host] &ndash; ".internalreference(array('action'=>'logout'), 'logout')) : '').
+          ($_SESSION['username'] ? html('div', array('id'=>'id'), join(' &ndash; ', array(strtolower(best_locale()), "$_SESSION[username]@$_SESSION[host]", internalreference(array('action'=>'logout'), 'logout')))) : '').
           html('div', array('id'=>'messages'),
             $error ? html('div', array('class'=>'error'), $error) : ''
           ).
@@ -283,7 +293,7 @@
     return $description;
   }
   
-  function rows_table($metabasename, $databasename, $tableid, $tablename, $limit, $offset, $uniquefieldname, $orderfieldid, $foreignfieldname = null, $foreignvalue = null, $parenttableid = null, $interactive = TRUE) {
+  function list_table($metabasename, $databasename, $tableid, $tablename, $limit, $offset, $uniquefieldname, $orderfieldid, $foreignfieldname = null, $foreignvalue = null, $parenttableid = null, $interactive = TRUE) {
     $originalorderfieldid = $orderfieldid;
     list($rows, $fields, $orderfieldid, $foundrows) = orderedrows($metabasename, $databasename, $tableid, $tablename, $limit, $offset, $uniquefieldname, 'list', $foreignfieldname, $foreignvalue, $orderfieldid);
     while ($row = mysql_fetch_assoc($rows)) {
@@ -295,7 +305,7 @@
           $field['descriptor'] = $row["$field[foreigntablename]_$field[fieldname]_descriptor"];
           $field['thisrecord'] = $foreignvalue && $field['fieldname'] == $foreignfieldname;
           include_once("presentation/$field[presentation].php");
-          $cell = call_user_func("cell_$field[presentation]", $metabasename, $databasename, $field, $value);
+          $cell = call_user_func("list_$field[presentation]", $metabasename, $databasename, $field, $value);
           $line .= html('td', array('class'=>'column '.$field['presentation']), $cell);
         }
       }
@@ -352,9 +362,10 @@
     }
 
     return 
-      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'rows_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'tablename'=>$tablename, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldid'=>$orderfieldid, 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttableid'=>$parenttableid, 'interactive'=>$interactive))), 
+      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'tablename'=>$tablename, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldid'=>$orderfieldid, 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttableid'=>$parenttableid, 'interactive'=>$interactive))), 
         ($interactive
-        ? internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $tablename)).html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)'))
+        ? internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $tablename)).
+          html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)'))
         : ($foreignvalue ? $tablename : '')
         ).
         html('div', array('class'=>'ajaxcontent'), '').
@@ -374,8 +385,8 @@
     return $uniquevalue ? $uniquevalue : mysql_insert_id();
   }
   
-  function preg_match1($pattern, $subject) {
-    return preg_match($pattern, $subject, $matches) ? (count($matches) == 2 ? $matches[1] : $matches[0]) : null;
+  function preg_match1($pattern, $subject, $default = null) {
+    return preg_match($pattern, $subject, $matches) ? (count($matches) == 2 ? $matches[1] : $matches[0]) : $default;
   }
   
   function preg_delete($pattern, $subject) {
@@ -467,10 +478,11 @@
     return html('input', array_merge(array('type'=>'checkbox'), $name ? array('class'=>'checkboxedit', 'name'=>$name) : array('class'=>'checkboxlist', 'readonly'=>'readonly', 'disabled'=>'disabled'), $value == 'Y' ? array('checked'=>'checked') : array()));
   }
 
-  function login($username, $host, $password) {
+  function login($username, $host, $password, $language) {
     $_SESSION['username'] = $username;
     $_SESSION['host']     = $host;
     $_SESSION['password'] = $password;
+    $_SESSION['language'] = $language;
   }
 
   function logout($error = null) {
@@ -530,5 +542,44 @@
     header("Content-Type: $content_type"); 
     print preg_replace("@( *)// *${function_prefix}_presentation\b.*\n@e", '"\\1".preg_replace("@\n(?=.)@", "\n\\1", $extra)', $content);
     exit;
+  }
+
+  function best_locale() {
+    static $best_locale = null;
+    if ($best_locale)
+      return $best_locale;
+
+    $http_accept = parameter('session', 'language', parameter('server', 'HTTP_ACCEPT_LANGUAGE', null));
+
+    $locales = array();
+    $parts = explode(',', preg_replace('/ /', '', $http_accept));
+    foreach ($parts as $part)
+      if (preg_match('/([^;]+)(?:;q=([01]?\.\d{0,4}))?/i', $part, $matches))
+        $locales[$matches[1]] = (float) (isset($matches[2]) ? $matches[2] : 1);
+
+    $best_locale = 'en-us';
+    $maxq = 0;
+    foreach ($locales as $locale=>$q) {
+      if ($q > $maxq) {
+        $maxq = $q;
+        $best_locale = $locale;
+      }
+    }
+
+    $best_locale = preg_replace('/^(\w\w)(?:(-)(\w\w))?$/e', "'\\1'.('\\2' ? '_'.strtoupper('\\3') : '')", $best_locale);
+    $best_locale = preg_replace('/\.utf8$/', '', setlocale(LC_ALL, "$best_locale.utf8"));
+
+    bindtextdomain('messages', './locale');
+    textdomain('messages');
+
+    return $best_locale;
+  }
+
+  function change_datetime_format($value, $from, $to) {
+    if (!$value)
+      return $value;
+    $matches = strptime($from, $value);
+    $date = mktime($matches['tm_hour'], $matches['tm_min'], $matches['tm_sec'], $matches['tm_mon'], $matches['tm_mday'], $matches['tm_year']);
+    return strftime($to, $date);
   }
 ?>

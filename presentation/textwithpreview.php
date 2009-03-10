@@ -29,8 +29,8 @@
     return formvalue_text($field);
   }
 
-  function cell_textwithpreview($metabasename, $databasename, $field, $value) {
-    return cell_text($metabasename, $databasename, $field, $value);
+  function list_textwithpreview($metabasename, $databasename, $field, $value) {
+    return list_text($metabasename, $databasename, $field, $value);
   }
   
   function css_textwithpreview() {

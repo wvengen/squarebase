@@ -22,7 +22,7 @@
     return parameter('get', "field:$field[fieldname]");
   }
 
-  function cell_autoincrement($metabasename, $databasename, $field, $value) {
+  function list_autoincrement($metabasename, $databasename, $field, $value) {
     return $value;
   }
   

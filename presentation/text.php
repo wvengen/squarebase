@@ -20,7 +20,7 @@
     return parameter('get', "field:$field[fieldname]");
   }
 
-  function cell_text($metabasename, $databasename, $field, $value) {
+  function list_text($metabasename, $databasename, $field, $value) {
     return $value;
   }
   

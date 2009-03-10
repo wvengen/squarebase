@@ -2,6 +2,7 @@
 body { margin: 0.5em; }
 h2 { margin-bottom: 0.5em; }
 form { background-color: #ddf; padding: 0.5em; }
+fieldset { border: 0.1em solid #ccc; padding: 0.2em; }
 p { margin: 0.5em 0; }
 
 table { border: 0.1em solid #999; }
@@ -20,12 +21,13 @@ ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 .integer { width: 2em; text-align: right; }
 
 input, select, textarea { font-size: 1em; font-family: inherit; background-color: #ffe; border: 0.1em solid #999; }
+input[type=text], input[type=password], select { width: 12em; }
 input:focus, select:focus, textarea:focus { background-color: #ffc; border: 0.1em solid #666; }
-select { height: 1.15em; }
+select { height: 1.25em; }
 input.readonly, select.readonly { border-color: #ddd; }
 input.button { border: 0.15em solid #fff; border-color: #fff #999 #999 #fff; color: #33f; padding: 0 0.2em; }
 input.mainsubmit, input.minorsubmit { margin-right: 1em; }
-input.mainsubmit:hover, input.minorsubmit:hover { background-color: #cfc !important; }
+input.mainsubmit:hover, input.minorsubmit:hover { background-color: #090 !important; color: #fff; }
 .cancel { padding: 0.1em 0.5em; }
 .cancel:hover { background-color: #f00 !important; color: #fff; }
 
@@ -49,6 +51,7 @@ input.minorsubmit.ajaxified { display: none; }
 #warnings { padding: 0; }
 #warnings li { list-style-type: none; }
 .error, .problem, .warning { font-weight: bold; color: #f00; }
+.help { color: #999; margin-left: 0.5em; }
 
 .trace { white-space: nowrap; }
 

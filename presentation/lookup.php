@@ -61,7 +61,7 @@
     return parameter('get', "field:$field[fieldname]");
   }
 
-  function cell_lookup($metabasename, $databasename, $field, $value) {
+  function list_lookup($metabasename, $databasename, $field, $value) {
     return
       ($field['thisrecord']
       ? html('span', array('class'=>'thisrecord'), $field['descriptor'])
