@@ -21,7 +21,6 @@ ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 .integer { width: 2em; text-align: right; }
 
 input, select, textarea { font-size: 1em; font-family: inherit; background-color: #ffe; border: 0.1em solid #999; }
-input[type=text], input[type=password], select { width: 12em; }
 input:focus, select:focus, textarea:focus { background-color: #ffc; border: 0.1em solid #666; }
 select { height: 1.25em; }
 input.readonly, select.readonly { border-color: #ddd; }
