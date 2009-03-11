@@ -33,22 +33,19 @@
 
   function ajax_lookup($metabasename, $databasename, $fieldname, $value, $presentation, $foreigntableid, $foreigntablename, $foreignuniquefieldname, $nullallowed, $readonly) {
     if (!$foreigntableid)
-      error("no foreigntableid for $fieldname");
-    list($references) = orderedrows($metabasename, $databasename, $foreigntableid, $foreigntablename, 0, 0, $foreignuniquefieldname, 'desc');
-    $options = '';
+      error(sprintf(_('no foreigntableid for %s'), $fieldname));
+    $references = query('data', "SELECT $foreignuniquefieldname, ".descriptor($metabasename, $foreigntableid, $foreigntablename)." AS _descriptor FROM `$databasename`.$foreigntablename ORDER BY _descriptor");
+    $options = array();
     while ($reference = mysql_fetch_assoc($references)) {
-      $option = $reference["${foreigntablename}_descriptor"];
-      $checkoption = $value == $reference[$foreignuniquefieldname];
-      $checked = $checked || $checkoption;
-      $options .= html('option', array_merge(array('value'=>$reference[$foreignuniquefieldname]), $checkoption ? array('selected'=>'selected') : array()), $option);
+      $selected = $value == $reference[$foreignuniquefieldname];
+      $oneselected = $oneselected || $selected;
+      $options[] = html('option', array_merge(array('value'=>$reference[$foreignuniquefieldname]), $selected ? array('selected'=>'selected') : array()), $reference['_descriptor']);
     }
-    $options =
-      html('option', array_merge(array('value'=>''), $checked ? array() : array('selected'=>'selected')), '').
-      $options;
+    array_unshift($options, html('option', array_merge(array('value'=>''), $oneselected ? array() : array('selected'=>'selected')), ''));
     return
       html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'ajax_lookup', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'fieldname'=>$fieldname, 'value'=>$value, 'presentation'=>$presentation, 'foreigntableid'=>$foreigntableid, 'foreigntablename'=>$foreigntablename, 'foreignuniquefieldname'=>$foreignuniquefieldname, 'nullallowed'=>$nullallowed, 'readonly'=>$readonly))),
-        html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>join(' ', array_clean(array($presentation, $readonly ? 'readonly' : null, $nullallowed ? null : 'notempty'))), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null), $options).' '.
-        ($readonly ? '' : internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$foreigntableid, 'back'=>parameter('server', 'REQUEST_URI')), "new $foreigntablename").html('span', array('class'=>'changeslost'), ' (changes to form fields are lost)')).
+        html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>join(' ', array_clean(array($presentation, $readonly ? 'readonly' : null, $nullallowed ? null : 'notempty'))), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null), join($options)).
+        ($readonly ? '' : ' '.internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$foreigntableid, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablename)).html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)'))).
         html('div', array('class'=>'ajaxcontent'), '')
       );
   }

@@ -180,7 +180,7 @@
 
   function query1field($metaordata, $query, $arguments = array(), $field = null) {
     $result = query1($metaordata, $query, $arguments);
-    return is_null($field) && count($result) == 1 ? array_shift(array_values($result)) : $result[$field];
+    return is_null($field) ? (count($result) == 1 ? array_shift(array_values($result)) : error(sprintf(_('problem retrieving 1 field, because there are %s fields'), count($result)))) : $result[$field];
   }
   
   function page($action, $path, $content) {
@@ -190,7 +190,7 @@
 
     header('Content-Type: text/html; charset=utf-8');
     header('Content-Language: '.best_locale());
-    echo
+    print
       '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'.
       html('html', array(),
         html('head', array(),
@@ -256,30 +256,6 @@
       : ''
       )
     );
-  }
-  
-  function description($metabasename, $databasename, $tableid, $reference, $tableids = array()) {
-    static $fields = array();
-    if (!$fields[$tableid])
-      $fields[$tableid] = fieldsforpurpose($metabasename, $tableid, array('desc'));
-    for (mysql_data_reset($fields[$tableid]); $field = mysql_fetch_assoc($fields[$tableid]); ) {
-      $value = $reference[$field['fieldname']];
-//      echo "$field[fieldname] - $value".html('br');
-      $description .= 
-        ($description ? ' ' : '').
-//        $field['fieldname'].':'.
-        ($field['foreigntableid'] && $value
-        ? (in_array($field['foreigntableid'], $tableids)
-          ? "[$value]"
-          : description($metabasename, $databasename, $field['foreigntableid'], 
-              query1('data', "SELECT * FROM $databasename.$field[foreigntablename] WHERE $field[foreigntablename].$field[foreignuniquefieldname] = '$value'"),
-              array_merge($tableids, array($tableid))
-            )
-          )
-        : $value
-        );
-    }
-    return $description;
   }
   
   function list_table($metabasename, $databasename, $tableid, $tablename, $limit, $offset, $uniquefieldname, $orderfieldid, $foreignfieldname = null, $foreignvalue = null, $parenttableid = null, $interactive = TRUE) {
@@ -450,15 +426,14 @@
 
   function descriptor($metabasename, $tableid, $tablealias) {
     static $descriptors = array();
-    $descriptor = $descriptors[$tableid];
-    if (!$descriptor) {
-        $descriptorfields = fieldsforpurpose($metabasename, $tableid, array('desc'));
-        while($descriptorfield = mysql_fetch_assoc($descriptorfields) ) 
-          $descriptor .= ($descriptor ? ', ' : '')."<table>.$descriptorfield[fieldname]";
-      $descriptor  = "CONCAT_WS(' ', $descriptor)";
-      $descriptors[$tableid] = $descriptor;
+    if (!$descriptor[$tableid]) {
+      $arguments = array();
+      $descriptorfields = fieldsforpurpose($metabasename, $tableid, array('desc'));
+      while($descriptorfield = mysql_fetch_assoc($descriptorfields) ) 
+        $arguments[] = "<table>.$descriptorfield[fieldname]";
+      $descriptors[$tableid] = count($arguments) == 1 ? $arguments[0] : 'CONCAT_WS(" ", '.join(', ', $arguments).')';
     }
-    return preg_replace('/<table>/', $tablealias, $descriptor);
+    return preg_replace('/<table>/', $tablealias, $descriptors[$tableid]);
   }
 
   function checkboxyn($value, $name = null) {

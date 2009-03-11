@@ -373,86 +373,86 @@
     if (!$metabasename)
       error(_('no name given for the metabase'));
 
-    query('meta', "DROP DATABASE IF EXISTS `<metabasename>`", array('metabasename'=>$metabasename));
+    query('meta', 'DROP DATABASE IF EXISTS `<metabasename>`', array('metabasename'=>$metabasename));
 
-    query('meta', "CREATE DATABASE IF NOT EXISTS `<metabasename>`", array('metabasename'=>$metabasename));
+    query('meta', 'CREATE DATABASE IF NOT EXISTS `<metabasename>`', array('metabasename'=>$metabasename));
 
-    query('meta', "CREATE TABLE `<metabasename>`.metaconstant (".
-          "  constantid      INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,".
-          "  constantname    VARCHAR(100) NOT NULL,".
-          "  UNIQUE KEY (constantname)".
-          ")",
+    query('meta', 'CREATE TABLE `<metabasename>`.metaconstant ('.
+          '  constantid      INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+          '  constantname    VARCHAR(100) NOT NULL,'.
+          '  UNIQUE KEY (constantname)'.
+          ')',
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', "CREATE TABLE `<metabasename>`.metavalue (".
-          "  valueid         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,".
-          "  constantid      INT UNSIGNED NOT NULL,".
-          "  value           VARCHAR(100) NOT NULL,".
-          "  UNIQUE KEY (constantid, value)".
-          ")",
+    query('meta', 'CREATE TABLE `<metabasename>`.metavalue ('.
+          '  valueid         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+          '  constantid      INT UNSIGNED NOT NULL,'.
+          '  value           VARCHAR(100) NOT NULL,'.
+          '  UNIQUE KEY (constantid, value)'.
+          ')',
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', "CREATE TABLE `<metabasename>`.metatable (".
-          "  tableid         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,".
-          "  tablename       VARCHAR(100) NOT NULL,".
-          "  uniquefieldid   INT UNSIGNED NOT NULL,".
-          "  UNIQUE KEY (tablename)".
-          ")",
+    query('meta', 'CREATE TABLE `<metabasename>`.metatable ('.
+          '  tableid         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+          '  tablename       VARCHAR(100) NOT NULL,'.
+          '  uniquefieldid   INT UNSIGNED NOT NULL,'.
+          '  UNIQUE KEY (tablename)'.
+          ')',
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', "CREATE TABLE `<metabasename>`.metafield (".
-          "  fieldid         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,".
-          "  tableid         INT UNSIGNED NOT NULL,".
-          "  fieldname       VARCHAR(100) NOT NULL,".
-          "  autoincrement   INT UNSIGNED NOT NULL,".
-          "  typeid          INT UNSIGNED NOT NULL,".
-          "  nullallowed     INT UNSIGNED NOT NULL,".
-          "  foreigntableid  INT UNSIGNED         ,".
-          "  UNIQUE KEY (tableid, fieldname)".
-          ")",
+    query('meta', 'CREATE TABLE `<metabasename>`.metafield ('.
+          '  fieldid         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+          '  tableid         INT UNSIGNED NOT NULL,'.
+          '  fieldname       VARCHAR(100) NOT NULL,'.
+          '  autoincrement   INT UNSIGNED NOT NULL,'.
+          '  typeid          INT UNSIGNED NOT NULL,'.
+          '  nullallowed     INT UNSIGNED NOT NULL,'.
+          '  foreigntableid  INT UNSIGNED         ,'.
+          '  UNIQUE KEY (tableid, fieldname)'.
+          ')',
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', "CREATE TABLE `<metabasename>`.metatype (".
-          "  typeid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,".
-          "  typename        VARCHAR(100) NOT NULL,".
-          "  type            VARCHAR(100) NOT NULL,".
-          "  typelength      INT UNSIGNED         ,".
-          "  typeunsigned    INT UNSIGNED         ,".
-          "  typezerofill    INT UNSIGNED         ,".
-          "  presentationid  INT UNSIGNED         ,".
-          "  UNIQUE KEY (typename)".
-          ")",
+    query('meta', 'CREATE TABLE `<metabasename>`.metatype ('.
+          '  typeid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+          '  typename        VARCHAR(100) NOT NULL,'.
+          '  type            VARCHAR(100) NOT NULL,'.
+          '  typelength      INT UNSIGNED         ,'.
+          '  typeunsigned    INT UNSIGNED         ,'.
+          '  typezerofill    INT UNSIGNED         ,'.
+          '  presentationid  INT UNSIGNED         ,'.
+          '  UNIQUE KEY (typename)'.
+          ')',
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', "CREATE TABLE `<metabasename>`.metapresentation (".
-          "  presentationid  INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,".
-          "  presentation    VARCHAR(100) NOT NULL,".
-          "  UNIQUE KEY (presentation)".
-          ")",
+    query('meta', 'CREATE TABLE `<metabasename>`.metapresentation ('.
+          '  presentationid  INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+          '  presentation    VARCHAR(100) NOT NULL,'.
+          '  UNIQUE KEY (presentation)'.
+          ')',
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', "CREATE TABLE `<metabasename>`.metapurpose (".
-          "  purposeid       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,".
-          "  purpose         VARCHAR(100) NOT NULL,".
-          "  UNIQUE KEY (purpose)".
-          ")",
+    query('meta', 'CREATE TABLE `<metabasename>`.metapurpose ('.
+          '  purposeid       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+          '  purpose         VARCHAR(100) NOT NULL,'.
+          '  UNIQUE KEY (purpose)'.
+          ')',
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', "CREATE TABLE `<metabasename>`.metaelement (".
-          "  elementid       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,".
-          "  fieldid         INT UNSIGNED NOT NULL,".
-          "  purposeid       INT UNSIGNED NOT NULL,".
-          "  rank            INT UNSIGNED NOT NULL,".
-          "  UNIQUE KEY (fieldid, purposeid)".
+    query('meta', 'CREATE TABLE `<metabasename>`.metaelement ('.
+          '  elementid       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+          '  fieldid         INT UNSIGNED NOT NULL,'.
+          '  purposeid       INT UNSIGNED NOT NULL,'.
+          '  rank            INT UNSIGNED NOT NULL,'.
+          '  UNIQUE KEY (fieldid, purposeid)'.
           // UNIQUE KEY (fieldid:tableid, purposeid, rank)
-          ")",
+          ')',
           array('metabasename'=>$metabasename)
     );
 
@@ -634,7 +634,7 @@
           internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$table['tableid']), $table['tablename'])
         ).
         html('td', array('class'=>'number'),
-          query1field('data', 'SELECT COUNT(*) AS count FROM `<databasename>`.`<tablename>`', array('databasename'=>$databasename, 'tablename'=>$table['tablename']), 'count')
+          query1field('data', 'SELECT COUNT(*) AS count FROM `<databasename>`.`<tablename>`', array('databasename'=>$databasename, 'tablename'=>$table['tablename']))
         );
     }
     page($action, path($metabasename, $databasename),
@@ -700,27 +700,33 @@
     if (!is_null($uniquevalue)) {
       $referringfields = query('meta', 'SELECT mt.tableid, tablename, mf.fieldname AS fieldname, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.metafield mf LEFT JOIN `<metabasename>`.metatable mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.metafield mfu ON mt.uniquefieldid = mfu.fieldid WHERE mf.foreigntableid = <tableid>', array('metabasename'=>$metabasename, 'tableid'=>$tableid));
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
-        $lines .=
+        $referringtables .=
           html('tr', array(),
             html('td', array('class'=>'description'), $referringfield['tablename']).
             html('td', array(), list_table($metabasename, $databasename, $referringfield['tableid'], $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tableid, $action != 'delete_record'))
           );
       }
+      $description = query1field('data', "SELECT ".descriptor($metabasename, $tableid, $tablename)." AS _descriptor FROM `$databasename`.$tablename WHERE $uniquefieldname = $uniquevalue");
     }
 
-    page($action, path($metabasename, $databasename, $tablename, $tableid, description($metabasename, $databasename, $tableid, $row)),
+    page($action, path($metabasename, $databasename, $tablename, $tableid, $description),
       form(
-        html('table', array('class'=>'tableedit'), $lines).
         html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('input', array('type'=>'hidden', 'name'=>'tableid', 'value'=>$tableid)).
         html('input', array('type'=>'hidden', 'name'=>'uniquevalue', 'value'=>$uniquevalue)).
         html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back ? $back : parameter('server', 'HTTP_REFERER'))).
-        html('input', array('type'=>'hidden', 'name'=>'newtableid', 'value'=>'')).
-        html('p', array(),
-          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'delete_record' ? 'delete_record_really' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>'mainsubmit button')).
-          (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit button')) : '').
-          internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel'))
+        html('table', array('class'=>'tableedit'), 
+          $lines.
+          html('tr', array(),
+            html('td', array('class'=>'description'), '&rarr;').
+            html('td', array(), 
+              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'delete_record' ? 'delete_record_really' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>'mainsubmit button')).
+              (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit button')) : '').
+              internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel'))
+            )
+          ).
+          $referringtables
         )
       )
     );
@@ -776,7 +782,7 @@
     $uniquevalue  = parameter('get', 'uniquevalue');
     list($tablename, $uniquefieldname) = tableanduniquefieldname($metabasename, $tableid);
 
-    $image = query1field('data', 'SELECT <fieldname> FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = \'<uniquevalue>\'', array('fieldname'=>$fieldname, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue), $fieldname);
+    $image = query1field('data', 'SELECT <fieldname> FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = \'<uniquevalue>\'', array('fieldname'=>$fieldname, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
 
 //  As of PHP 5.3, Fileinfo will be shipped with the main distribution and enabled by default.
 //  $finfo = new finfo(FILEINFO_MIME);
