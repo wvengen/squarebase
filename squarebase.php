@@ -7,8 +7,11 @@
 
   best_locale();
 
+  bindtextdomain('messages', './locale');
+  textdomain('messages');
+
   $action = parameter('get', 'action', 'login');
-  addtolist('logs', 'action', $action.' '.preg_replace('/^Array/', '', print_r(parameter('get'), true)));
+  addtolist('logs', 'action', $action.' '.array_show(parameter('get')));
 
   /********************************************************************************************/
 
@@ -52,49 +55,44 @@
 
   if ($action == 'index') {
     $metabases = query('root', 'SHOW DATABASES');
-    $rows = array();
+    $rows = array(html('th', array(), array(_('metabase'), _('database'))));
     while ($metabase = mysql_fetch_assoc($metabases)) {
       $metabasename = $metabase['Database'];
       $databasenames = databasenames($metabasename);
       if ($databasenames) {
-        $databaselist = '';
+        $databaselist = array();
         while ($databasename = mysql_fetch_assoc($databasenames))
-          $databaselist .= ($databaselist ? ', ' : '').internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename['value']), $databasename['value']);
+          $databaselist[] = internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename['value']), $databasename['value']);
         $rows[] =
           html('td', array(),
             array(
               internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$metabasename), $metabasename),
-              $databaselist
+              html('ul', array('class'=>'compact'), html('li', array(), $databaselist))
             )
           );
       }
     }
     page($action, null,
       internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')).
-      html('table', array(),
-        html('tr', array(),
-          array_merge(
-            array(html('th', array(), array(_('metabase'), _('database')))),
-            $rows
-          )
-        )
-      )
+      html('table', array(), html('tr', array(), $rows))
     );
   }
 
   /********************************************************************************************/
 
   if ($action == 'new_metabase_from_database') {
-    $rows = html('tr', array(), html('th', array(), array(_('database'), _('tables'), '')));
+    $rows = array(html('th', array(), array(_('database'), _('tables'), '&nbsp;')));
     $databases = query('root', 'SHOW DATABASES');
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['Database'];
       $tables = query('data', 'SHOW TABLES FROM `<databasename>`', array('databasename'=>$databasename));
+      $dblist = array();
       $dbs = databasenames($databasename);
-      $contents = '';
-      if ($dbs)
+      if ($dbs) {
         while ($db = mysql_fetch_assoc($dbs))
-          $contents .= ($contents ? ', ' : '').internalreference(array('action'=>'form_metabase_for_database', 'databasename'=>$db['value'], 'metabasename'=>$databasename), $db['value']);
+          $dblist[] = internalreference(array('action'=>'form_metabase_for_database', 'databasename'=>$db['value'], 'metabasename'=>$databasename), $db['value']);
+        $contents = html('ul', array('class'=>'compact'), html('li', array(), $dblist));
+      }
       elseif ($tables) {
         $tablelist = array();
         while ($table = mysql_fetch_assoc($tables)) {
@@ -107,20 +105,18 @@
         }
         $contents = html('ul', array('class'=>'compact'), html('li', array(), $tablelist).($fulllist ? html('li', array('title'=>$fulllist), '&hellip') : ''));
       }
-      $rows .=
-        html('tr', array(),
-          html('td', array(),
-            array(
-              internalreference(array('action'=>'form_metabase_for_database', 'databasename'=>$databasename), $databasename),
-              $contents,
-              internalreference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop')
-            )
+      $rows[] =
+        html('td', array(),
+          array(
+            internalreference(array('action'=>'form_metabase_for_database', 'databasename'=>$databasename), $databasename),
+            $contents,
+            internalreference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop')
           )
         );
     }
     page($action, null,
       form(
-        html('table', array(), $rows)
+        html('table', array(), html('tr', array(), $rows))
       )
     );
   }
@@ -171,9 +167,7 @@
 
     $presentations = get_presentations();
 
-    $fields = array();
-    $alltables = array();
-    $primarykeyfieldname = array();
+    $fields = $alltables = $primarykeyfieldname = $tableswithoutsinglevaluedprimarykey = array();
     $tables = query('data', 'SHOW TABLES FROM `<databasename>`', array('databasename'=>$databasename));
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table["Tables_in_$databasename"];
@@ -194,7 +188,7 @@
       if (count($allprimarykeyfieldnames) == 1)
         $primarykeyfieldname[$tablename] = $allprimarykeyfieldnames[0];
       else
-        $tableswithoutsinglevaluedprimarykey .= ($tableswithoutsinglevaluedprimarykey ? ', ' : '').$tablename;
+        $tableswithoutsinglevaluedprimarykey[] = $tablename;
     }
 
     $header =
@@ -206,10 +200,11 @@
         )
       );
 
+    $totalstructure = array();
     for (mysql_data_reset($tables); $table = mysql_fetch_assoc($tables); ) {
       $tablename = $table["Tables_in_$databasename"];
 
-      $tablestructure = '';
+      $tablestructure = array();
       $desc = $sort = $list = $edit = $fieldnr = 0;
       $inpurpose = array();
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
@@ -284,10 +279,10 @@
           $inpurpose['edit'] = call_user_func("in_edit_$presentation", $augmentedfield) ? ++$edit : '';
         }
 
-        $tableoptions = '';
+        $tableoptions = array();
+        $tableoptions[] = html('option', array_merge(array('value'=>''), $linkedtable ? array() : array('selected'=>'selected')), '').$tableoptions;
         foreach ($alltables as $onetable)
-          $tableoptions .= html('option', array_merge(array('value'=>$onetable), $onetable == $linkedtable ? array('selected'=>'selected') : array()), $onetable);
-        $tableoptions = html('option', array_merge(array('value'=>''), $linkedtable ? array() : array('selected'=>'selected')), '').$tableoptions;
+          $tableoptions[] = html('option', array_merge(array('value'=>$onetable), $onetable == $linkedtable ? array('selected'=>'selected') : array()), $onetable);
 
         $presentationspositive = $presentationszero = array();
         foreach ($presentations as $onepresentation)
@@ -298,15 +293,15 @@
         arsort($presentationspositive);
         sort($presentationszero);
 
-        $positiveoptions = '';
+        $positiveoptions = array();
         foreach ($presentationspositive as $onepresentation=>$probability)
-          $positiveoptions .= html('option', array_merge(array('value'=>$onepresentation), $onepresentation == $presentation ? array('selected'=>'selected') : array()), $onepresentation);
-        $zerooptions = '';
+          $positiveoptions[] = html('option', array_merge(array('value'=>$onepresentation), $onepresentation == $presentation ? array('selected'=>'selected') : array()), $onepresentation);
+        $zerooptions = array();
         foreach ($presentationszero as $onepresentation)
-          $zerooptions .= html('option', array_merge(array('value'=>$onepresentation), $onepresentation == $presentation ? array('selected'=>'selected') : array()), $onepresentation);
-        $presentationoptions = html('optgroup', array(), $positiveoptions).html('optgroup', array('label'=>'------------------------'), $zerooptions);
+          $zerooptions[] = html('option', array_merge(array('value'=>$onepresentation), $onepresentation == $presentation ? array('selected'=>'selected') : array()), $onepresentation);
+        $presentationoptions = html('optgroup', array(), join($positiveoptions)).html('optgroup', array('label'=>'------------------------'), join($zerooptions));
 
-        $tablestructure .=
+        $tablestructure[] =
           html('tr', array(),
             ($tablestructure ? '' : html('td', array('class'=>'rowgroup top', 'rowspan'=>mysql_num_rows($fields[$tablename])), $tablename)).
             html('td', array('class'=>'rowgroup'),
@@ -330,7 +325,7 @@
                 ? html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$fieldname))
                 : ($type == 'int'
                   ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename"),
-                      $tableoptions
+                      join($tableoptions)
                     )
                   : '&nbsp;'
                   )
@@ -343,7 +338,7 @@
             )
           );
       }
-      $totalstructure .= $header.$tablestructure;
+      $totalstructure[] = $header.join($tablestructure);
     }
 
     page($action, path('&hellip;', $databasename),
@@ -353,12 +348,12 @@
           _('metabase').' '.html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename ? $metabasename : (count($mbnames) == 1 ? $mbnames[0] : ''), 'class'=>'notempty'))
         ).
         html('table', array(),
-          $totalstructure
+          join($totalstructure)
         ).
         ($metabasename ? "* = from $metabasename" : '').
         html('p', array(),
           $tableswithoutsinglevaluedprimarykey
-          ? html('span', array('class'=>'error'), sprintf(_('no single valued primary key for table(s) %s'), $tableswithoutsinglevaluedprimarykey))
+          ? html('span', array('class'=>'error'), sprintf(_('no single valued primary key for table(s) %s'), join(', ', $tableswithoutsinglevaluedprimarykey)))
           : html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract_structure_from_database_to_metabase', 'class'=>'button'))
         )
       )
@@ -524,46 +519,41 @@
   /********************************************************************************************/
 
   if ($action == 'form_metabase_to_database') {
+    $rows = array();
     $metabases = query('root', 'SHOW DATABASES');
     while ($metabase = mysql_fetch_assoc($metabases)) {
       $metabasename = $metabase['Database'];
       $databasenames = databasenames($metabasename);
       if ($databasenames)
-        $rows .= html('tr', array(), html('td', array(), internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$metabasename), $metabasename)));
+        $rows[] = html('td', array(), internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$metabasename), $metabasename));
     }
     page($action, null,
-      html('table', array(), $rows)
+      html('table', array(), html('tr', array(), $rows))
     );
   }
-
 
   /********************************************************************************************/
 
   if ($action == 'form_database_for_metabase') {
     $metabasename = parameter('get', 'metabasename');
+    $rows = array();
     $databasenames = databasenames($metabasename);
     if ($databasenames) {
       while ($databasename = mysql_fetch_assoc($databasenames))
-        $rows .=
-          html('tr', array(),
-            html('td', array(),
-              internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename['value']), $databasename['value'])
-            )
-          );
-      $rows .=
-        html('tr', array(),
+        $rows[] =
           html('td', array(),
-            array(
-              html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
-              html('input', array('type'=>'text', 'name'=>'databasename')).
-              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_database_from_metabase', 'class'=>'button'))
-            )
-          )
+            internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename['value']), $databasename['value'])
+          );
+      $rows[] =
+        html('td', array(),
+          html('input', array('type'=>'text', 'name'=>'databasename')).
+          html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
+          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_database_from_metabase', 'class'=>'button mainsubmit'))
         );
     }
     page($action, path($metabasename),
       form(
-        html('table', array(), $rows)
+        html('table', array(), html('tr', array(), $rows))
       )
     );
   }
@@ -578,6 +568,7 @@
 
     query('data', 'CREATE DATABASE IF NOT EXISTS `<databasename>`', array('databasename'=>$databasename));
 
+    $rows = array();
     $metatables = query('meta', 'SELECT * FROM `<metabasename>`.metatable mt LEFT JOIN `<metabasename>`.metafield mf ON mf.fieldid = mt.uniquefieldid LEFT JOIN `<metabasename>`.metatype my ON mf.typeid = my.typeid', array('metabasename'=>$metabasename));
     while ($metatable = mysql_fetch_assoc($metatables)) {
       $totaltype = totaltype($metatable);
@@ -602,12 +593,12 @@
           $newtype = totaltype($metafield);
           if ($oldfield) {
             if (strcasecmp($oldtype, $newtype))
-              $rows .= queriesused("ALTER TABLE `$databasename`.$metafield[tablename] CHANGE COLUMN $metafield[fieldname] $metafield[fieldname] $newtype", $oldtype);
+              $rows[] = queriesused("ALTER TABLE `$databasename`.$metafield[tablename] CHANGE COLUMN $metafield[fieldname] $metafield[fieldname] $newtype", $oldtype);
           }
           else
-            $rows .= queriesused("ALTER TABLE `$databasename`.$metafield[tablename] ADD COLUMN ($metafield[fieldname] $newtype)", $oldtype);
+            $rows[] = queriesused("ALTER TABLE `$databasename`.$metafield[tablename] ADD COLUMN ($metafield[fieldname] $newtype)", $oldtype);
           if ($metafield['foreigntableid'] && !$associatedoldindices[$metafield['fieldname']])
-            $rows .= queriesused("ALTER TABLE `$databasename`.$metafield[tablename] ADD INDEX ($metafield[fieldname])", 'non-existent');
+            $rows[] = queriesused("ALTER TABLE `$databasename`.$metafield[tablename] ADD INDEX ($metafield[fieldname])", 'non-existent');
         }
       }
     }
@@ -616,7 +607,7 @@
       internalredirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
 
     page($action, path($metabasename, $databasename),
-      html('table', array(), $rows).
+      html('table', array(), html('tr', array(), $rows)).
       internalreference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), 'show_database')
     );
   }
@@ -682,7 +673,7 @@
 
     get_presentations();
 
-    $line = '';
+    $line = array();
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
       $field['uniquefieldname'] = $uniquefieldname;
       $field['uniquevalue'] = $uniquevalue;
@@ -690,44 +681,36 @@
       if (!$value && $row)
         $value = $row[$field['fieldname']];
       $cell = call_user_func("formfield_$field[presentation]", $metabasename, $databasename, $field, $value, $action == 'delete_record' || $fixedvalue);
-      $lines .=
-        html('tr', array(),
-          html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), preg_replace('/(?<=\w)id$/i', '', $field['fieldname']))).
-          html('td', array(), $cell)
-        );
+      $lines[] =
+        html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), preg_replace('/(?<=\w)id$/i', '', $field['fieldname']))).
+        html('td', array(), $cell);
     }
+
+    $lines[] =
+      html('td', array('class'=>'description'), '&rarr;').
+      html('td', array(), 
+        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'delete_record' ? 'delete_record_really' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>'mainsubmit button')).
+        (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit button')) : '').
+        internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel'))
+      );
 
     if (!is_null($uniquevalue)) {
       $referringfields = query('meta', 'SELECT mt.tableid, tablename, mf.fieldname AS fieldname, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.metafield mf LEFT JOIN `<metabasename>`.metatable mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.metafield mfu ON mt.uniquefieldid = mfu.fieldid WHERE mf.foreigntableid = <tableid>', array('metabasename'=>$metabasename, 'tableid'=>$tableid));
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
-        $referringtables .=
-          html('tr', array(),
-            html('td', array('class'=>'description'), $referringfield['tablename']).
-            html('td', array(), list_table($metabasename, $databasename, $referringfield['tableid'], $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tableid, $action != 'delete_record'))
-          );
+        $lines[] =
+          html('td', array('class'=>'description'), $referringfield['tablename']).
+          html('td', array(), list_table($metabasename, $databasename, $referringfield['tableid'], $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tableid, $action != 'delete_record'));
       }
-      $description = query1field('data', "SELECT ".descriptor($metabasename, $tableid, $tablename)." AS _descriptor FROM `$databasename`.$tablename WHERE $uniquefieldname = $uniquevalue");
     }
 
-    page($action, path($metabasename, $databasename, $tablename, $tableid, $description),
+    page($action, path($metabasename, $databasename, $tablename, $tableid, $uniquefieldname, $uniquevalue),
       form(
         html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('input', array('type'=>'hidden', 'name'=>'tableid', 'value'=>$tableid)).
         html('input', array('type'=>'hidden', 'name'=>'uniquevalue', 'value'=>$uniquevalue)).
         html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back ? $back : parameter('server', 'HTTP_REFERER'))).
-        html('table', array('class'=>'tableedit'), 
-          $lines.
-          html('tr', array(),
-            html('td', array('class'=>'description'), '&rarr;').
-            html('td', array(), 
-              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'delete_record' ? 'delete_record_really' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>'mainsubmit button')).
-              (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit button')) : '').
-              internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel'))
-            )
-          ).
-          $referringtables
-        )
+        html('table', array('class'=>'tableedit'), html('tr', array(), $lines))
       )
     );
   }
