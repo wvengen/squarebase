@@ -50,7 +50,7 @@ input.minorsubmit.ajaxified { display: none; }
 
 #warnings { padding: 0; }
 #warnings li { list-style-type: none; }
-.error, .problem, .warning { font-weight: bold; color: #f00; }
+p.error, .problem, .warning { font-weight: bold; color: #f00; }
 .help { color: #999; margin-left: 0.5em; }
 
 .trace { white-space: nowrap; }

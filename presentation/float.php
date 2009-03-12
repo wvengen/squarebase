@@ -5,7 +5,7 @@
   }
 
   function typename_float($field) {
-    return $field['Field'];
+    return strtolower($field['Field']);
   }
 
   function in_desc_float($field) { return false; }

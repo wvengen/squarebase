@@ -3,17 +3,20 @@
     static $linkedtables = array();
     if (is_null($linkedtables["$tablename:$fieldname"])) {
       $likeness = array();
+      $fieldname_lower = strtolower($fieldname);
       foreach ($alltables as $onetable) {
+        $onetable_lower = strtolower($onetable);
         $likeness[$onetable] =
-          ($fieldname == $onetable ? 10 : 0) +
-          (substr($fieldname, -strlen($primarykeyfieldname[$onetable])) == $primarykeyfieldname[$onetable] ? 5 : 0) +
-          (strpos($fieldname, $onetable) !== FALSE ? 5 : 0);
+          ($fieldname_lower == $onetable_lower ? 10 : 0) +
+          (substr($fieldname_lower, -strlen($primarykeyfieldname[$onetable])) == $primarykeyfieldname[$onetable] ? 5 : 0) +
+          (strpos($fieldname_lower, $onetable_lower) !== FALSE ? 5 : 0) -
+          levenshtein($fieldname_lower, $onetable_lower);
       }
       arsort($likeness);
       reset($likeness);
       list($table1, $likeness1) = each($likeness);
       list($table2, $likeness2) = each($likeness);
-      $linkedtables["$tablename:$fieldname"] = $likeness1 == $likeness2 ? '' : $table1;
+      $linkedtables["$tablename:$fieldname"] = $likeness1 < -3 || $likeness1 == $likeness2 ? '' : $table1;
     }
     return $linkedtables["$tablename:$fieldname"] ? $linkedtables["$tablename:$fieldname"] : null;
   }

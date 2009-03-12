@@ -397,11 +397,6 @@
       mysql_data_seek($results, 0);
   }
   
-  function queriesused($query, $old) {
-    query('data', $query);
-    return html('td', array(), array($query, sprintf(_('WAS %s'), $old)));
-  }
-
   function fieldsforpurpose($metabasename, $tablename, $purpose) {
     return query('meta', 
       "SELECT mt.tablename, mt.tableid, mf.fieldid, mf.fieldname, mr.presentation, mf.autoincrement, mf.foreigntableid, mf.nullallowed, mf.indesc, mf.inlist, mf.inedit, mt2.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname ".

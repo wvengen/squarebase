@@ -19,5 +19,5 @@ Notes:
    $ sudo chown :www-data session
    $ chmod g+w session
 
-3. There is a demo database Nortwind (by Microsoft) included.
-   $ mysql < example/install_northwind.sql
+3. There is a demo database mst3k_Inventory
+   $ mysql < example/inventory.sql

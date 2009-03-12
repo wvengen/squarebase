@@ -541,7 +541,6 @@
 
     query('data', 'CREATE DATABASE IF NOT EXISTS `<databasename>`', array('databasename'=>$databasename));
 
-    $rows = array();
     $metatables = query('meta', 'SELECT * FROM `<metabasename>`.metatable mt LEFT JOIN `<metabasename>`.metafield mf ON mf.fieldid = mt.uniquefieldid LEFT JOIN `<metabasename>`.metatype my ON mf.typeid = my.typeid', array('metabasename'=>$metabasename));
     while ($metatable = mysql_fetch_assoc($metatables)) {
       $totaltype = totaltype($metatable);
@@ -566,23 +565,17 @@
           $newtype = totaltype($metafield);
           if ($oldfield) {
             if (strcasecmp($oldtype, $newtype))
-              $rows[] = queriesused("ALTER TABLE `$databasename`.$metafield[tablename] CHANGE COLUMN $metafield[fieldname] $metafield[fieldname] $newtype", $oldtype);
+              query('data', 'ALTER TABLE `<databasename>`.`<tablename>` MODIFY COLUMN <fieldname> <newtype> /* WAS <oldtype> */', array('databasename'=>$databasename, 'tablename'=>$metafield['tablename'], 'fieldname'=>$metafield['fieldname'], 'newtype'=>$newtype, 'oldtype'=>$oldtype));
           }
           else
-            $rows[] = queriesused("ALTER TABLE `$databasename`.$metafield[tablename] ADD COLUMN ($metafield[fieldname] $newtype)", $oldtype);
+            query('data', 'ALTER TABLE `<databasename>`.`<tablename>` ADD COLUMN (<fieldname> <newtype>) /* WAS <oldtype> */', array('databasename'=>$databasename, 'tablename'=>$metafield['tablename'], 'fieldname'=>$metafield['fieldname'], 'newtype'=>$newtype, 'oldtype'=>$oldtype));
           if ($metafield['foreigntableid'] && !$associatedoldindices[$metafield['fieldname']])
-            $rows[] = queriesused("ALTER TABLE `$databasename`.$metafield[tablename] ADD INDEX ($metafield[fieldname])", 'non-existent');
+            query('data', 'ALTER TABLE `<databasename>`.`<tablename>` ADD INDEX (<fieldname>) /* WAS non-existent */', array('databasename'=>$databasename, 'tablename'=>$metafield['tablename'], 'fieldname'=>$metafield['fieldname']));
         }
       }
     }
 
-    if (!$rows)
-      internalredirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
-
-    page($action, path($metabasename, $databasename),
-      html('table', array(), html('tr', array(), $rows)).
-      internalreference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), 'show_database')
-    );
+    internalredirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
   }
 
   /********************************************************************************************/
