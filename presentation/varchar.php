@@ -8,9 +8,8 @@
   }
 
   function in_desc_varchar($field) { return $field['FieldNr'] < 5 && preg_match('/('._('name').'|'._('acronym').'|'._('abbr').'|'._('abbreviation').')$/i', $field['Field']); }
-  function in_sort_varchar($field) { return in_desc_varchar($field); }
   function in_list_varchar($field) { return in_desc_varchar($field); }
-  function in_edit_varchar($field) { return 1; }
+  function in_edit_varchar($field) { return true; }
 
   function formfield_varchar($metabasename, $databasename, $field, $value, $readonly) {
     return html('input', array('type'=>'text', 'class'=>join(' ', array_clean(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null));

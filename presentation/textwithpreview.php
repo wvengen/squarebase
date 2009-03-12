@@ -16,10 +16,9 @@
     return strtolower($field['Field']);
   }
 
-  function in_desc_textwithpreview($field) { return 0; }
-  function in_sort_textwithpreview($field) { return 0; }
-  function in_list_textwithpreview($field) { return 0; }
-  function in_edit_textwithpreview($field) { return 1; }
+  function in_desc_textwithpreview($field) { return false; }
+  function in_list_textwithpreview($field) { return false; }
+  function in_edit_textwithpreview($field) { return true; }
 
   function formfield_textwithpreview($metabasename, $databasename, $field, $value, $readonly) {
     return formfield_text($metabasename, $databasename, $field, $value, $readonly);

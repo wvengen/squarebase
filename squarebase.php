@@ -195,7 +195,7 @@
       html('tr', array(),
         html('th', array(),
           array(
-            _('table'), _('field'), _('type'), _('len'), _('unsg'), _('fill'), _('null'), _('auto'), _('more'), _('typename'), _('presentation'), _('key'), _('desc'), _('sort'), _('list'), _('edit')
+            _('table'), _('field'), _('type'), _('len'), _('unsg'), _('fill'), _('null'), _('auto'), _('more'), _('typename'), _('presentation'), _('key'), _('desc'), _('list'), _('edit')
           )
         )
       );
@@ -206,11 +206,10 @@
 
       $tablestructure = array();
       $desc = $sort = $list = $edit = $fieldnr = 0;
-      $inpurpose = array();
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
         $fieldname = $field['Field'];
 
-        $originals = $metabasename ? query('meta', 'SELECT typename, type, typelength, typeunsigned, typezerofill, presentation, nullallowed, autoincrement, mt2.tablename AS foreigntablename FROM `<metabasename>`.metatable AS mt LEFT JOIN `<metabasename>`.metafield AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.metatype AS my ON my.typeid = mf.typeid LEFT JOIN `<metabasename>`.metapresentation mr ON mr.presentationid = my.presentationid LEFT JOIN `<metabasename>`.metatable AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = \'<tablename>\' AND fieldname = \'<fieldname>\'', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
+        $originals = $metabasename ? query('meta', 'SELECT typename, type, typelength, typeunsigned, typezerofill, presentation, nullallowed, autoincrement, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.metatable AS mt LEFT JOIN `<metabasename>`.metafield AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.metatype AS my ON my.typeid = mf.typeid LEFT JOIN `<metabasename>`.metapresentation mr ON mr.presentationid = my.presentationid LEFT JOIN `<metabasename>`.metatable AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = \'<tablename>\' AND fieldname = \'<fieldname>\'', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
         if ($originals) {
           $original = mysql_fetch_assoc($originals);
           $type          = $original['type'];
@@ -222,14 +221,12 @@
           $nullallowed   = $original['nullallowed'];
           $autoincrement = $original['autoincrement'];
           $linkedtable   = $original['foreigntablename'];
+          $indesc        = $original['indesc'];
+          $inlist        = $original['inlist'];
+          $inedit        = $original['inedit'];
 
           $typeinfo = '';
           $numeric = $type == 'int';
-
-          $purposes = query('meta', 'SELECT * FROM `<metabasename>`.metatable AS mt LEFT JOIN `<metabasename>`.metafield AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.metaelement AS me ON me.fieldid = mf.fieldid LEFT JOIN `<metabasename>`.metapurpose AS mp ON mp.purposeid = me.purposeid WHERE mt.tablename = \'<tablename>\' AND fieldname = \'<fieldname>\'', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname));
-          if ($purposes)
-            while ($purpose = mysql_fetch_assoc($purposes))
-              $inpurpose[$purpose['purpose']] = $purpose['rank'];
         }
         else {
           $typeinfo = $field['Type'];
@@ -273,16 +270,15 @@
           $linkedtable = $presentation == 'lookup' ? linkedtable_lookup($tablename, $fieldname) : null;
           $typename = call_user_func("typename_$presentation", $augmentedfield);
 
-          $inpurpose['desc'] = call_user_func("in_desc_$presentation", $augmentedfield) ? ++$desc : '';
-          $inpurpose['sort'] = call_user_func("in_sort_$presentation", $augmentedfield) ? ++$sort : '';
-          $inpurpose['list'] = call_user_func("in_list_$presentation", $augmentedfield) ? ++$list : '';
-          $inpurpose['edit'] = call_user_func("in_edit_$presentation", $augmentedfield) ? ++$edit : '';
+          $indesc = call_user_func("in_desc_$presentation", $augmentedfield);
+          $inlist = call_user_func("in_list_$presentation", $augmentedfield);
+          $inedit = call_user_func("in_edit_$presentation", $augmentedfield);
         }
 
         $tableoptions = array();
-        $tableoptions[] = html('option', array_merge(array('value'=>''), $linkedtable ? array() : array('selected'=>'selected')), '').$tableoptions;
+        $tableoptions[] = html('option', array('value'=>'', 'selected'=>!$linkedtable ? 'selected' : null), '').$tableoptions;
         foreach ($alltables as $onetable)
-          $tableoptions[] = html('option', array_merge(array('value'=>$onetable), $onetable == $linkedtable ? array('selected'=>'selected') : array()), $onetable);
+          $tableoptions[] = html('option', array('value'=>$onetable, 'selected'=>$onetable == $linkedtable ? 'selected' : null), $onetable);
 
         $presentationspositive = $presentationszero = array();
         foreach ($presentations as $onepresentation)
@@ -295,10 +291,10 @@
 
         $positiveoptions = array();
         foreach ($presentationspositive as $onepresentation=>$probability)
-          $positiveoptions[] = html('option', array_merge(array('value'=>$onepresentation), $onepresentation == $presentation ? array('selected'=>'selected') : array()), $onepresentation);
+          $positiveoptions[] = html('option', array('value'=>$onepresentation, 'selected'=>$onepresentation == $presentation ? 'selected' : null), $onepresentation);
         $zerooptions = array();
         foreach ($presentationszero as $onepresentation)
-          $zerooptions[] = html('option', array_merge(array('value'=>$onepresentation), $onepresentation == $presentation ? array('selected'=>'selected') : array()), $onepresentation);
+          $zerooptions[] = html('option', array('value'=>$onepresentation, 'selected'=>$onepresentation == $presentation ? 'selected' : null), $onepresentation);
         $presentationoptions = html('optgroup', array(), join($positiveoptions)).html('optgroup', array('label'=>'------------------------'), join($zerooptions));
 
         $tablestructure[] =
@@ -308,16 +304,16 @@
               array(
                 $fieldname.($originals ? '*' : ''),
                 html('select', array('name'=>"$tablename:$fieldname:type"),
-                  html('option', array_merge(array('value'=>'int'     ), $type == 'int'      ? array('selected'=>'selected') : array()), 'int'     ).
-                  html('option', array_merge(array('value'=>'varchar' ), $type == 'varchar'  ? array('selected'=>'selected') : array()), 'varchar' ).
-                  html('option', array_merge(array('value'=>'datetime'), $type == 'datetime' ? array('selected'=>'selected') : array()), 'datetime').
+                  html('option', array('value'=>'int'     , 'selected'=>$type == 'int'      ? 'selected' : null), 'int'     ).
+                  html('option', array('value'=>'varchar' , 'selected'=>$type == 'varchar'  ? 'selected' : null), 'varchar' ).
+                  html('option', array('value'=>'datetime', 'selected'=>$type == 'datetime' ? 'selected' : null), 'datetime').
                   ($type != 'int' && $type != 'varchar' && $type != 'datetime' ? html('option', array('value'=>$type, 'selected'=>'selected'), $type) : '')
                 ),
                 html('input', array('type'=>'text', 'class'=>'integer', 'name'=>"$tablename:$fieldname:typelength", 'value'=>$typelength)),
-                $numeric ? html('input', array_merge(array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:typeunsigned"), $typeunsigned ? array('checked'=>'checked') : array())) : '&nbsp;',
-                $numeric ? html('input', array_merge(array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:typezerofill"), $typezerofill ? array('checked'=>'checked') : array())) : '&nbsp;',
-                html('input', array_merge(array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:nullallowed"), $nullallowed ? array('checked'=>'checked') : array())),
-                $numeric ? html('input', array_merge(array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:autoincrement"), $autoincrement ? array('checked'=>'checked') : array())) : '&nbsp;',
+                $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:typeunsigned", 'checked'=>$typeunsigned ? 'checked' : null)) : '&nbsp;',
+                $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:typezerofill", 'checked'=>$typezerofill ? 'checked' : null)) : '&nbsp;',
+                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:nullallowed", 'checked'=>$nullallowed ? 'checked' : null)),
+                $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:autoincrement", 'checked'=>$autoincrement ? 'checked' : null)) : '&nbsp;',
                 join(' ', array($typeinfo, $extrainfo)),
                 html('input', array('type'=>'text', 'class'=>'typename', 'name'=>"$tablename:$fieldname:typename", 'value'=>$typename)),
                 html('select', array('name'=>"$tablename:$fieldname:presentation", 'class'=>'presentation'), $presentationoptions),
@@ -330,10 +326,9 @@
                   : '&nbsp;'
                   )
                 ),
-                html('input', array('type'=>'text', 'class'=>'integer', 'name'=>"$tablename:$fieldname:desc", 'value'=>$inpurpose['desc'])),
-                html('input', array('type'=>'text', 'class'=>'integer', 'name'=>"$tablename:$fieldname:sort", 'value'=>$inpurpose['sort'])),
-                html('input', array('type'=>'text', 'class'=>'integer', 'name'=>"$tablename:$fieldname:list", 'value'=>$inpurpose['list'])),
-                html('input', array('type'=>'text', 'class'=>'integer', 'name'=>"$tablename:$fieldname:edit", 'value'=>$inpurpose['edit']))
+                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null)),
+                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null)),
+                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null))
               )
             )
           );
@@ -402,9 +397,12 @@
           '  fieldid         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
           '  tableid         INT UNSIGNED NOT NULL,'.
           '  fieldname       VARCHAR(100) NOT NULL,'.
-          '  autoincrement   INT UNSIGNED NOT NULL,'.
+          '  autoincrement   BOOLEAN NOT NULL,'.
           '  typeid          INT UNSIGNED NOT NULL,'.
-          '  nullallowed     INT UNSIGNED NOT NULL,'.
+          '  nullallowed     BOOLEAN NOT NULL,'.
+          '  indesc          BOOLEAN NOT NULL,'.
+          '  inlist          BOOLEAN NOT NULL,'.
+          '  inedit          BOOLEAN NOT NULL,'.
           '  foreigntableid  INT UNSIGNED         ,'.
           '  UNIQUE KEY (tableid, fieldname)'.
           ')',
@@ -432,35 +430,9 @@
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', 'CREATE TABLE `<metabasename>`.metapurpose ('.
-          '  purposeid       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-          '  purpose         VARCHAR(100) NOT NULL,'.
-          '  UNIQUE KEY (purpose)'.
-          ')',
-          array('metabasename'=>$metabasename)
-    );
-
-    query('meta', 'CREATE TABLE `<metabasename>`.metaelement ('.
-          '  elementid       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-          '  fieldid         INT UNSIGNED NOT NULL,'.
-          '  purposeid       INT UNSIGNED NOT NULL,'.
-          '  rank            INT UNSIGNED NOT NULL,'.
-          '  UNIQUE KEY (fieldid, purposeid)'.
-          // UNIQUE KEY (fieldid:tableid, purposeid, rank)
-          ')',
-          array('metabasename'=>$metabasename)
-    );
-
     $constantid = insertorupdate($metabasename, 'metaconstant', array('constantname'=>'database'), 'constantid');
 
     insertorupdate($metabasename, 'metavalue', array('constantid'=>$constantid, 'value'=>$databasename));
-
-    $purposeids = array(
-      'desc'=>insertorupdate($metabasename, 'metapurpose', array('purpose'=>'desc'), 'purposeid'),
-      'sort'=>insertorupdate($metabasename, 'metapurpose', array('purpose'=>'sort'), 'purposeid'),
-      'list'=>insertorupdate($metabasename, 'metapurpose', array('purpose'=>'list'), 'purposeid'),
-      'edit'=>insertorupdate($metabasename, 'metapurpose', array('purpose'=>'edit'), 'purposeid')
-    );
 
     $presentations = get_presentations();
     $presentationids = array();
@@ -491,23 +463,24 @@
 
         $foreigntablename = parameter('get', "$tablename:$fieldname:foreigntablename");
 
-        $fieldid = insertorupdate($metabasename, 'metafield', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'typeid'=>$typeids[$typename], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'autoincrement'=>parameter('get', "$tablename:$fieldname:autoincrement") ? 1 : 0, 'nullallowed'=>parameter('get', "$tablename:$fieldname:nullallowed") ? 1 : 0), 'fieldid');
+        $indesc = parameter('get', "$tablename:$fieldname:indesc") ? 1 : 0;
+        $inlist = parameter('get', "$tablename:$fieldname:inlist") ? 1 : 0;
+        $inedit = parameter('get', "$tablename:$fieldname:inedit") ? 1 : 0;
+
+        $fieldid = insertorupdate($metabasename, 'metafield', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'typeid'=>$typeids[$typename], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'autoincrement'=>parameter('get', "$tablename:$fieldname:autoincrement") ? 1 : 0, 'nullallowed'=>parameter('get', "$tablename:$fieldname:nullallowed") ? 1 : 0, 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit), 'fieldid');
+
+        $indescs += $indesc;
+        $inlists += $inlist;
+        $inedits += $inedit;
 
         if (parameter('get', "$tablename:primary") == $fieldname)
           query('meta', 'UPDATE `<metabasename>`.metatable SET uniquefieldid = <fieldid> WHERE tableid = <tableid>', array('metabasename'=>$metabasename, 'fieldid'=>$fieldid, 'tableid'=>$tableid));
-
-        $descs += setelement($metabasename, $tablename, $fieldid, $fieldname, $purposeids, 'desc') ? 1 : 0;
-        $sorts += setelement($metabasename, $tablename, $fieldid, $fieldname, $purposeids, 'sort') ? 1 : 0;
-        $lists += setelement($metabasename, $tablename, $fieldid, $fieldname, $purposeids, 'list') ? 1 : 0;
-        $edits += setelement($metabasename, $tablename, $fieldid, $fieldname, $purposeids, 'edit') ? 1 : 0;
       }
-      if (!$descs)
+      if (!$indescs)
         $errors[] = sprintf(_('no fields to desc for %s'), $tablename);
-      if (!$sorts)
-        $errors[] = sprintf(_('no fields to sort for %s'), $tablename);
-      if (!$lists)
+      if (!$inlists)
         $errors[] = sprintf(_('no fields to list for %s'), $tablename);
-      if (!$edits)
+      if (!$inedits)
         $errors[] = sprintf(_('no fields to edit for %s'), $tablename);
     }
     if ($errors)
@@ -617,55 +590,48 @@
   if ($action == 'show_database') {
     $metabasename = parameter('get', 'metabasename');
     $databasename = parameter('get', 'databasename');
-    $tables = query('meta', 'SELECT * FROM `<metabasename>`.metatable ORDER BY tablename', array('metabasename'=>$metabasename));
-    $rows = array();
+    $tables = query('meta', 'SELECT * FROM `<metabasename>`.metatable LEFT JOIN `<metabasename>`.metafield ON metatable.uniquefieldid = metafield.fieldid ORDER BY tablename', array('metabasename'=>$metabasename));
+    $rows = array(html('th', array(), array('table', '#rows')));
     while ($table = mysql_fetch_assoc($tables)) {
       $rows[] =
         html('td', array(),
-          internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$table['tableid']), $table['tablename'])
+          internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$table['tablename'], 'uniquefieldname'=>$table['fieldname']), $table['tablename'])
         ).
         html('td', array('class'=>'number'),
-          query1field('data', 'SELECT COUNT(*) AS count FROM `<databasename>`.`<tablename>`', array('databasename'=>$databasename, 'tablename'=>$table['tablename']))
+          query1field('data', 'SELECT COUNT(*) FROM `<databasename>`.`<tablename>`', array('databasename'=>$databasename, 'tablename'=>$table['tablename']))
         );
     }
     page($action, path($metabasename, $databasename),
-      html('table', array(),
-        html('tr', array(),
-          array_merge(
-            array(html('th', array(), array('table', '#rows'))),
-            $rows
-          )
-        )
-      )
+      html('table', array(), html('tr', array(), $rows))
     );
   }
 
   /********************************************************************************************/
 
   if ($action == 'show_table') {
-    $metabasename = parameter('get', 'metabasename');
-    $databasename = parameter('get', 'databasename');
-    $tableid      = parameter('get', 'tableid');
-    $offset       = parameter('get', 'offset', 0);
-    $orderfieldid = parameter('get', 'orderfieldid');
-    list($tablename, $uniquefieldname) = tableanduniquefieldname($metabasename, $tableid);
+    $metabasename    = parameter('get', 'metabasename');
+    $databasename    = parameter('get', 'databasename');
+    $tablename       = parameter('get', 'tablename');
+    $uniquefieldname = parameter('get', 'uniquefieldname');
+    $offset          = parameter('get', 'offset', 0);
+    $orderfieldname  = parameter('get', 'orderfieldname');
 
-    page($action, path($metabasename, $databasename, $tablename, $tableid),
-      list_table($metabasename, $databasename, $tableid, $tablename, 0, $offset, $uniquefieldname, $orderfieldid)
+    page($action, path($metabasename, $databasename, $tablename, $uniquefieldname),
+      list_table($metabasename, $databasename, $tablename, 0, $offset, $uniquefieldname, $orderfieldname)
     );
   }
 
   /********************************************************************************************/
 
   if ($action == 'new_record' || $action == 'edit_record' || $action == 'delete_record') {
-    $metabasename = parameter('get', 'metabasename');
-    $databasename = parameter('get', 'databasename');
-    $tableid      = parameter('get', 'tableid');
-    $uniquevalue  = parameter('get', 'uniquevalue');
-    $back         = parameter('get', 'back');
-    list($tablename, $uniquefieldname) = tableanduniquefieldname($metabasename, $tableid);
+    $metabasename    = parameter('get', 'metabasename');
+    $databasename    = parameter('get', 'databasename');
+    $tablename       = parameter('get', 'tablename');
+    $uniquefieldname = parameter('get', 'uniquefieldname');
+    $uniquevalue     = parameter('get', 'uniquevalue');
+    $back            = parameter('get', 'back');
 
-    $fields = fieldsforpurpose($metabasename, $tableid, array('edit'));
+    $fields = fieldsforpurpose($metabasename, $tablename, 'inedit');
 
     $row = array();
     if (!is_null($uniquevalue))
@@ -695,11 +661,11 @@
       );
 
     if (!is_null($uniquevalue)) {
-      $referringfields = query('meta', 'SELECT mt.tableid, tablename, mf.fieldname AS fieldname, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.metafield mf LEFT JOIN `<metabasename>`.metatable mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.metafield mfu ON mt.uniquefieldid = mfu.fieldid WHERE mf.foreigntableid = <tableid>', array('metabasename'=>$metabasename, 'tableid'=>$tableid));
+      $referringfields = query('meta', 'SELECT mt.tablename, mf.fieldname AS fieldname, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.metafield mf LEFT JOIN `<metabasename>`.metatable mtf ON mtf.tableid = mf.foreigntableid LEFT JOIN `<metabasename>`.metatable mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.metafield mfu ON mt.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
         $lines[] =
           html('td', array('class'=>'description'), $referringfield['tablename']).
-          html('td', array(), list_table($metabasename, $databasename, $referringfield['tableid'], $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tableid, $action != 'delete_record'));
+          html('td', array(), list_table($metabasename, $databasename, $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tablename, $action != 'delete_record'));
       }
     }
 
@@ -707,7 +673,8 @@
       form(
         html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
-        html('input', array('type'=>'hidden', 'name'=>'tableid', 'value'=>$tableid)).
+        html('input', array('type'=>'hidden', 'name'=>'tablename', 'value'=>$tablename)).
+        html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
         html('input', array('type'=>'hidden', 'name'=>'uniquevalue', 'value'=>$uniquevalue)).
         html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back ? $back : parameter('server', 'HTTP_REFERER'))).
         html('table', array('class'=>'tableedit'), html('tr', array(), $lines))
@@ -718,11 +685,11 @@
   /********************************************************************************************/
 
   if ($action == 'delete_record_really') {
-    $metabasename = parameter('get', 'metabasename');
-    $databasename = parameter('get', 'databasename');
-    $tableid      = parameter('get', 'tableid');
-    $uniquevalue  = parameter('get', 'uniquevalue');
-    list($tablename, $uniquefieldname) = tableanduniquefieldname($metabasename, $tableid);
+    $metabasename    = parameter('get', 'metabasename');
+    $databasename    = parameter('get', 'databasename');
+    $tablename       = parameter('get', 'tablename');
+    $uniquefieldname = parameter('get', 'uniquefieldname');
+    $uniquevalue     = parameter('get', 'uniquevalue');
 
     query('data', 'DELETE FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = \'<uniquevalue>\'', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
 
@@ -732,25 +699,24 @@
   /********************************************************************************************/
 
   if ($action == 'update_record' || $action == 'add_record' || $action == 'add_record_and_edit') {
-    $metabasename = parameter('get', 'metabasename');
-    $databasename = parameter('get', 'databasename');
-    $tableid      = parameter('get', 'tableid');
-    $uniquevalue  = parameter('get', 'uniquevalue');
-    $back         = parameter('get', 'back');
-
-    list($tablename, $uniquefieldname) = tableanduniquefieldname($metabasename, $tableid);
+    $metabasename    = parameter('get', 'metabasename');
+    $databasename    = parameter('get', 'databasename');
+    $tablename       = parameter('get', 'tablename');
+    $uniquefieldname = parameter('get', 'uniquefieldname');
+    $uniquevalue     = parameter('get', 'uniquevalue');
+    $back            = parameter('get', 'back');
 
     get_presentations();
 
     $fieldnamesandvalues = array();
-    $fields = fieldsforpurpose($metabasename, $tableid, array('edit'));
+    $fields = fieldsforpurpose($metabasename, $tablename, 'inedit');
     while ($field = mysql_fetch_assoc($fields)) {
       $fieldnamesandvalues[$field['fieldname']] = call_user_func("formvalue_$field[presentation]", $field);
     }
 
-    $uniquevalue = insertorupdate($databasename, $tablename, $fieldnamesandvalues, $uniquevalue ? $uniquefieldname : null, $uniquevalue);
+    $uniquevalue = insertorupdate($databasename, $tablename, $fieldnamesandvalues, $uniquefieldname, $uniquevalue);
     if ($action == 'add_record_and_edit')
-      internalredirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$tableid, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
+      internalredirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
 
     back();
   }
@@ -758,12 +724,12 @@
   /********************************************************************************************/
 
   if ($action == 'get_image') {
-    $metabasename = parameter('get', 'metabasename');
-    $databasename = parameter('get', 'databasename');
-    $tableid      = parameter('get', 'tableid');
-    $fieldname    = parameter('get', 'fieldname');
-    $uniquevalue  = parameter('get', 'uniquevalue');
-    list($tablename, $uniquefieldname) = tableanduniquefieldname($metabasename, $tableid);
+    $metabasename    = parameter('get', 'metabasename');
+    $databasename    = parameter('get', 'databasename');
+    $tablename       = parameter('get', 'tablename');
+    $uniquefieldname = parameter('get', 'uniquefieldname');
+    $uniquevalue     = parameter('get', 'uniquevalue');
+    $fieldname       = parameter('get', 'fieldname');
 
     $image = query1field('data', 'SELECT <fieldname> FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = \'<uniquevalue>\'', array('fieldname'=>$fieldname, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
 

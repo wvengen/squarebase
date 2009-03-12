@@ -7,10 +7,9 @@
     return 'image';
   }
 
-  function in_desc_image($field) { return 0; }
-  function in_sort_image($field) { return 0; }
-  function in_list_image($field) { return 0; }
-  function in_edit_image($field) { return 1; }
+  function in_desc_image($field) { return false; }
+  function in_list_image($field) { return false; }
+  function in_edit_image($field) { return true; }
 
   function formfield_image($metabasename, $databasename, $field, $value, $readonly) {
     return
@@ -44,7 +43,7 @@
   }
 
   function list_image($metabasename, $databasename, $field, $value) {
-    return $value ? html('img', array('src'=>internalurl(array('action'=>'get_image', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$field['tableid'], 'uniquevalue'=>$field['uniquevalue'], 'fieldname'=>$field['fieldname'])))) : '';
+    return $value ? html('img', array('src'=>internalurl(array('action'=>'get_image', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$field['tablename'], 'uniquefieldname'=>$field['uniquefieldname'], 'uniquevalue'=>$field['uniquevalue'], 'fieldname'=>$field['fieldname'])))) : '';
   }
   
   function css_image() {

@@ -7,10 +7,9 @@
     return 'date';
   }
 
-  function in_desc_date($field) { return 0; }
-  function in_sort_date($field) { return 0; }
-  function in_list_date($field) { return 0; }
-  function in_edit_date($field) { return 1; }
+  function in_desc_date($field) { return false; }
+  function in_list_date($field) { return false; }
+  function in_edit_date($field) { return true; }
 
   function formfield_date($metabasename, $databasename, $field, $value, $readonly) {
     return 

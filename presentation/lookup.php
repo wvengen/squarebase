@@ -27,14 +27,13 @@
   }
 
   function in_desc_lookup($field) { return $field['FieldNr'] < 5; }
-  function in_sort_lookup($field) { return in_desc_lookup($field); }
   function in_list_lookup($field) { return in_desc_lookup($field); }
-  function in_edit_lookup($field) { return 1; }
+  function in_edit_lookup($field) { return true; }
 
-  function ajax_lookup($metabasename, $databasename, $fieldname, $value, $presentation, $foreigntableid, $foreigntablename, $foreignuniquefieldname, $nullallowed, $readonly) {
-    if (!$foreigntableid)
-      error(sprintf(_('no foreigntableid for %s'), $fieldname));
-    $references = query('data', "SELECT $foreignuniquefieldname, ".descriptor($metabasename, $foreigntableid, $foreigntablename)." AS _descriptor FROM `$databasename`.$foreigntablename ORDER BY _descriptor");
+  function ajax_lookup($metabasename, $databasename, $fieldname, $value, $presentation, $foreigntablename, $foreignuniquefieldname, $nullallowed, $readonly) {
+    if (!$foreigntablename)
+      error(sprintf(_('no foreigntablename for %s'), $fieldname));
+    $references = query('data', "SELECT $foreignuniquefieldname, ".descriptor($metabasename, $foreigntablename, $foreigntablename)." AS _descriptor FROM `$databasename`.$foreigntablename ORDER BY _descriptor");
     $options = array();
     while ($reference = mysql_fetch_assoc($references)) {
       $selected = $value == $reference[$foreignuniquefieldname];
@@ -43,15 +42,15 @@
     }
     array_unshift($options, html('option', array_merge(array('value'=>''), $oneselected ? array() : array('selected'=>'selected')), ''));
     return
-      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'ajax_lookup', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'fieldname'=>$fieldname, 'value'=>$value, 'presentation'=>$presentation, 'foreigntableid'=>$foreigntableid, 'foreigntablename'=>$foreigntablename, 'foreignuniquefieldname'=>$foreignuniquefieldname, 'nullallowed'=>$nullallowed, 'readonly'=>$readonly))),
+      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'ajax_lookup', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'fieldname'=>$fieldname, 'value'=>$value, 'presentation'=>$presentation, 'foreigntablename'=>$foreigntablename, 'foreignuniquefieldname'=>$foreignuniquefieldname, 'nullallowed'=>$nullallowed, 'readonly'=>$readonly))),
         html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>join(' ', array_clean(array($presentation, $readonly ? 'readonly' : null, $nullallowed ? null : 'notempty'))), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null), join($options)).
-        ($readonly ? '' : ' '.internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$foreigntableid, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablename)).html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)'))).
+        ($readonly ? '' : ' '.internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablename)).html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)'))).
         html('div', array('class'=>'ajaxcontent'), '')
       );
   }
 
   function formfield_lookup($metabasename, $databasename, $field, $value, $readonly) {
-    return ajax_lookup($metabasename, $databasename, $field['fieldname'], $value, $field['presentation'], $field['foreigntableid'], $field['foreigntablename'], $field['foreignuniquefieldname'], $field['nullallowed'], $readonly);
+    return ajax_lookup($metabasename, $databasename, $field['fieldname'], $value, $field['presentation'], $field['foreigntablename'], $field['foreignuniquefieldname'], $field['nullallowed'], $readonly);
   }
 
   function formvalue_lookup($field) {
@@ -63,7 +62,7 @@
       ($field['thisrecord']
       ? html('span', array('class'=>'thisrecord'), $field['descriptor'])
       : ($field['descriptor']
-        ? internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tableid'=>$field['foreigntableid'], 'uniquevalue'=>$value, 'back'=>parameter('server', 'REQUEST_URI')), $field['descriptor']) 
+        ? internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$field['foreigntablename'], 'uniquefieldname'=>$field['foreignuniquefieldname'], 'uniquevalue'=>$value, 'back'=>parameter('server', 'REQUEST_URI')), $field['descriptor']) 
         : $value
         )
       );

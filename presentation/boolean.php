@@ -10,10 +10,9 @@
     return $field['Field'];
   }
 
-  function in_desc_boolean($field) { return 0; }
-  function in_sort_boolean($field) { return 0; }
-  function in_list_boolean($field) { return 0; }
-  function in_edit_boolean($field) { return 1; }
+  function in_desc_boolean($field) { return false; }
+  function in_list_boolean($field) { return false; }
+  function in_edit_boolean($field) { return true; }
 
   function formfield_boolean($metabasename, $databasename, $field, $value, $readonly) {
     return html('input', array('type'=>'checkbox', 'class'=>join(' ', array_clean(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null, 'checked'=>$value ? 'checked' : null));

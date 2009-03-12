@@ -18,3 +18,6 @@ Notes:
 2. After checking out, perform the following commands, because Subversion doesn't set the permissions right.
    $ sudo chown :www-data session
    $ chmod g+w session
+
+3. There is a demo database Nortwind (by Microsoft) included.
+   $ mysql < example/install_northwind.sql
