@@ -1,18 +1,21 @@
 * { margin: 0; border: 0; padding: 0; }
-body { margin: 0.5em; }
+body { margin: 0.5em; overflow-y: scroll; }
 h2 { margin-bottom: 0.5em; }
 form { background-color: #ddf; padding: 0.5em; }
 fieldset { border: 0.1em solid #ccc; padding: 0.2em; }
 p { margin: 0.5em 0; }
 
-table { border: 0.1em solid #999; }
-tr.rowodd { background: #eee; }
-tr.roweven { background: #ddd; }
+table { border: 0.1em solid #999; width: 100%; }
+tr.rowodd { background-color: #eee; }
+tr.roweven { background-color: #ddd; }
 th, td { padding: 0.1em; vertical-align: top; }
 th { text-align: left; background: #ddd; }
 td.description { width: 0.1em; height: 1.5em; white-space: nowrap; }
 td.number { text-align: right; }
 td.center { text-align: center; }
+th.wide, td.wide { width: 99%; }
+th.small, td.small { width: 1%; }
+tr.list:hover { background-color: #ffc; }
 
 ul, ol { padding: 0.5em 2em; }
 ul.compact { margin: 0; padding: 0; max-width: 30em; overflow: hidden; }
@@ -25,14 +28,16 @@ input:focus, select:focus, textarea:focus { background-color: #ffc; border: 0.1e
 select { height: 1.25em; }
 input.readonly, select.readonly { border-color: #ddd; }
 input.button { border: 0.15em solid #fff; border-color: #fff #999 #999 #fff; color: #33f; padding: 0 0.2em; }
-input.mainsubmit, input.minorsubmit { margin-right: 1em; }
+input.mainsubmit, input.minorsubmit, .cancel, .done { margin-right: 1em; }
 input.mainsubmit:hover, input.minorsubmit:hover { background-color: #090 !important; color: #fff; }
 .cancel { padding: 0.1em 0.5em; }
 option { background-color: #fff; }
-.cancel:hover { background-color: #f00 !important; color: #fff; }
+input.mainsubmit.delete:hover, .cancel:hover, .close:hover { background-color: #f00 !important; color: #fff; }
+input.mainsubmit.delete{ margin-left: 5em; }
 
 a.ajaxified, input.ajaxified { background-color: #cff; }
 input.minorsubmit.ajaxified { display: none; }
+.ajaxcontainer { padding-left: 1em; }
 .ajaxproblem { border-color: #c00 !important; }
 
 .column { white-space: nowrap; }

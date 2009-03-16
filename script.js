@@ -1,3 +1,12 @@
+$.extend(
+  $.expr[':'],
+  {
+    inline:     function(a) { return $(a).css('display') === 'inline'; },
+    block:      function(a) { return $(a).css('display') === 'block';  },
+    blocklevel: function(a) { return $(a).css('display') === 'block' || $(a).css('display') === 'table-row';  }
+  }
+);
+
 jQuery.fn.enhanceform = function() {
   $(this).
   filter(':not(.enhancedform)').
@@ -89,6 +98,12 @@ jQuery.fn.ajaxsubmit = function() {
 };
 
 jQuery.fn.ajaxify = function() {
+//$(this).
+//css('background', 'red');
+//alert('ajaxify');
+//$(this).
+//css('background', null);
+
   $(this).
   find('form').
   enhanceform().
@@ -103,24 +118,37 @@ jQuery.fn.ajaxify = function() {
   addClass('ajaxified').
   click(
     function() {
-      var ajaxcontent =
-        $(this).
-        closest('.ajax').
-        find('.ajaxcontent:first');
-
-      if (ajaxcontent.length == 0) //error
-        $(this).
-        closest('.ajax').
-        addClass('ajaxproblem');
+      var ajaxcontent =  null;
+      if ($(this).hasClass('ajaxreload')) {
+        ajaxcontent = 
+          $(this).
+          closest('.ajaxcontent');
+      }
+      else {
+        var containingblock =
+          $(this).
+          closest(':blocklevel');
+        if (containingblock.next('.ajaxcontent').length == 0) {
+          containingblock.
+          after(
+            containingblock.css('display') == 'table-row'
+            ? '<tr class="ajaxcontent"><td colspan="' + $(containingblock).children().length + '" style="padding: 0;"><div class="ajaxcontainer"></div></td></tr>'
+            : '<div class="ajaxcontent"><div class="ajaxcontainer"></div></div>'
+          );
+        }
+        ajaxcontent = 
+          containingblock.
+          next('.ajaxcontent');
+      }
 
       if (ajaxcontent.attr('id') == this.href) {
         ajaxcontent.
-        attr('id', '').
-        empty();
+        remove();
       }
       else {
         ajaxcontent.
         attr('id', this.href).
+        find('.ajaxcontainer:first').
         load(
           this.href + ' #content',
           null,
@@ -129,32 +157,38 @@ jQuery.fn.ajaxify = function() {
             find('form').
             ajaxsubmit().
 
-            // the following line is needed because jquery doesn't include the name=value of the submit button in form.serialize()
-            append('<input type="hidden" name="action" value="' + $(this).find('.mainsubmit').val() + '"/>').
-
             find('.mainsubmit').
             addClass('ajaxified').
+            click(
+              function() {
+                // the following line is needed because jquery doesn't include the name=value of the submit button in form.serialize()
+                $(this).
+                append('<input type="hidden" name="action" value="' + $(this).val() + '"/>');
+                return true;
+              }
+            ).
+
             end().
 
             find('.minorsubmit').
             addClass('ajaxified').
             end().
 
-            find('.cancel').
+            end(). //find('form')
+
+            find('.cancel, .close').
             addClass('ajaxified').
             click(
               function() {
                 $(this).
-                closest('.ajax').
-                find('.ajaxcontent').
-                attr('id', null).
-                empty();
+                closest('.ajaxcontent').
+                remove();
                 return false;
               }
             ).
             end().
 
-            closest('.ajax').
+            find('.ajax').
             ajaxify();
           }
         );
@@ -169,7 +203,8 @@ jQuery.fn.ajaxify = function() {
 $(document).
 ready(
   function() {
-    $('body.editrecord .ajax, body.newrecord .ajax').
+    $('body.editrecord, body.newrecord, body.showtable, body.showdatabase').
+    find('.ajax').
     ajaxify();
 
     $('form').
