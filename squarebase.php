@@ -21,11 +21,11 @@
         html('table', array(),
           html('tr', array(),
             array(
-              html('td', array(), array(html('label', array('for'=>'username'), _('username')), html('input', array('type'=>'text',     'id'=>'username', 'name'=>'username', 'value'=>'root')))),
-              html('td', array(), array(html('label', array('for'=>'host'    ), _('host'    )), html('input', array('type'=>'text',     'id'=>'host',     'name'=>'host',     'value'=>'localhost')))),
-              html('td', array(), array(html('label', array('for'=>'password'), _('password')), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password')))),
-              html('td', array(), array(html('label', array('for'=>'language'), _('language')), html('select', array('id'=>'language', 'name'=>'language'), html('option', array(), 'en_US').html('option', array(), 'nl_NL')))),
-              html('td', array(), array('&nbsp;',                                               html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>'button mainsubmit'))))
+              html('td', array('class'=>'small'), html('label', array('for'=>'username'), _('username'))).html('td', array(), html('input', array('type'=>'text',     'id'=>'username', 'name'=>'username', 'value'=>'root'))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'host'    ), _('host'    ))).html('td', array(), html('input', array('type'=>'text',     'id'=>'host',     'name'=>'host',     'value'=>'localhost'))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'password'), _('password'))).html('td', array(), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password'))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), html('select', array('id'=>'language', 'name'=>'language'), html('option', array(), 'en_US').html('option', array(), 'nl_NL'))),
+              html('td', array('class'=>'small'), '&nbsp;').                                              html('td', array(), html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>'button mainsubmit')))
             )
           )
         )
@@ -65,11 +65,11 @@
           $databaselist[] = internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename['value']), $databasename['value']);
         $rows[] =
           html('tr', array('class'=>join(' ', array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list'))),
+            html('td', array('class'=>'small'),
+              internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$metabasename), $metabasename)
+            ).
             html('td', array(),
-              array(
-                internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$metabasename), $metabasename),
-                html('ul', array('class'=>'compact'), html('li', array(), $databaselist))
-              )
+              html('ul', array('class'=>'compact'), html('li', array(), $databaselist))
             )
           );
       }
@@ -624,8 +624,7 @@
     $orderfieldname  = parameter('get', 'orderfieldname');
 
     page($action, path($metabasename, $databasename, $tablename, $uniquefieldname),
-      list_table($metabasename, $databasename, $tablename, 0, $offset, $uniquefieldname, $orderfieldname).
-      internalreference(parameter('server', 'HTTP_REFERER'), 'close', array('class'=>'close'))
+      list_table($metabasename, $databasename, $tablename, 0, $offset, $uniquefieldname, $orderfieldname, null, null, null, TRUE, TRUE)
     );
   }
 

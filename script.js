@@ -3,9 +3,19 @@ $.extend(
   {
     inline:     function(a) { return $(a).css('display') === 'inline'; },
     block:      function(a) { return $(a).css('display') === 'block';  },
-    blocklevel: function(a) { return $(a).css('display') === 'block' || $(a).css('display') === 'table-row';  }
+    blocklevel: function(a) { var display = $(a).css('display'); return display === 'block' || display === 'table-row'; }
   }
 );
+
+jQuery.fn.setid = function(id) {
+  $('#' + id).
+  attr('id', null);
+
+  $(this).
+  attr('id', id);
+
+  return this;
+};
 
 jQuery.fn.enhanceform = function() {
   $(this).
@@ -97,6 +107,18 @@ jQuery.fn.ajaxsubmit = function() {
   return this;
 };
 
+jQuery.fn.unload = function() {
+  $(this).
+  closest('.ajax').
+  removeClass('ajaxdimmed').
+  setid('ajaxbright').
+  end().
+
+  remove();
+
+  return this;
+};
+
 jQuery.fn.ajaxify = function() {
 //$(this).
 //css('background', 'red');
@@ -118,6 +140,8 @@ jQuery.fn.ajaxify = function() {
   addClass('ajaxified').
   click(
     function() {
+      if ($(this).closest('.ajaxdimmed').length > 0 && $(this).closest('#ajaxbright').length == 0 && !$(this).closest(':blocklevel').next().hasClass('.ajaxcontent'))
+        return false;
       var ajaxcontent =  null;
       if ($(this).hasClass('ajaxreload')) {
         ajaxcontent = 
@@ -143,9 +167,13 @@ jQuery.fn.ajaxify = function() {
 
       if (ajaxcontent.attr('id') == this.href) {
         ajaxcontent.
-        remove();
+        unload();
       }
       else {
+        $(this).
+        closest('.ajax').
+        addClass('ajaxdimmed');
+
         ajaxcontent.
         attr('id', this.href).
         find('.ajaxcontainer:first').
@@ -154,6 +182,8 @@ jQuery.fn.ajaxify = function() {
           null,
           function() {
             $(this).
+            setid('ajaxbright').
+
             find('form').
             ajaxsubmit().
 
@@ -182,7 +212,7 @@ jQuery.fn.ajaxify = function() {
               function() {
                 $(this).
                 closest('.ajaxcontent').
-                remove();
+                unload();
                 return false;
               }
             ).

@@ -260,7 +260,6 @@
     $joins = $selectnames = $ordernames = array();
     $fields = fieldsforpurpose($metabasename, $tablename, 'inlist');
     while ($field = mysql_fetch_assoc($fields)) {
-//    print html('p', array(), array_show($field));
       $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
       if ($field['foreigntablename']) {
         $joins[] = " LEFT JOIN `$databasename`.$field[foreigntablename] AS $field[foreigntablename]_$field[fieldname] ON $field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = $tablename.$field[fieldname]";
@@ -275,16 +274,17 @@
     $rows = query('data', "SELECT ".($limit ? "SQL_CALC_FOUND_ROWS " : "")."$tablename.$uniquefieldname AS $uniquefieldname".($selectnames ? ', '.join(', ', $selectnames) : '')." FROM `$databasename`.$tablename".join(array_unique($joins)).($foreignvalue ? " WHERE $tablename.$foreignfieldname = '$foreignvalue'" : '').($ordernames ? " ORDER BY ".join(', ', $ordernames) : '').($limit ? " LIMIT $limit".($offset ? " OFFSET $offset" : '') : ''));
     $foundrows = $limit ? query1('data', 'SELECT FOUND_ROWS() AS number') : null;
 
-    $header = array_fill(0, 2, html('th', array('class'=>'small'), '&nbsp;'));
+    $header = array(html('th', array('class'=>'small'), '&nbsp;'));
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
       if ($field['inlist']) {
+        $cleanname = preg_replace(array('/(?<=\w)id$/i', '/(?<=[a-z])([A-Z])/e'), array('', 'strtolower(" \\1")'), $field['fieldname']);
         $header[] = 
           html('th', $foreignvalue && $field['fieldname'] == $foreignfieldname ? array('class'=>'thisrecord') : array(), 
             ($foreignvalue && $foreignfieldname) || $field['fieldname'] == $orderfieldname
-            ? preg_replace('/(?<=\w)id$/i', '', $field['fieldname'])
+            ? $cleanname
             : internalreference(
                 array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$field['fieldname']), 
-                preg_replace('/(?<=\w)id$/i', '', $field['fieldname']),
+                $cleanname,
                 array('class'=>'ajaxreload')
               )
           );
@@ -309,8 +309,8 @@
           ($interactive
           ? html('td', array('class'=>'small'),
               array(
-                internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), 'edit'  ),
-                internalreference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], 'back'=>parameter('server', 'REQUEST_URI')), 'delete')
+                internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), 'edit'  )
+//              internalreference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], 'back'=>parameter('server', 'REQUEST_URI')), 'delete')
               )
             )
           : ''
@@ -338,7 +338,8 @@
         : ($foreignvalue ? $tablename : '')
         ).
         (count($lines) > 1 ? html('table', array(), join($lines)) : '').
-        join(' &nbsp; ', $offsets)
+        join(' &nbsp; ', $offsets).
+        ($oneditform ? internalreference(parameter('server', 'HTTP_REFERER'), 'close', array('class'=>'close')) : '')
       );
   }
   
