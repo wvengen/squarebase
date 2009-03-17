@@ -40,15 +40,17 @@
       ".preview.blur { visibility: hidden; }\n";
   }
 
-  function jquery_document_ready_textwithpreview() {
+  function jquery_enhance_form_textwithpreview() {
     return
-      "$('.textwithpreview').".
-      "addClass('blur').".
-      "focus(function() { $(this).removeClass('blur').next().addClass('blur'); }).".
-      "blur( function() { $(this).addClass('blur').next().removeClass('blur').html(this.value); }).".
-      "after('<div id=\"preview_' + this.id + '\" class=\"preview\"></div>').".
-      "blur().". //to put the html in the preview box
-      "next().".
-      "click(function() { $(this).prev().focus(); });\n";
+      "find('.textwithpreview').\n".
+      "addClass('blur').\n".
+      "focus(function() { $(this).removeClass('blur').next().addClass('blur'); }).\n".
+      "blur( function() { $(this).addClass('blur').next().removeClass('blur').html(this.value); }).\n".
+      "after('<div id=\"preview_' + this.id + '\" class=\"preview\"></div>').\n".
+      "blur().\n". //to put the html in the preview box
+      "next().\n".
+      "click(function() { $(this).prev().focus(); }).\n".
+      "end().\n".
+      "end().\n";
   }
 ?>

@@ -17,7 +17,9 @@ jQuery.fn.setid = function(id) {
   return this;
 };
 
-jQuery.fn.enhanceform = function() {
+jQuery.fn.enhance_form = function() {
+//alert('enhance_form ' + $(this).length);
+
   $(this).
   filter(':not(.enhancedform)').
   addClass('enhancedform').
@@ -41,6 +43,8 @@ jQuery.fn.enhanceform = function() {
   end().
 
   checkform().
+
+  //jquery_enhance_form_presentation goes here
 
   find('input:enabled, select:enabled').
   eq(0).
@@ -122,13 +126,13 @@ jQuery.fn.unload = function() {
 jQuery.fn.ajaxify = function() {
 //$(this).
 //css('background', 'red');
-//alert('ajaxify');
+//alert('ajaxify ' + $(this).length);
 //$(this).
 //css('background', null);
 
   $(this).
   find('form').
-  enhanceform().
+  enhance_form().
   ajaxsubmit().
   end().
 
@@ -218,7 +222,6 @@ jQuery.fn.ajaxify = function() {
             ).
             end().
 
-            find('.ajax').
             ajaxify();
           }
         );
@@ -237,8 +240,8 @@ ready(
     find('.ajax').
     ajaxify();
 
-    $('form').
-    enhanceform();
+    $('form:not(.enhancedform)').
+    enhance_form();
 
     $('#logs').
     before('<a href="" id="togglelogs" class="ajaxified">logs</a>');

@@ -438,16 +438,22 @@
     return $presentations;
   }
 
-  function augment_file($filename, $function_prefix, $content_type) {
+  function augment_file($filename, $content_type) {
     $content = join(file($filename));
 
-    $extra = array();
-    $presentations = get_presentations();
-    foreach ($presentations as $presentation)
-      $extra[] = @call_user_func("${function_prefix}_$presentation");
+    if (preg_match_all('@// *(\w+)_presentation\b@', $content, $function_prefixes, PREG_SET_ORDER)) {
+      $presentations = get_presentations();
+      foreach ($function_prefixes as $function_prefix) {
+        $extra = array();
+        foreach ($presentations as $presentation)
+          $extra[] = @call_user_func("$function_prefix[1]_$presentation");
+
+        $content = preg_replace("@( *)// *$function_prefix[1]_presentation\b.*\n@e", '"\\1".preg_replace("@\n(?=.)@", "\n\\1", join($extra))', $content);
+      }
+    }
 
     header("Content-Type: $content_type"); 
-    print preg_replace("@( *)// *${function_prefix}_presentation\b.*\n@e", '"\\1".preg_replace("@\n(?=.)@", "\n\\1", join($extra))', $content);
+    print $content;
     exit;
   }
 

@@ -32,7 +32,7 @@ input.mainsubmit, input.minorsubmit, .cancel, .done { margin-right: 1em; }
 input.mainsubmit:hover, input.minorsubmit:hover { background-color: #090 !important; color: #fff; }
 .cancel { padding: 0.1em 0.5em; }
 option { background-color: #fff; }
-input.mainsubmit.delete:hover, #ajaxbright a.cancel:hover, .close:hover { background-color: #f00 !important; color: #fff !important; }
+input.mainsubmit.delete:hover, #ajaxbright a.cancel:hover, #ajaxbright a.close:hover { background-color: #f00 !important; color: #fff !important; }
 input.mainsubmit.delete{ margin-left: 5em; }
 
 a.ajaxified, input.ajaxified { background-color: #cff; }
