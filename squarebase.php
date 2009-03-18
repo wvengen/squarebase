@@ -315,20 +315,20 @@
             html('td', array('class'=>'rowgroup'),
               array(
                 $fieldname.($originals ? '*' : ''),
-                html('select', array('name'=>"$tablename:$fieldname:type"),
+                html('select', array('name'=>"$tablename:$fieldname:type", 'class'=>'dependsontypename'),
                   html('option', array('value'=>'int'     , 'selected'=>$type == 'int'      ? 'selected' : null), 'int'     ).
                   html('option', array('value'=>'varchar' , 'selected'=>$type == 'varchar'  ? 'selected' : null), 'varchar' ).
                   html('option', array('value'=>'datetime', 'selected'=>$type == 'datetime' ? 'selected' : null), 'datetime').
                   ($type != 'int' && $type != 'varchar' && $type != 'datetime' ? html('option', array('value'=>$type, 'selected'=>'selected'), $type) : '')
                 ),
-                html('input', array('type'=>'text', 'class'=>'integer', 'name'=>"$tablename:$fieldname:typelength", 'value'=>$typelength)),
-                $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:typeunsigned", 'checked'=>$typeunsigned ? 'checked' : null)) : '&nbsp;',
-                $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:typezerofill", 'checked'=>$typezerofill ? 'checked' : null)) : '&nbsp;',
+                html('input', array('type'=>'text', 'class'=>'integer dependsontypename', 'name'=>"$tablename:$fieldname:typelength", 'value'=>$typelength)),
+                $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit dependsontypename', 'name'=>"$tablename:$fieldname:typeunsigned", 'checked'=>$typeunsigned ? 'checked' : null)) : '&nbsp;',
+                $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit dependsontypename', 'name'=>"$tablename:$fieldname:typezerofill", 'checked'=>$typezerofill ? 'checked' : null)) : '&nbsp;',
                 html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:nullallowed", 'checked'=>$nullallowed ? 'checked' : null)),
                 $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:autoincrement", 'checked'=>$autoincrement ? 'checked' : null)) : '&nbsp;',
                 join(' ', array($typeinfo, $extrainfo)),
                 html('input', array('type'=>'text', 'class'=>'typename', 'name'=>"$tablename:$fieldname:typename", 'value'=>$typename)),
-                html('select', array('name'=>"$tablename:$fieldname:presentation", 'class'=>'presentation'), $presentationoptions),
+                html('select', array('name'=>"$tablename:$fieldname:presentation", 'class'=>'presentation dependsontypename'), $presentationoptions),
                 ($fieldname == $primarykeyfieldname[$tablename]
                 ? html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$fieldname))
                 : ($type == 'int'

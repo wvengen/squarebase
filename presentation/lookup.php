@@ -26,7 +26,7 @@
   }
 
   function typename_lookup($field) {
-    return 'lookup'.linkedtable_lookup($field['Table'], $field['Field']);
+    return 'lookup';
   }
 
   function in_desc_lookup($field) { return $field['FieldNr'] < 5; }

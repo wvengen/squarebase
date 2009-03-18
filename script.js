@@ -1,3 +1,8 @@
+String.prototype.regexmatch = function (format) {
+  var result = new RegExp(format, 'im').exec(this);
+  return !result ? null : (result.length === 1 ? result[0] : (result.length === 2 ? result[1] : result));
+}
+
 $.extend(
   $.expr[':'],
   {
@@ -255,6 +260,45 @@ ready(
       }
     ).
     click();
+
+    $('body.formmetabasefordatabase').
+    find(':input').
+    keyup(
+      function() {
+        $(this).
+        closest('form').
+        find('.typename').
+        each(
+          (function() {
+            var firsttypenames = {};
+            return function () {
+              var typename = $(this).val();
+              $(this).
+              closest('tr').
+              find('.dependsontypename').
+              attr('disabled', firsttypenames[typename] ? 'disabled' : null).
+              filter(':disabled').
+              each(
+                function() {
+                  $(this).
+                  css(
+                    'border-color', 
+                    $(this).val() == $(firsttypenames[typename]).closest('tr').find('[name$=' + $(this).attr('name').regexmatch(':\\w+$') + ']').val()
+                    ? null
+                    : 'orange'
+                  );
+                }
+              );
+
+              if (!firsttypenames[typename])
+                firsttypenames[typename] = this;
+            }
+          })()
+        );
+      }
+    ).
+    eq(0).
+    keyup();
 
     //jquery_document_ready_presentation goes here
   }

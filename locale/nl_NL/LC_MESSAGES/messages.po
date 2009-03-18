@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: Squarebase 0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-03-10 14:40+0100\n"
-"PO-Revision-Date: 2009-03-16 17:49+0100\n"
+"PO-Revision-Date: 2009-03-18 15:08+0100\n"
 "Last-Translator: Frans Reijnhoudt <fransre@gmail.com>\n"
 "Language-Team: Dutch <nl@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -111,7 +111,7 @@ msgstr "vul"
 
 #: squarebase.php:202 ../../../squarebase.php:204
 msgid "null"
-msgstr "null"
+msgstr "nul"
 
 #: squarebase.php:202 ../../../squarebase.php:204
 msgid "auto"
@@ -225,3 +225,4 @@ msgstr "geen foreigntablename voor %s"
 #: presentation/varchar.php:10
 msgid "description"
 msgstr "beschrijving"
+
