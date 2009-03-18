@@ -624,7 +624,7 @@
     $orderfieldname  = parameter('get', 'orderfieldname');
 
     page($action, path($metabasename, $databasename, $tablename, $uniquefieldname),
-      list_table($metabasename, $databasename, $tablename, 0, $offset, $uniquefieldname, $orderfieldname, null, null, null, TRUE, TRUE)
+      list_table($metabasename, $databasename, $tablename, 0, $offset, $uniquefieldname, $orderfieldname, null, null, null, TRUE)
     );
   }
 
@@ -655,7 +655,7 @@
         $value = $row[$field['fieldname']];
       $cell = call_user_func("formfield_$field[presentation]", $metabasename, $databasename, $field, $value, $action == 'show_record' || $fixedvalue);
       $lines[] =
-        html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), preg_replace('/(?<=\w)id$/i', '', $field['fieldname']))).
+        html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), clean_name($field['fieldname']))).
         html('td', array(), $cell);
     }
 
@@ -673,7 +673,7 @@
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
         $lines[] =
           html('td', array('class'=>'description'), $referringfield['tablename']).
-          html('td', array(), list_table($metabasename, $databasename, $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tablename, $action != 'show_record', TRUE));
+          html('td', array(), list_table($metabasename, $databasename, $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tablename, $action != 'show_record'));
       }
     }
 
