@@ -1,4 +1,6 @@
 <?php
+  include('inflection.php');
+
   function parameter($type, $name = null, $default = null) {
     $arrays = array(
       'get'=>$_POST ? $_POST : $_GET,
@@ -255,8 +257,8 @@
     );
   }
   
-  function clean_name($name) {
-    return preg_replace(array('/(?<=\w)id$/i', '/(?<=[a-z])([A-Z]+)/e'), array('', 'strtolower(" \\1")'), $name);
+  function clean_name($name, $forbiddennoun = null) {
+    return preg_replace(array('/(?<=[a-z])([A-Z]+)/e', "/\b$forbiddennoun\b/i", "/\b".singularize_noun($forbiddennoun)."\b/i", '/(?<=\w)id$/i'), array('strtolower(" \\1")', '', '', ''), $name);
   }
 
   function list_table($metabasename, $databasename, $tablename, $limit, $offset, $uniquefieldname, $orderfieldname, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = TRUE) {
@@ -280,12 +282,12 @@
       $header[] = 
         html('th', !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? array('class'=>'thisrecord') : array(), 
           !is_null($foreignvalue)
-          ? clean_name($field['fieldname'])
+          ? clean_name($field['fieldname'], $tablename)
           : ($field['fieldname'] == $orderfieldname
-            ? clean_name($field['fieldname']).' &#x25be;'
+            ? clean_name($field['fieldname'], $tablename).' &#x25be;'
             : internalreference(
                 array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$field['fieldname']), 
-                clean_name($field['fieldname']),
+                clean_name($field['fieldname'], $tablename),
                 array('class'=>'ajaxreload')
               )
             )
@@ -335,7 +337,7 @@
       html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablename'=>$tablename, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))), 
         ($interactive
         ? html('div', array(),
-            internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $tablename)).
+            internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), singularize_noun($tablename))).
             (is_null($foreignvalue) ? '' : html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)')))
           )
         : (is_null($foreignvalue) ? '' : $tablename)
@@ -441,8 +443,13 @@
     return $presentations;
   }
 
+  function read_file($filename, $flags = null) {
+    $content = @file($filename, $flags);
+    return $content === false ? array() : $content;
+  }
+
   function augment_file($filename, $content_type) {
-    $content = join(file($filename));
+    $content = join(read_file($filename));
 
     if (preg_match_all('@// *(\w+)_presentation\b@', $content, $function_prefixes, PREG_SET_ORDER)) {
       $presentations = get_presentations();

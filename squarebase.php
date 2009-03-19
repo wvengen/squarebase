@@ -655,7 +655,7 @@
         $value = $row[$field['fieldname']];
       $cell = call_user_func("formfield_$field[presentation]", $metabasename, $databasename, $field, $value, $action == 'show_record' || $fixedvalue);
       $lines[] =
-        html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), clean_name($field['fieldname']))).
+        html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), clean_name($field['fieldname'], $tablename))).
         html('td', array(), $cell);
     }
 

@@ -118,11 +118,6 @@ jQuery.fn.ajaxsubmit = function() {
 
 jQuery.fn.unload = function() {
   $(this).
-  closest('.ajax').
-  removeClass('ajaxdimmed').
-  setid('ajaxbright').
-  end().
-
   remove();
 
   return this;
@@ -149,8 +144,6 @@ jQuery.fn.ajaxify = function() {
   addClass('ajaxified').
   click(
     function() {
-      if ($(this).closest('.ajaxdimmed').length > 0 && $(this).closest('#ajaxbright').length == 0 && !$(this).closest(':blocklevel').next().hasClass('.ajaxcontent'))
-        return false;
       var ajaxcontent =  null;
       if ($(this).hasClass('ajaxreload')) {
         ajaxcontent = 
@@ -161,38 +154,32 @@ jQuery.fn.ajaxify = function() {
         var containingblock =
           $(this).
           closest(':blocklevel');
-        if (containingblock.next('.ajaxcontent').length == 0) {
+        ajaxcontent =
+          containingblock.
+          next('.ajaxcontent');
+        if (ajaxcontent.length == 0)
           containingblock.
           after(
             containingblock.css('display') == 'table-row'
             ? '<tr class="ajaxcontent"><td colspan="' + $(containingblock).children().length + '" style="padding: 0;"><div class="ajaxcontainer"></div></td></tr>'
             : '<div class="ajaxcontent"><div class="ajaxcontainer"></div></div>'
           );
-        }
-        ajaxcontent = 
+        else
+          ajaxcontent.
+          unload();
+        ajaxcontent =
           containingblock.
           next('.ajaxcontent');
       }
 
-      if (ajaxcontent.attr('id') == this.href) {
+      if (ajaxcontent.length > 0) {
         ajaxcontent.
-        unload();
-      }
-      else {
-        $(this).
-        closest('.ajax').
-        addClass('ajaxdimmed');
-
-        ajaxcontent.
-        attr('id', this.href).
         find('.ajaxcontainer:first').
         load(
           this.href + ' #content',
           null,
           function() {
             $(this).
-            setid('ajaxbright').
-
             find('form').
             ajaxsubmit().
 

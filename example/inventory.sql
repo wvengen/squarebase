@@ -7,17 +7,17 @@ CREATE DATABASE inventory;
 
 USE inventory;
 
-DROP TABLE IF EXISTS computer;
+DROP TABLE IF EXISTS computers;
 
-CREATE TABLE computer (
+CREATE TABLE computers (
    computerID   INT(11)      NOT NULL AUTO_INCREMENT,
    description  VARCHAR(80)  NOT NULL,
    PRIMARY KEY (computerID)
 );
 
-DROP TABLE IF EXISTS employee;
+DROP TABLE IF EXISTS employees;
 
-CREATE TABLE employee (
+CREATE TABLE employees (
    employeeID   INT(11)      NOT NULL AUTO_INCREMENT,
    firstName    VARCHAR(15)  NOT NULL,
    lastName     VARCHAR(25)  NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE inventory (
    KEY (employeeID)
 );
 
-INSERT INTO computer (computerID, description) VALUES
+INSERT INTO computers (computerID, description) VALUES
 ( 1, 'Dell Optiplex'),
 ( 2, 'Dell Inspiron'),
 ( 3, 'Dell Dimension'),
@@ -58,7 +58,7 @@ INSERT INTO computer (computerID, description) VALUES
 (32, 'Atari'),
 (36, 'Beowolf Cluster II');
 
-INSERT INTO employee (employeeID, firstName, lastName) VALUES
+INSERT INTO employees (employeeID, firstName, lastName) VALUES
 ( 1, 'John', 'Doe'),
 ( 2, 'Daffy', 'Duck'),
 ( 3, 'Mickey', 'Mouse'),

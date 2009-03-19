@@ -32,17 +32,13 @@ input.mainsubmit, input.minorsubmit, .cancel, .done { margin-right: 1em; }
 input.mainsubmit:hover, input.minorsubmit:hover { background-color: #090 !important; color: #fff; }
 .cancel { padding: 0.1em 0.5em; }
 option { background-color: #fff; }
-input.mainsubmit.delete:hover, #ajaxbright a.cancel:hover, #ajaxbright a.close:hover { background-color: #f00 !important; color: #fff !important; }
+input.mainsubmit.delete:hover, .cancel:hover, .close:hover { background-color: #f00 !important; color: #fff !important; }
 input.mainsubmit.delete{ margin-left: 5em; }
 
 a.ajaxified, input.ajaxified { background-color: #cff; }
 input.minorsubmit.ajaxified { display: none; }
 .ajaxcontainer { padding-left: 1em; }
 .ajaxproblem { border-color: #c00 !important; }
-.ajaxdimmed { color: #999; }
-.ajaxdimmed a { color: #99f; }
-#ajaxbright { color: #000; }
-#ajaxbright a { color: #00f !important; }
 
 .column { white-space: nowrap; }
 .thisrecord { color: #000; }
