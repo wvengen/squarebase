@@ -5,7 +5,21 @@
   session_save_path('session');
   session_start();
 
-  best_locale();
+  best_locale(
+    preg_replace('/-([a-z]+)/e', '"_".strtoupper("\\1")',
+      join(',',
+        array_clean(
+          array(
+            parameter('get', 'metabasename') && mysql_num_rows(query('meta', "SHOW DATABASES LIKE '<metabasename>'", array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE \'metaconstant\'', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT value FROM `<metabasename>`.metavalue mv LEFT JOIN `<metabasename>`.metaconstant mc ON mv.constantid = mc.constantid WHERE constantname = \'language\'', array('metabasename'=>parameter('get', 'metabasename'))).';q=4.0' : null,
+            parameter('get', 'language')     ? parameter('get', 'language').';q=3.0' : null,
+            parameter('session', 'language') ? parameter('session', 'language').';q=2.0' : null,
+            parameter('server', 'HTTP_ACCEPT_LANGUAGE'),
+            'en-us;q=0.0'
+          )
+        )
+      )
+    )
+  );
 
   bindtextdomain('messages', './locale');
   textdomain('messages');
@@ -24,7 +38,7 @@
               html('td', array('class'=>'small'), html('label', array('for'=>'username'), _('username'))).html('td', array(), html('input', array('type'=>'text',     'id'=>'username', 'name'=>'username', 'value'=>'root'))),
               html('td', array('class'=>'small'), html('label', array('for'=>'host'    ), _('host'    ))).html('td', array(), html('input', array('type'=>'text',     'id'=>'host',     'name'=>'host',     'value'=>'localhost'))),
               html('td', array('class'=>'small'), html('label', array('for'=>'password'), _('password'))).html('td', array(), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password'))),
-              html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), html('select', array('id'=>'language', 'name'=>'language'), html('option', array(), 'en_US').html('option', array(), 'nl_NL'))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale()),
               html('td', array('class'=>'small'), '&nbsp;').                                              html('td', array(), html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>'button mainsubmit')))
             )
           )
@@ -351,8 +365,13 @@
     page($action, path('&hellip;', $databasename),
       form(
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
-        html('p', array(),
-          _('metabase').' '.html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename ? $metabasename : (count($mbnames) == 1 ? $mbnames[0] : ''), 'class'=>'notempty'))
+        html('table', array(),
+          html('tr', array(),
+            array(
+              html('td', array('class'=>'small'), html('label', array('for'=>'metabasename'), _('metabasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename ? $metabasename : (count($mbnames) == 1 ? $mbnames[0] : ''), 'class'=>'notempty'))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale())
+            )
+          )
         ).
         html('table', array(),
           join($totalstructure)
@@ -443,9 +462,8 @@
           array('metabasename'=>$metabasename)
     );
 
-    $constantid = insertorupdate($metabasename, 'metaconstant', array('constantname'=>'database'), 'constantid');
-
-    insertorupdate($metabasename, 'metavalue', array('constantid'=>$constantid, 'value'=>$databasename));
+    insertorupdate($metabasename, 'metavalue', array('constantid'=>insertorupdate($metabasename, 'metaconstant', array('constantname'=>'database'), 'constantid'), 'value'=>$databasename));
+    insertorupdate($metabasename, 'metavalue', array('constantid'=>insertorupdate($metabasename, 'metaconstant', array('constantname'=>'language'), 'constantid'), 'value'=>parameter('get', 'language')));
 
     $presentations = get_presentations();
     $presentationids = array();

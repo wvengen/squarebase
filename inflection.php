@@ -6,6 +6,22 @@
 
   //external functions
 
+  function best_locale($accepted_locales = null) {
+    //$accepted_languages is of the form (<locale>(;q=<number>))*
+    static $best_locale = null;
+    if ($best_locale)
+      return $best_locale;
+
+    $locales = array();
+    $parts = explode(',', $accepted_locales);
+    foreach ($parts as $part)
+      if (preg_match('/([^;]+)(?:;q=(\d*\.\d*))?/i', $part, $matches))
+        $locales["$matches[1].utf8"] = $locales[$matches[1]] = max($locales[$matches[1]], (float) (isset($matches[2]) ? $matches[2] : 1));
+    arsort($locales);
+
+    return $best_locale = preg_replace('/\.\w+/', '', setlocale(LC_ALL, array_keys($locales)));
+  }
+
   function pluralize_noun($noun) {
     return inflect_noun_internal($noun, 1);
   }

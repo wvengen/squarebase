@@ -467,38 +467,21 @@
     exit;
   }
 
-  function best_locale() {
-    static $best_locale = null;
-    if ($best_locale)
-      return $best_locale;
-
-    $http_accept = parameter('session', 'language', parameter('server', 'HTTP_ACCEPT_LANGUAGE', null));
-
-    $locales = array();
-    $parts = explode(',', preg_replace('/ /', '', $http_accept));
-    foreach ($parts as $part)
-      if (preg_match('/([^;]+)(?:;q=([01]?\.\d{0,4}))?/i', $part, $matches))
-        $locales[$matches[1]] = (float) (isset($matches[2]) ? $matches[2] : 1);
-
-    $best_locale = 'en-us';
-    $maxq = 0;
-    foreach ($locales as $locale=>$q) {
-      if ($q > $maxq) {
-        $maxq = $q;
-        $best_locale = $locale;
-      }
-    }
-
-    $best_locale = preg_replace('/^(\w\w)(?:(-)(\w\w))?$/e', "'\\1'.('\\2' ? '_'.strtoupper('\\3') : '')", $best_locale);
-    $best_locale = preg_replace('/\.utf8$/', '', setlocale(LC_ALL, "$best_locale.utf8"));
-
-    return $best_locale;
-  }
-
   function change_datetime_format($value, $from, $to) {
     if (!$value)
       return $value;
     $matches = strptime($from, $value);
     return strftime($to, mktime($matches['tm_hour'], $matches['tm_min'], $matches['tm_sec'], $matches['tm_mon'], $matches['tm_mday'], $matches['tm_year']));
+  }
+
+  function select_locale($name = 'language') {
+    $best_locale = best_locale();
+
+    $localeoptions = array();
+    $locales = array('en_US', 'nl_NL');
+    foreach ($locales as $locale)
+      $localeoptions[] = html('option', array('value'=>$locale, 'selected'=>$locale == $best_locale ? 'selected' : null), $locale);
+
+    return html('select', array('id'=>$name, 'name'=>$name), join($localeoptions));
   }
 ?>
