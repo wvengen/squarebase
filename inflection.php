@@ -19,15 +19,15 @@
   function inflect_noun_internal($noun, $fromquantity) {
     //$fromquantity == 1 => $noun is singular
     //$fromquantity != 1 => $noun is plural
-    list($noun) = inflect_noun_verbose_internal($noun, $fromquantity);
-    return $noun;
+    list($inflected_noun) = inflect_noun_verbose_internal($noun, $fromquantity);
+    return $inflected_noun;
   }
 
   function inflect_noun_verbose_internal($noun, $fromquantity, $forbiddenrule = null) {
     $current_locale = preg_replace('/\..*/', '', setlocale(LC_ALL, 0));
     $rules = read_file("locale/$current_locale/rules_singular_plural.txt", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
     foreach ($rules as $rule) {
-      if ($rule != $forbiddenrule) {
+      if ($rule && $rule != $forbiddenrule) {
         list($body, $suffixsingular, $suffixplural) = explode('/', $rule);
         list($from, $to) = $fromquantity == 1 ? array($suffixsingular, $suffixplural) : array($suffixplural, $suffixsingular);
         //\<number>=(<group>) => (<group>)
@@ -44,48 +44,52 @@
   }
 
   function test_plural_singular_internal() {
-    $current_locale = setlocale(LC_ALL, 0);
+    $current_locale = preg_replace('/\..*/', '', setlocale(LC_ALL, 0));
     $rules = read_file("locale/$current_locale/rules_singular_plural.txt", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
-    $tests = read_file("locale/$current_locale/test_singular_plural.txt", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
+    $tests = read_file("locale/$current_locale/tests_singular_plural.txt", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
     return array_merge(
-      test_lines_internal($rules, true),
-      test_lines_internal($tests, false)
+      test_lines_internal($rules, $rules),
+      test_lines_internal($tests, $rules)
     );
   }
 
-  function test_lines_internal($lines, $isrule) {
+  function test_lines_internal($lines, $rules) {
+    if ($lines != $rules)
+      $used = array_fill_keys($rules, 0);
     $messages = array();
     foreach ($lines as $line) {
       $line = preg_replace('@\^@', '', $line);
       if (substr_count($line, '/') != 2)
-        print "incorrect syntax: $line".html('br');
+        $messages[] = "not exactly 2 slashes: $line";
       list($body, $suffixsingular, $suffixplural) = explode('/', $line);
-      if (!preg_match('@[\[\]\(\)\?\*\+\.]@', $body)) {
-        list($rulesingular, $messagesingular) = test_noun_internal("$body$suffixsingular", 1);
-        if ($messagesingular)
-          $messages[] = $messagesingular;
+      if (!preg_match('@[\[\]\(\)\?\*\+\.\^]@', $body)) {
+        list($nounsingular, $rulesingular) = inflect_noun_verbose_internal("$body$suffixsingular", 1);
+        if ($nounsingular != "$body$suffixplural")
+          $messages[] = "1 $body$suffixsingular &rarr; 2 $nounsingular (instead of $body$suffixplural by rule $rulesingular)";
 
-        list($ruleplural, $messageplural) = test_noun_internal("$body$suffixplural", 2);
-        if ($messageplural)
-          $messages[] = $messageplural;
+        list($nounplural, $ruleplural) = inflect_noun_verbose_internal("$body$suffixplural", 2);
+        if ($nounplural != "$body$suffixsingular")
+          $messages[] = "2 $body$suffixplural &rarr; 1 $nounplural (instead of $body$suffixsingular by rule $ruleplural)";
 
-        if ($isrule && $rulesingular && $ruleplural) {
-          list($nounsingular2, $rulesingular2) = inflect_noun_verbose_internal("$body$suffixsingular", 1, $rulesingular);
-          list($nounplural2, $ruleplural2) = inflect_noun_verbose_internal("$body$suffixplural", 2, $ruleplural);
-          if ($nounsingular2 == "$body$suffixplural" && $nounplural2 == "$body$suffixsingular")
-            $messages[] = "superfluous rule: $line ($rulesingular2) ($ruleplural2)";
+        if ($lines != $rules) {
+          $used[$rulesingular]++;
+          $used[$ruleplural]++;
+        }
+        else {
+          if ($rulesingular && $ruleplural) {
+            list($nounsingular2, $rulesingular2) = inflect_noun_verbose_internal("$body$suffixsingular", 1, $rulesingular);
+            list($nounplural2, $ruleplural2) = inflect_noun_verbose_internal("$body$suffixplural", 2, $ruleplural);
+            if ($nounsingular2 == "$body$suffixplural" && $nounplural2 == "$body$suffixsingular")
+              $messages[] = "superfluous rule: $line ($rulesingular2) ($ruleplural2)";
+          }
         }
       }
     }
+    if ($lines != $rules) {
+      foreach ($used as $rule=>$count)
+        if ($count == 0)
+          $messages[] = "unused rule: $rule";
+    }
     return $messages;
-  }
-
-  function test_noun_internal($noun, $fromquantity) {
-    $toquantity = $fromquantity == 1 ? 2 : 1;
-    list($noun1, $rule1) = inflect_noun_verbose_internal($noun, $fromquantity);
-    list($noun2, $rule2) = inflect_noun_verbose_internal($noun1, $toquantity);
-    if ($noun2 != $noun)
-      return array(null, "$fromquantity $noun &rarr; $rule1 &rarr; $toquantity $noun1 &rarr; $rule2 &rarr; $fromquantity $noun2");
-    return array($rule1, null);
   }
 ?>

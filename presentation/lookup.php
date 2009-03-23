@@ -16,7 +16,7 @@
       reset($likeness);
       list($table1, $likeness1) = each($likeness);
       list($table2, $likeness2) = each($likeness);
-      $linkedtables["$tablename:$fieldname"] = $likeness1 < -3 || $likeness1 == $likeness2 ? '' : $table1;
+      $linkedtables["$tablename:$fieldname"] = $likeness1 < 0 || $likeness1 == $likeness2 ? '' : $table1;
     }
     return $linkedtables["$tablename:$fieldname"] ? $linkedtables["$tablename:$fieldname"] : null;
   }
@@ -26,7 +26,7 @@
   }
 
   function typename_lookup($field) {
-    return 'lookup';
+    return 'lookup'.linkedtable_lookup($field['Table'], $field['Field'], $field['Alltables'], $field['Primarykeyfieldname']);
   }
 
   function in_desc_lookup($field) { return $field['FieldNr'] < 5; }
