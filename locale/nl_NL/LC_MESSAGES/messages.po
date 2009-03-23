@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: Squarebase 0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-03-10 14:40+0100\n"
-"PO-Revision-Date: 2009-03-18 15:08+0100\n"
+"PO-Revision-Date: 2009-03-23 16:03+0100\n"
 "Last-Translator: Frans Reijnhoudt <fransre@gmail.com>\n"
 "Language-Team: Dutch <nl@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -12,36 +12,41 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit"
 
 #: functions.php:101 ../../../functions.php:109 functions.php:114
+#: functions.php:116
 msgid "mysql module not found"
 msgstr "mysql module niet gevonden"
 
 #: functions.php:104 ../../../functions.php:112 functions.php:117
+#: functions.php:119
 #, php-format
 msgid "problem connecting to the databasemanager: %s"
 msgstr "probleem bij verbinden met de databasemanager: %s"
 
 #: functions.php:156 ../../../functions.php:164 functions.php:171
+#: functions.php:173
 #, php-format
 msgid "%s with %s = %s already exists"
 msgstr "%s met %s = %s bestaat al"
 
 #: functions.php:161 ../../../functions.php:169 functions.php:176
+#: functions.php:178
 msgid "problem while querying the databasemanager"
 msgstr "probleem bij bevragen databasemanager"
 
 #: functions.php:168 ../../../functions.php:176 functions.php:183
+#: functions.php:185
 #, php-format
 msgid "problem retrieving 1 result, because there are %s results"
 msgstr "probeem bij opvragen 1 resultaat omdat er %s resultaten zijn"
 
 #: functions.php:357 ../../../functions.php:367 functions.php:335
-#: presentation/lookup.php:50
+#: presentation/lookup.php:50 functions.php:344
 #, php-format
 msgid "new %s"
 msgstr "nieuw %s"
 
 #: functions.php:357 ../../../functions.php:368 functions.php:336
-#: presentation/lookup.php:50
+#: presentation/lookup.php:50 functions.php:345
 msgid "(changes to form fields are lost)"
 msgstr "(wijzigingen van formuliervelden gaan verloren)"
 
@@ -50,90 +55,91 @@ msgstr "(wijzigingen van formuliervelden gaan verloren)"
 msgid "WAS %s"
 msgstr "WAS %s"
 
-#: squarebase.php:21 ../../../squarebase.php:21 squarebase.php:24
+#: squarebase.php:21 ../../../squarebase.php:21 squarebase.php:24 index.php:39
 msgid "username"
 msgstr "gebruikersnaam"
 
-#: squarebase.php:22 ../../../squarebase.php:22 squarebase.php:25
+#: squarebase.php:22 ../../../squarebase.php:22 squarebase.php:25 index.php:40
 msgid "host"
 msgstr "gastheer"
 
-#: squarebase.php:23 ../../../squarebase.php:23 squarebase.php:26
+#: squarebase.php:23 ../../../squarebase.php:23 squarebase.php:26 index.php:41
 msgid "password"
 msgstr "wachtwoord"
 
-#: squarebase.php:71 ../../../squarebase.php:73 squarebase.php:78
+#: squarebase.php:71 ../../../squarebase.php:73 squarebase.php:78 index.php:93
 msgid "new metabase from database"
 msgstr "nieuwe metabase voor database"
 
 #: squarebase.php:75 ../../../squarebase.php:77 squarebase.php:58
-#: squarebase.php:355
+#: squarebase.php:355 index.php:73
 msgid "metabase"
 msgstr "metabase"
 
 #: squarebase.php:86 ../../../squarebase.php:77 ../../../squarebase.php:88
-#: squarebase.php:58
+#: squarebase.php:58 index.php:73 index.php:101
 msgid "database"
 msgstr "database"
 
-#: squarebase.php:86 ../../../squarebase.php:88
+#: squarebase.php:86 ../../../squarebase.php:88 index.php:101
 msgid "tables"
 msgstr "tabellen"
 
 #: squarebase.php:134 ../../../squarebase.php:136 squarebase.php:136
+#: index.php:151
 #, php-format
 msgid "Drop database %s?"
 msgstr "Verwijder database %s?"
 
-#: squarebase.php:202 ../../../squarebase.php:204
+#: squarebase.php:202 ../../../squarebase.php:204 index.php:217
 msgid "table"
 msgstr "tabel"
 
-#: squarebase.php:202 ../../../squarebase.php:204
+#: squarebase.php:202 ../../../squarebase.php:204 index.php:217
 msgid "field"
 msgstr "veld"
 
-#: squarebase.php:202 ../../../squarebase.php:204
+#: squarebase.php:202 ../../../squarebase.php:204 index.php:217
 msgid "type"
 msgstr "type"
 
-#: squarebase.php:202 ../../../squarebase.php:204
+#: squarebase.php:202 ../../../squarebase.php:204 index.php:217
 msgid "len"
 msgstr "len"
 
-#: squarebase.php:202 ../../../squarebase.php:204
+#: squarebase.php:202 ../../../squarebase.php:204 index.php:217
 msgid "unsg"
 msgstr "pos"
 
-#: squarebase.php:202 ../../../squarebase.php:204
+#: squarebase.php:202 ../../../squarebase.php:204 index.php:217
 msgid "fill"
 msgstr "vul"
 
-#: squarebase.php:202 ../../../squarebase.php:204
+#: squarebase.php:202 ../../../squarebase.php:204 index.php:217
 msgid "null"
 msgstr "nul"
 
-#: squarebase.php:202 ../../../squarebase.php:204
+#: squarebase.php:202 ../../../squarebase.php:204 index.php:217
 msgid "auto"
 msgstr "auto"
 
-#: squarebase.php:202 ../../../squarebase.php:204
+#: squarebase.php:202 ../../../squarebase.php:204 index.php:217
 msgid "more"
 msgstr "meer"
 
-#: squarebase.php:202 ../../../squarebase.php:204
+#: squarebase.php:202 ../../../squarebase.php:204 index.php:217
 msgid "typename"
 msgstr "typenaam"
 
-#: squarebase.php:202 ../../../squarebase.php:204
+#: squarebase.php:202 ../../../squarebase.php:204 index.php:217
 msgid "presentation"
 msgstr "presentatie"
 
-#: squarebase.php:202 ../../../squarebase.php:204
+#: squarebase.php:202 ../../../squarebase.php:204 index.php:217
 msgid "key"
 msgstr "sleutel"
 
-#: squarebase.php:202 ../../../squarebase.php:204
+#: squarebase.php:202 ../../../squarebase.php:204 index.php:217
 msgid "desc"
 msgstr "omschr"
 
@@ -141,28 +147,31 @@ msgstr "omschr"
 msgid "sort"
 msgstr "sort"
 
-#: squarebase.php:202 ../../../squarebase.php:204
+#: squarebase.php:202 ../../../squarebase.php:204 index.php:217
 msgid "list"
 msgstr "lijst"
 
-#: squarebase.php:202 ../../../squarebase.php:204
+#: squarebase.php:202 ../../../squarebase.php:204 index.php:217
 msgid "edit"
 msgstr "wijzig"
 
-#: squarebase.php:351 ../../../squarebase.php:353
+#: squarebase.php:351 ../../../squarebase.php:353 index.php:372
 msgid "metabasename"
 msgstr "metabasenaam"
 
 #: squarebase.php:359 ../../../squarebase.php:361 squarebase.php:363
+#: index.php:383
 #, php-format
 msgid "no single valued primary key for table(s) %s"
 msgstr "geen primaire sleutel met maar 1 veld voor tabel(len) %s"
 
 #: squarebase.php:372 ../../../squarebase.php:374 squarebase.php:376
+#: index.php:396
 msgid "no name given for the metabase"
 msgstr "geen naam gegeven voor de metabase"
 
 #: squarebase.php:500 ../../../squarebase.php:502 squarebase.php:493
+#: index.php:512
 #, php-format
 msgid "no fields to desc for %s"
 msgstr "geen velden voor omschr van %s"
@@ -173,11 +182,13 @@ msgid "no fields to sort for %s"
 msgstr "geen velden voor sort van %s"
 
 #: squarebase.php:504 ../../../squarebase.php:506 squarebase.php:495
+#: index.php:514
 #, php-format
 msgid "no fields to list for %s"
 msgstr "geen velden voor lijst van %s"
 
 #: squarebase.php:506 ../../../squarebase.php:508 squarebase.php:497
+#: index.php:516
 #, php-format
 msgid "no fields to edit for %s"
 msgstr "geen velden voor wijzig van %s"
@@ -198,7 +209,7 @@ msgstr "afk"
 msgid "abbreviation"
 msgstr "afkorting"
 
-#: ../../../squarebase.php:24 squarebase.php:27
+#: ../../../squarebase.php:24 squarebase.php:27 index.php:42 index.php:373
 msgid "language"
 msgstr "taal"
 
@@ -212,7 +223,7 @@ msgstr "b.v. %x"
 msgid "e.g. %x %X"
 msgstr "b.v. %x %X"
 
-#: functions.php:188
+#: functions.php:188 functions.php:190
 #, php-format
 msgid "problem retrieving 1 field, because there are %s fields"
 msgstr "probeem bij opvragen 1 veld omdat er %s velden zijn"
@@ -225,4 +236,10 @@ msgstr "geen foreigntablename voor %s"
 #: presentation/varchar.php:10
 msgid "description"
 msgstr "beschrijving"
+
+#: functions.php:498
+#, php-format
+msgid ""
+"preferred locale %s not found on operating system level, falling back to %s"
+msgstr "gewenste lokale instellingen voor %s niet gevonden op het niveau van het besturingssysteem, teruggevallen op %s"
 
