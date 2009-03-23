@@ -5,7 +5,7 @@
   session_save_path('session');
   session_start();
 
-  best_locale(
+  set_best_locale(
     preg_replace('/-([a-z]+)/e', '"_".strtoupper("\\1")',
       join(',',
         array_clean(
@@ -18,7 +18,8 @@
           )
         )
       )
-    )
+    ),
+    'utf8'
   );
 
   bindtextdomain('messages', './locale');
@@ -321,28 +322,29 @@
           html('tr', array(),
             ($tablestructure 
             ? '' 
-            : html('td', array('class'=>'rowgroup top', 'rowspan'=>mysql_num_rows($fields[$tablename])), $tablename).
-              html('td', array('class'=>'rowgroup top', 'rowspan'=>mysql_num_rows($fields[$tablename])), 
+            : html('td', array('class'=>'top', 'rowspan'=>mysql_num_rows($fields[$tablename])), $tablename).
+              html('td', array('class'=>'top', 'rowspan'=>mysql_num_rows($fields[$tablename])), 
                 html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
               )
             ).
-            html('td', array('class'=>'rowgroup'),
-              array(
-                $fieldname.($originals ? '*' : ''),
-                html('select', array('name'=>"$tablename:$fieldname:type", 'class'=>'dependsontypename'),
-                  html('option', array('value'=>'int'     , 'selected'=>$type == 'int'      ? 'selected' : null), 'int'     ).
-                  html('option', array('value'=>'varchar' , 'selected'=>$type == 'varchar'  ? 'selected' : null), 'varchar' ).
-                  html('option', array('value'=>'datetime', 'selected'=>$type == 'datetime' ? 'selected' : null), 'datetime').
-                  ($type != 'int' && $type != 'varchar' && $type != 'datetime' ? html('option', array('value'=>$type, 'selected'=>'selected'), $type) : '')
-                ),
-                html('input', array('type'=>'text', 'class'=>'integer dependsontypename', 'name'=>"$tablename:$fieldname:typelength", 'value'=>$typelength)),
-                $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit dependsontypename', 'name'=>"$tablename:$fieldname:typeunsigned", 'checked'=>$typeunsigned ? 'checked' : null)) : '&nbsp;',
-                $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit dependsontypename', 'name'=>"$tablename:$fieldname:typezerofill", 'checked'=>$typezerofill ? 'checked' : null)) : '&nbsp;',
-                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:nullallowed", 'checked'=>$nullallowed ? 'checked' : null)),
-                $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:autoincrement", 'checked'=>$autoincrement ? 'checked' : null)) : '&nbsp;',
-                join(' ', array($typeinfo, $extrainfo)),
-                html('input', array('type'=>'text', 'class'=>'typename', 'name'=>"$tablename:$fieldname:typename", 'value'=>$typename)),
-                html('select', array('name'=>"$tablename:$fieldname:presentation", 'class'=>'presentation dependsontypename'), $presentationoptions),
+            html('td', array(), $fieldname.($originals ? '*' : '')).
+            html('td', array(),
+              html('select', array('name'=>"$tablename:$fieldname:type", 'class'=>'dependsontypename'),
+                html('option', array('value'=>'int'     , 'selected'=>$type == 'int'      ? 'selected' : null), 'int'     ).
+                html('option', array('value'=>'varchar' , 'selected'=>$type == 'varchar'  ? 'selected' : null), 'varchar' ).
+                html('option', array('value'=>'datetime', 'selected'=>$type == 'datetime' ? 'selected' : null), 'datetime').
+                ($type != 'int' && $type != 'varchar' && $type != 'datetime' ? html('option', array('value'=>$type, 'selected'=>'selected'), $type) : '')
+              )
+            ).
+            html('td', array(), html('input', array('type'=>'text', 'class'=>'integer dependsontypename', 'name'=>"$tablename:$fieldname:typelength", 'value'=>$typelength))).
+            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit dependsontypename', 'name'=>"$tablename:$fieldname:typeunsigned", 'checked'=>$typeunsigned ? 'checked' : null)) : '&nbsp;').
+            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit dependsontypename', 'name'=>"$tablename:$fieldname:typezerofill", 'checked'=>$typezerofill ? 'checked' : null)) : '&nbsp;').
+            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:nullallowed", 'checked'=>$nullallowed ? 'checked' : null))).
+            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:autoincrement", 'checked'=>$autoincrement ? 'checked' : null)) : '&nbsp;').
+            html('td', array(), join(' ', array($typeinfo, $extrainfo))).
+            html('td', array(), html('input', array('type'=>'text', 'class'=>'typename', 'name'=>"$tablename:$fieldname:typename", 'value'=>$typename))).
+            html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentation", 'class'=>'presentation dependsontypename'), $presentationoptions)).
+            html('td', array(),
                 ($fieldname == $primarykeyfieldname[$tablename]
                 ? html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$fieldname))
                 : ($type == 'int'
@@ -351,12 +353,11 @@
                     )
                   : '&nbsp;'
                   )
-                ),
-                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null)),
-                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null)),
-                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null))
-              )
-            )
+                )
+            ).
+            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null))).
+            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))).
+            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null)))
           );
       }
       $totalstructure[] = $header.join($tablestructure);

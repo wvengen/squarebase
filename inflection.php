@@ -6,22 +6,6 @@
 
   //external functions
 
-  function best_locale($accepted_locales = null) {
-    //$accepted_languages is of the form (<locale>(;q=<number>))*
-    static $best_locale = null;
-    if ($best_locale)
-      return $best_locale;
-
-    $locales = array();
-    $parts = explode(',', $accepted_locales);
-    foreach ($parts as $part)
-      if (preg_match('/([^;]+)(?:;q=(\d*\.\d*))?/i', $part, $matches))
-        $locales["$matches[1].utf8"] = $locales[$matches[1]] = max($locales[$matches[1]], (float) (isset($matches[2]) ? $matches[2] : 1));
-    arsort($locales);
-
-    return $best_locale = preg_replace('/\.\w+/', '', setlocale(LC_ALL, array_keys($locales)));
-  }
-
   function pluralize_noun($noun) {
     return inflect_noun_internal($noun, 1);
   }
@@ -40,8 +24,8 @@
   }
 
   function inflect_noun_verbose_internal($noun, $fromquantity, $forbiddenrule = null) {
-    $best_locale = best_locale();
-    $rules = read_file("locale/$best_locale/rules_singular_plural.txt", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
+    $current_locale = preg_replace('/\..*/', '', setlocale(LC_ALL, 0));
+    $rules = read_file("locale/$current_locale/rules_singular_plural.txt", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
     foreach ($rules as $rule) {
       if ($rule != $forbiddenrule) {
         list($body, $suffixsingular, $suffixplural) = explode('/', $rule);
@@ -60,9 +44,9 @@
   }
 
   function test_plural_singular_internal() {
-    $best_locale = best_locale();
-    $rules = read_file("locale/$best_locale/rules_singular_plural.txt", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
-    $tests = read_file("locale/$best_locale/test_singular_plural.txt", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
+    $current_locale = setlocale(LC_ALL, 0);
+    $rules = read_file("locale/$current_locale/rules_singular_plural.txt", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
+    $tests = read_file("locale/$current_locale/test_singular_plural.txt", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
     return array_merge(
       test_lines_internal($rules, true),
       test_lines_internal($tests, false)

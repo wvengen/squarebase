@@ -12,6 +12,10 @@ $.extend(
   }
 );
 
+jQuery.fn.formvalue = function() {
+  return $(this).attr('type') == 'checkbox' ? $(this).attr('checked') : $(this).val();
+}
+
 jQuery.fn.setid = function(id) {
   $('#' + id).
   attr('id', null);
@@ -249,8 +253,8 @@ ready(
     click();
 
     $('body.formmetabasefordatabase').
-    find(':input').
-    keyup(
+    find('.typename, .dependsontypename').
+    change(
       function() {
         $(this).
         closest('form').
@@ -267,13 +271,13 @@ ready(
               filter(':disabled').
               each(
                 function() {
-                  $(this).
-                  css(
-                    'border-color', 
-                    $(this).val() == $(firsttypenames[typename]).closest('tr').find('[name$=' + $(this).attr('name').regexmatch(':\\w+$') + ']').val()
-                    ? null
-                    : 'orange'
-                  );
+                  var first = $(firsttypenames[typename]).closest('tr').find('[name$=' + $(this).attr('name').regexmatch(':\\w+$') + ']');
+                  if ($(this).formvalue() == first.formvalue())
+                    $(this).closest('td').
+                    removeClass('ajaxwarning');
+                  else
+                    $(this).closest('td').
+                    addClass('ajaxwarning');
                 }
               );
 
@@ -285,7 +289,7 @@ ready(
       }
     ).
     eq(0).
-    keyup();
+    change();
 
     //jquery_document_ready_presentation goes here
   }

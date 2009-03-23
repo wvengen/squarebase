@@ -196,7 +196,7 @@
     $error = parameter('get', 'error');
 
     header('Content-Type: text/html; charset=utf-8');
-    header('Content-Language: '.best_locale());
+    header('Content-Language: '.get_locale());
     print
       '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'.
       html('html', array(),
@@ -209,7 +209,7 @@
         html('body', array('class'=>preg_replace('@_@', '', $action)),
           html('div', array('id'=>'header'),
             html('h1', array('id'=>'title'), $title).
-            ($_SESSION['username'] ? html('div', array('id'=>'id'), join(' &ndash; ', array(best_locale(), "$_SESSION[username]@$_SESSION[host]", internalreference(array('action'=>'logout'), 'logout')))) : '').
+            ($_SESSION['username'] ? html('div', array('id'=>'id'), join(' &ndash; ', array(get_locale(), "$_SESSION[username]@$_SESSION[host]", internalreference(array('action'=>'logout'), 'logout')))) : '').
             html('div', array('id'=>'messages'),
               $error ? html('div', array('class'=>'error'), $error) : ''
             ).
@@ -258,7 +258,11 @@
   }
   
   function clean_name($name, $forbiddennoun = null) {
-    return preg_replace(array('/(?<=[a-z])([A-Z]+)/e', "/\b$forbiddennoun\b/i", "/\b".singularize_noun($forbiddennoun)."\b/i", '/(?<=\w)id$/i'), array('strtolower(" \\1")', '', '', ''), $name);
+    return preg_replace(
+      array('/(?<=\w)id$/i', '/(?<=[a-z])([A-Z]+)/e', "/\b$forbiddennoun\b/i", "/\b".singularize_noun($forbiddennoun)."\b/i"),
+      array('',              'strtolower(" \\1")',    '',                      ''                                           ),
+      $name
+    );
   }
 
   function list_table($metabasename, $databasename, $tablename, $limit, $offset, $uniquefieldname, $orderfieldname, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = TRUE) {
@@ -474,13 +478,43 @@
     return strftime($to, mktime($matches['tm_hour'], $matches['tm_min'], $matches['tm_sec'], $matches['tm_mon'], $matches['tm_mday'], $matches['tm_year']));
   }
 
+  function set_best_locale($accepted_locales, $encoding) {
+    //$accepted_locales is of the form (<locale>(;q=<number>))*
+    $locales = array();
+    $parts = explode(',', $accepted_locales);
+    foreach ($parts as $part)
+      if (preg_match('/([^;]+)(?:;q=(\d*\.\d*))?/i', $part, $matches)) {
+        $locale_with_encoding = $matches[1].(preg_match('/\./', $matches[1]) ? '' : '.'.$encoding);
+        $locales[$locale_with_encoding] = max($locales[$locale_with_encoding], (float) (isset($matches[2]) ? $matches[2] : 1));
+      }
+    arsort($locales);
+    $locales = array_keys($locales);
+
+    $best_locale = setlocale(LC_ALL, $locales);
+
+    foreach ($locales as $locale) {
+      if ($locale == $best_locale)
+        break;
+      addtolist('warnings', 'warning', sprintf(_('preferred locale %s not found on operating system level, falling back to %s'), $locale, $best_locale));
+    }
+  }
+
+  function get_locale() {
+    return setlocale(LC_ALL, 0);
+  }
+
+  function get_system_locales() {
+    exec('locale -a', $system_locales);
+    return $system_locales;
+  }
+
   function select_locale($name = 'language') {
-    $best_locale = best_locale();
+    $current_locale = get_locale();
 
     $localeoptions = array();
-    $locales = array('en_US', 'nl_NL');
+    $locales = get_system_locales();
     foreach ($locales as $locale)
-      $localeoptions[] = html('option', array('value'=>$locale, 'selected'=>$locale == $best_locale ? 'selected' : null), $locale);
+      $localeoptions[] = html('option', array('value'=>$locale, 'selected'=>$locale == $current_locale ? 'selected' : null), $locale);
 
     return html('select', array('id'=>$name, 'name'=>$name), join($localeoptions));
   }
