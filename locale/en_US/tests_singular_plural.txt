@@ -224,3 +224,4 @@ nese//
 rese//
 lese//
 mese//
+imperative//s

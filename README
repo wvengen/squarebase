@@ -15,9 +15,13 @@ Notes:
    Check out with the following command.
    $ svn checkout http://svn.xp-dev.com/svn/fransre-squarebase/
 
-2. After checking out, perform the following commands, because Subversion doesn't set the permissions right.
-   $ sudo chown :www-data session
-   $ chmod g+w session
+2. After checking out, perform the following command, because Subversion doesn't set the permissions right.
+   $ make install
 
-3. There is a demo database mst3k_Inventory
+3. There is a demo database named inventory
    $ mysql < example/inventory.sql
+
+4. Conventions
+   a. Table names are plural (e.g. orders instead of order)
+   b. Each table has exactly 1 auto_increment field that is the primary key
+   c. All foreign key fields have the singular form of table name they are referring to in their name (e.g. orderID)

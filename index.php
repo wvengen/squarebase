@@ -91,7 +91,18 @@
     }
     page($action, null,
       internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')).
-      html('table', array(), join($rows))
+      html('table', array(), join($rows)).
+      internalreference(array('action'=>'test_inflection_singular_plural'), _('test inflection singular plural'))
+    );
+  }
+
+  /********************************************************************************************/
+
+  if ($action == 'test_inflection_singular_plural') {
+    $problems = test_inflection_singular_plural();
+    page($action, null,
+      html('h3', array(), sprintf(_('%d problems with inflection singular plural'), count($problems))).
+      ($problems ? html('ol', array(), html('li', array(), $problems)) : '')
     );
   }
 
@@ -126,7 +137,7 @@
         html('tr', array('class'=>join(' ', array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list'))),
           html('td', array(),
             array(
-              internalreference(array('action'=>'form_metabase_for_database', 'databasename'=>$databasename), $databasename),
+              internalreference(array('action'=>'language_for_database', 'databasename'=>$databasename), $databasename),
               $contents,
               internalreference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop')
             )
@@ -161,6 +172,30 @@
     $databasename = parameter('get', 'databasename');
     query('root', 'DROP DATABASE `<databasename>`', array('databasename'=>$databasename));
     back();
+  }
+
+  /********************************************************************************************/
+
+  if ($action == 'language_for_database') {
+    $metabasename = parameter('get', 'metabasename');
+    $databasename = parameter('get', 'databasename');
+
+    page($action, path($metabasename ? $metabasename : '&hellip;', $databasename),
+      form(
+        html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
+        html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
+        html('table', array(),
+          html('tr', array(),
+            array(
+              html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale())
+            )
+          )
+        ).
+        html('p', array(),
+          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'form_metabase_for_database', 'class'=>'button'))
+        )
+      )
+    );
   }
 
   /********************************************************************************************/
@@ -363,7 +398,7 @@
       $totalstructure[] = $header.join($tablestructure);
     }
 
-    page($action, path('&hellip;', $databasename),
+    page($action, path($metabasename ? $metabasename : '&hellip;', $databasename),
       form(
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('table', array(),

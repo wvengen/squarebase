@@ -478,13 +478,13 @@
     return strftime($to, mktime($matches['tm_hour'], $matches['tm_min'], $matches['tm_sec'], $matches['tm_mon'], $matches['tm_mday'], $matches['tm_year']));
   }
 
-  function set_best_locale($accepted_locales, $encoding) {
+  function set_best_locale($accepted_locales, $encoding = null) {
     //$accepted_locales is of the form (<locale>(;q=<number>))*
     $locales = array();
     $parts = explode(',', $accepted_locales);
     foreach ($parts as $part)
       if (preg_match('/([^;]+)(?:;q=(\d*\.\d*))?/i', $part, $matches)) {
-        $locale_with_encoding = $matches[1].(preg_match('/\./', $matches[1]) ? '' : '.'.$encoding);
+        $locale_with_encoding = $matches[1].(preg_match('/\./', $matches[1]) ? '' : ($encoding ? '.'.$encoding : ''));
         $locales[$locale_with_encoding] = max($locales[$locale_with_encoding], (float) (isset($matches[2]) ? $matches[2] : 1));
       }
     arsort($locales);

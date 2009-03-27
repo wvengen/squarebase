@@ -7,9 +7,9 @@
       foreach ($alltables as $onetable) {
         $onetable_lower = strtolower($onetable);
         $likeness[$onetable] =
-          ($fieldname_lower == $onetable_lower ? 10 : 0) +
+          ($fieldname_lower == singularize_noun($onetable_lower) ? 10 : 0) +
           (substr($fieldname_lower, -strlen($primarykeyfieldname[$onetable])) == $primarykeyfieldname[$onetable] ? 5 : 0) +
-          (strpos($fieldname_lower, $onetable_lower) !== FALSE ? 5 : 0) -
+          (strpos($fieldname_lower, singularize_noun($onetable_lower)) !== FALSE ? 5 : 0) -
           levenshtein($fieldname_lower, $onetable_lower);
       }
       arsort($likeness);
@@ -46,9 +46,10 @@
     array_unshift($options, html('option', array_merge(array('value'=>''), $oneselected ? array() : array('selected'=>'selected')), ''));
     return
       html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'ajax_lookup', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'fieldname'=>$fieldname, 'value'=>$value, 'presentation'=>$presentation, 'foreigntablename'=>$foreigntablename, 'foreignuniquefieldname'=>$foreignuniquefieldname, 'nullallowed'=>$nullallowed, 'readonly'=>$readonly))),
-        html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>join(' ', array_clean(array($presentation, $readonly ? 'readonly' : null, $nullallowed ? null : 'notempty'))), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null), join($options)).
-        ($readonly ? '' : ' '.internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablename)).html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)'))).
-        html('div', array('class'=>'ajaxcontent'), '')
+        html('div', array(),
+          html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>join(' ', array_clean(array($presentation, $readonly ? 'readonly' : null, $nullallowed ? null : 'notempty'))), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null), join($options)).
+          ($readonly ? '' : ' '.internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), singularize_noun($foreigntablename))).html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)')))
+        )
       );
   }
 

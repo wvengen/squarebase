@@ -1,3 +1,9 @@
+none:
+
+install:
+	sudo chown :www-data session
+	chmod g+w session
+
 ./locale/nl_NL/LC_MESSAGES/messages.mo: ./locale/nl_NL/LC_MESSAGES/messages.po
 	msgfmt -o $@ $?
 

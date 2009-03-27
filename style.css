@@ -17,7 +17,7 @@ th.wide, td.wide { width: 99%; }
 th.small, td.small { width: 1%; }
 tr.list:hover { background-color: #ffc; }
 
-ul, ol { padding: 0.5em 2em; }
+ul, ol { padding: 0.5em 2.5em; }
 ul.compact { margin: 0; padding: 0; max-width: 30em; overflow: hidden; }
 ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 
