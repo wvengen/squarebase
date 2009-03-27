@@ -70,7 +70,7 @@
         $output = list_table($parameters['metabasename'], $parameters['databasename'], $parameters['tablename'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['orderfieldid'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
         break;
       case 'ajax_lookup':
-        $output = ajax_lookup($parameters['metabasename'], $parameters['databasename'], $parameters['fieldname'], $parameters['value'], $parameters['presentation'], $parameters['foreigntablename'], $parameters['foreignuniquefieldname'], $parameters['nullallowed'], $parameters['readonly']);
+        $output = ajax_lookup($parameters['metabasename'], $parameters['databasename'], $parameters['fieldname'], query1field('data', 'SELECT MAX(<foreignuniquefieldname>) FROM `<databasename>`.<foreigntablename>', array('foreigntablename'=>$parameters['foreigntablename'], 'foreignuniquefieldname'=>$parameters['foreignuniquefieldname'], 'databasename'=>$parameters['databasename'])), $parameters['presentation'], $parameters['foreigntablename'], $parameters['foreignuniquefieldname'], $parameters['nullallowed'], $parameters['readonly']);
         break;
       }
       page($parameters['function'], null, $output);
