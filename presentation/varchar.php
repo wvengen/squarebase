@@ -7,7 +7,7 @@
     return strtolower($field['Field']);
   }
 
-  function in_desc_varchar($field) { return $field['FieldNr'] < 5 && preg_match('/('._('name').'|'._('description').'|'._('acronym').'|'._('abbr').'|'._('abbreviation').')$/i', $field['Field']); }
+  function in_desc_varchar($field) { return $field['FieldNr'] < 5 && preg_match('@('._('name').'|'._('description').'|'._('acronym').'|'._('abbr').'|'._('abbreviation').')$@i', $field['Field']); }
   function in_list_varchar($field) { return in_desc_varchar($field); }
   function in_edit_varchar($field) { return true; }
 

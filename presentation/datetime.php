@@ -1,6 +1,6 @@
 <?php
   function probability_datetime($field) {
-    return preg_match('/^datetime\b/', $field['Type']) ? 0.5 : 0;
+    return preg_match('@^datetime\b@', $field['Type']) ? 0.5 : 0;
   }
 
   function typename_datetime($field) {

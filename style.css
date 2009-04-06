@@ -16,6 +16,7 @@ td.center { text-align: center; }
 th.wide, td.wide { width: 99%; }
 th.small, td.small { width: 1%; }
 tr.list:hover { background-color: #ffc; }
+tr.list:hover td.nolist { background-color: #ddf; }
 
 ul, ol { padding: 0.5em 2.5em; }
 ul.compact { margin: 0; padding: 0; max-width: 30em; overflow: hidden; }
@@ -26,7 +27,7 @@ ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 input, select, textarea { font-size: 1em; font-family: inherit; background-color: #ffe; border: 0.1em solid #999; }
 input:focus, select:focus, textarea:focus { background-color: #ffc; border: 0.1em solid #666; }
 select { height: 1.25em; }
-input.readonly, select.readonly { border-color: #ddd; }
+input.readonly, select.readonly { border-color: #ddd; color: #666; }
 input.button { border: 0.15em solid #fff; border-color: #fff #999 #999 #fff; color: #33f; padding: 0 0.2em; }
 input.mainsubmit, input.minorsubmit, .cancel, .done { margin-right: 1em; }
 input.mainsubmit:hover, input.minorsubmit:hover { background-color: #090 !important; color: #fff; }

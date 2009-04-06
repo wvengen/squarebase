@@ -16,7 +16,7 @@
     global $currencies;
     static $currencyregexp;
     if (!$currencyregexp)
-      $currencyregexp = '/('.join('|',array_keys($currencies)).')/';
+      $currencyregexp = '@('.join('|',array_keys($currencies)).')@';
 
     if (!probability_int($field) && !probability_float($field))
       return 0;

@@ -6,7 +6,7 @@
   session_start();
 
   set_best_locale(
-    preg_replace('/-([a-z]+)/e', '"_".strtoupper("\\1")',
+    preg_replace(array('@-@', '@_([a-z]+)@e'), array('_', 'strtoupper("\\1")'),
       join(',',
         array_clean(
           array(
@@ -113,7 +113,6 @@
     $databases = query('root', 'SHOW DATABASES');
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['Database'];
-      $tables = query('data', 'SHOW TABLES FROM `<databasename>`', array('databasename'=>$databasename));
       $dblist = array();
       $dbs = databasenames($databasename);
       if ($dbs) {
@@ -121,17 +120,20 @@
           $dblist[] = internalreference(array('action'=>'form_metabase_for_database', 'databasename'=>$db['value'], 'metabasename'=>$databasename), $db['value']);
         $contents = html('ul', array('class'=>'compact'), html('li', array(), $dblist));
       }
-      elseif ($tables) {
-        $tablelist = array();
-        while ($table = mysql_fetch_assoc($tables)) {
-          $tablelist[] = $table["Tables_in_$databasename"];
+      else {
+        $tables = query('data', 'SHOW TABLES FROM `<databasename>`', array('databasename'=>$databasename));
+        if ($tables) {
+          $tablelist = array();
+          while ($table = mysql_fetch_assoc($tables)) {
+            $tablelist[] = $table["Tables_in_$databasename"];
+          }
+          $fulllist = null;
+          if (count($tablelist) > 5) {
+            $fulllist = join(' ', array_slice($tablelist, 4));
+            array_splice($tablelist, 4);
+          }
+          $contents = html('ul', array('class'=>'compact'), html('li', array(), $tablelist).($fulllist ? html('li', array('title'=>$fulllist), '&hellip') : ''));
         }
-        $fulllist = null;
-        if (count($tablelist) > 5) {
-          $fulllist = join(' ', array_slice($tablelist, 4));
-          array_splice($tablelist, 4);
-        }
-        $contents = html('ul', array('class'=>'compact'), html('li', array(), $tablelist).($fulllist ? html('li', array('title'=>$fulllist), '&hellip') : ''));
       }
       $rows[] =
         html('tr', array('class'=>join(' ', array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list'))),
@@ -155,7 +157,7 @@
 
   if ($action == 'drop_database') {
     $databasename = parameter('get', 'databasename');
-    page($action, path('&hellip;', $databasename),
+    page($action, path(null, $databasename),
       form(
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>parameter('server', 'HTTP_REFERER'))).
@@ -177,16 +179,27 @@
   /********************************************************************************************/
 
   if ($action == 'language_for_database') {
-    $metabasename = parameter('get', 'metabasename');
     $databasename = parameter('get', 'databasename');
 
-    page($action, path($metabasename ? $metabasename : '&hellip;', $databasename),
+    $tables = query('data', 'SHOW TABLES FROM `<databasename>`', array('databasename'=>$databasename));
+    if ($tables) {
+      $tablelist = array();
+      while ($table = mysql_fetch_assoc($tables)) {
+        $tablelist[] = $table["Tables_in_$databasename"];
+      }
+      $tables = join(', ', $tablelist);
+    }
+
+    page($action, path(null, $databasename),
       form(
-        html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
-        html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
         html('table', array(),
           html('tr', array(),
             array(
+              html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename:disabled', 'value'=>$databasename, 'readonly'=>'readonly', 'disabled'=>'disabled', 'class'=>'readonly'))),
+              html('td', array('class'=>'small'), html('label', array(), _('tables'))).html('td', array(),
+                html('input', array('type'=>'text', 'name'=>'tables:disabled', 'value'=>$tables, 'readonly'=>'readonly', 'disabled'=>'disabled', 'class'=>'readonly')).
+                html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename))
+              ),
               html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale())
             )
           )
@@ -203,6 +216,10 @@
   if ($action == 'form_metabase_for_database') {
     $metabasename = parameter('get', 'metabasename');
     $databasename = parameter('get', 'databasename');
+    $language = 
+      $metabasename
+      ? query1field('meta', 'SELECT value FROM `<metabasename>`.metavalue mv LEFT JOIN `<metabasename>`.metaconstant mc ON mv.constantid = mc.constantid WHERE constantname = \'language\'', array('metabasename'=>parameter('get', 'metabasename')))
+      : parameter('get', 'language');
 
     if (!$metabasename) {
       $mbnames = array();
@@ -236,8 +253,8 @@
           $allprimarykeyfieldnames[] = $field['Field'];
 
         $typeinfo = $field['Type'];
-        list($typeinfo, $type          ) = preg_delete('/^(\w+) */',     $typeinfo);
-        list($typeinfo, $typelength    ) = preg_delete('/^\((\d+)\) */', $typeinfo);
+        list($typeinfo, $type          ) = preg_delete('@^(\w+) *@',     $typeinfo);
+        list($typeinfo, $typelength    ) = preg_delete('@^\((\d+)\) *@', $typeinfo);
       }
       if (count($allprimarykeyfieldnames) == 1)
         $primarykeyfieldname[$tablename] = $allprimarykeyfieldnames[0];
@@ -259,26 +276,26 @@
       $tablename = $table["Tables_in_$databasename"];
 
       $tablestructure = array();
-      $desc = $sort = $list = $edit = $fieldnr = 0;
+      $fieldnr = 0;
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
         $fieldname = $field['Field'];
 
         $originals = $metabasename ? query('meta', 'SELECT mt.intablelist, typename, type, typelength, typeunsigned, typezerofill, presentation, nullallowed, autoincrement, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.metatable AS mt LEFT JOIN `<metabasename>`.metafield AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.metatype AS my ON my.typeid = mf.typeid LEFT JOIN `<metabasename>`.metapresentation mr ON mr.presentationid = my.presentationid LEFT JOIN `<metabasename>`.metatable AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = \'<tablename>\' AND fieldname = \'<fieldname>\'', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
         if ($originals) {
           $original = mysql_fetch_assoc($originals);
-          $type          = $original['type'];
-          $typelength    = $original['typelength'];
-          $typeunsigned  = $original['typeunsigned'];
-          $typezerofill  = $original['typezerofill'];
-          $intablelist   = $original['intablelist'];
-          $typename      = $original['typename'];
-          $presentation  = $original['presentation'];
-          $nullallowed   = $original['nullallowed'];
-          $autoincrement = $original['autoincrement'];
-          $linkedtable   = $original['foreigntablename'];
-          $indesc        = $original['indesc'];
-          $inlist        = $original['inlist'];
-          $inedit        = $original['inedit'];
+          $type            = $original['type'];
+          $typelength      = $original['typelength'];
+          $typeunsigned    = $original['typeunsigned'];
+          $typezerofill    = $original['typezerofill'];
+          $intablelist     = $original['intablelist'];
+          $typename        = $original['typename'];
+          $presentation    = $original['presentation'];
+          $nullallowed     = $original['nullallowed'];
+          $autoincrement   = $original['autoincrement'];
+          $linkedtable     = $original['foreigntablename'];
+          $indesc          = $original['indesc'];
+          $inlist          = $original['inlist'];
+          $inedit          = $original['inedit'];
 
           $typeinfo = '';
           $numeric = $type == 'int';
@@ -286,18 +303,18 @@
         else {
           $intablelist   = TRUE;
           $typeinfo = $field['Type'];
-          list($typeinfo, $type          ) = preg_delete('/^(\w+) */',         $typeinfo);
-          list($typeinfo, $typelength    ) = preg_delete('/^\((\d+)\) */',     $typeinfo);
-          list($typeinfo, $typemd        ) = preg_delete('/^\((\d+,\d+)\) */', $typeinfo); //ignored non-standard syntax: "(M,D)" means than values can be stored with up to M digits in total, of which D digits may be after the decimal point
-          list($typeinfo, $typeunsigned  ) = preg_delete('/(unsigned) */',     $typeinfo);
-          list($typeinfo, $typezerofill  ) = preg_delete('/(zerofill) */',     $typeinfo);
+          list($typeinfo, $type          ) = preg_delete('@^(\w+) *@',         $typeinfo);
+          list($typeinfo, $typelength    ) = preg_delete('@^\((\d+)\) *@',     $typeinfo);
+          list($typeinfo, $typemd        ) = preg_delete('@^\((\d+,\d+)\) *@', $typeinfo); //ignored non-standard syntax: "(M,D)" means than values can be stored with up to M digits in total, of which D digits may be after the decimal point
+          list($typeinfo, $typeunsigned  ) = preg_delete('@(unsigned) *@',     $typeinfo);
+          list($typeinfo, $typezerofill  ) = preg_delete('@(zerofill) *@',     $typeinfo);
 
           $numeric = $type == 'int';
 
           $nullallowed = $field['Null'] == 'YES';
 
           $extrainfo = $field['Extra'];
-          list($extrainfo, $autoincrement) = preg_delete('/(auto_increment) */', $extrainfo);
+          list($extrainfo, $autoincrement) = preg_delete('@(auto_increment) *@', $extrainfo);
 
           $augmentedfield = 
             array_merge(
@@ -353,12 +370,13 @@
           $zerooptions[] = html('option', array('value'=>$onepresentation, 'selected'=>$onepresentation == $presentation ? 'selected' : null), $onepresentation);
         $presentationoptions = html('optgroup', array(), join($positiveoptions)).html('optgroup', array('label'=>'------------------------'), join($zerooptions));
 
+        $issimpletype = preg_match('@^(tinyint|smallint|mediumint|int|integer|bigint|char|varchar|date|datetime)$@', $type);
         $tablestructure[] =
-          html('tr', array(),
+          html('tr', array('class'=>'list'),
             ($tablestructure 
             ? '' 
-            : html('td', array('class'=>'top', 'rowspan'=>mysql_num_rows($fields[$tablename])), $tablename).
-              html('td', array('class'=>'top', 'rowspan'=>mysql_num_rows($fields[$tablename])), 
+            : html('td', array('class'=>'top nolist', 'rowspan'=>mysql_num_rows($fields[$tablename])), $tablename).
+              html('td', array('class'=>'top nolist', 'rowspan'=>mysql_num_rows($fields[$tablename])), 
                 html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
               )
             ).
@@ -380,15 +398,15 @@
             html('td', array(), html('input', array('type'=>'text', 'class'=>'typename', 'name'=>"$tablename:$fieldname:typename", 'value'=>$typename))).
             html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentation", 'class'=>'presentation dependsontypename'), $presentationoptions)).
             html('td', array(),
-                ($fieldname == $primarykeyfieldname[$tablename]
-                ? html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$fieldname))
-                : ($type == 'int'
-                  ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename"),
-                      join($tableoptions)
-                    )
-                  : '&nbsp;'
+              ($fieldname == $primarykeyfieldname[$tablename]
+              ? _('primary').html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$fieldname))
+              : ($issimpletype
+                ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename", 'class'=>'foreigntablename'),
+                    join($tableoptions)
                   )
+                : '&nbsp;'
                 )
+              )
             ).
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null))).
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))).
@@ -398,14 +416,14 @@
       $totalstructure[] = $header.join($tablestructure);
     }
 
-    page($action, path($metabasename ? $metabasename : '&hellip;', $databasename),
+    page($action, path(null, $databasename),
       form(
-        html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('table', array(),
           html('tr', array(),
             array(
               html('td', array('class'=>'small'), html('label', array('for'=>'metabasename'), _('metabasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename ? $metabasename : (count($mbnames) == 1 ? $mbnames[0] : ''), 'class'=>'notempty'))),
-              html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale())
+              html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename:disabled', 'value'=>$databasename, 'readonly'=>'readonly', 'disabled'=>'disabled', 'class'=>'readonly')).html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'language:disabled', 'value'=>$language, 'readonly'=>'readonly', 'disabled'=>'disabled', 'class'=>'readonly')).html('input', array('type'=>'hidden', 'name'=>'language', 'value'=>$language)))
             )
           )
         ).
@@ -553,7 +571,7 @@
     if ($errors)
       error(join(', ', $errors));
 
-    internalredirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
+    internalredirect(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
   }
 
   /********************************************************************************************/
@@ -632,12 +650,12 @@
           $newtype = totaltype($metafield);
           if ($oldfield) {
             if (strcasecmp($oldtype, $newtype))
-              query('data', 'ALTER TABLE `<databasename>`.`<tablename>` MODIFY COLUMN <fieldname> <newtype> /* WAS <oldtype> */', array('databasename'=>$databasename, 'tablename'=>$metafield['tablename'], 'fieldname'=>$metafield['fieldname'], 'newtype'=>$newtype, 'oldtype'=>$oldtype));
+              query('data', 'ALTER TABLE `<databasename>`.`<tablename>` MODIFY COLUMN <fieldname> <newtype> #warning WAS <oldtype>', array('databasename'=>$databasename, 'tablename'=>$metafield['tablename'], 'fieldname'=>$metafield['fieldname'], 'newtype'=>$newtype, 'oldtype'=>$oldtype));
           }
           else
-            query('data', 'ALTER TABLE `<databasename>`.`<tablename>` ADD COLUMN (<fieldname> <newtype>) /* WAS <oldtype> */', array('databasename'=>$databasename, 'tablename'=>$metafield['tablename'], 'fieldname'=>$metafield['fieldname'], 'newtype'=>$newtype, 'oldtype'=>$oldtype));
+            query('data', 'ALTER TABLE `<databasename>`.`<tablename>` ADD COLUMN (<fieldname> <newtype>) #warning WAS <oldtype>', array('databasename'=>$databasename, 'tablename'=>$metafield['tablename'], 'fieldname'=>$metafield['fieldname'], 'newtype'=>$newtype, 'oldtype'=>$oldtype));
           if ($metafield['foreigntableid'] && !$associatedoldindices[$metafield['fieldname']])
-            query('data', 'ALTER TABLE `<databasename>`.`<tablename>` ADD INDEX (<fieldname>) /* WAS non-existent */', array('databasename'=>$databasename, 'tablename'=>$metafield['tablename'], 'fieldname'=>$metafield['fieldname']));
+            query('data', 'ALTER TABLE `<databasename>`.`<tablename>` ADD INDEX (<fieldname>) #warning WAS non-existent', array('databasename'=>$databasename, 'tablename'=>$metafield['tablename'], 'fieldname'=>$metafield['fieldname']));
         }
       }
     }

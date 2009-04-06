@@ -148,6 +148,8 @@
         $fullquery
       )
     );
+    if (preg_match('@#warning @', $fullquery))
+      addtolist('warnings', 'warning', $fullquery);
 
     if ($result)
       return $result;
@@ -247,10 +249,10 @@
       join(' - ',
         array_clean(
           array(
-            $metabasename,
-            $metabasename && $databasename ? internalreference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'back'=>parameter('server', 'REQUEST_URI')), $databasename) : null,
-            $metabasename && $databasename && $tablename && $uniquefieldname ? internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename), $tablename) : null,
-            $metabasename && $databasename && $tablename && $uniquefieldname && !is_null($uniquevalue) ? query1field('data', 'SELECT '.descriptor($metabasename, $tablename, $tablename).' FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = <uniquevalue>', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)) : null
+            !is_null($metabasename) ? $metabasename : '&hellip;',
+            !is_null($databasename) ? ($metabasename ? internalreference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'back'=>parameter('server', 'REQUEST_URI')), $databasename) : $databasename) : null,
+            !is_null($tablename)    ? ($metabasename && $databasename && $uniquefieldname ? internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename), $tablename) : $tablename) : null,
+            !is_null($uniquevalue)  ? ($metabasename && $databasename && $tablename && $uniquefieldname ? query1field('data', 'SELECT '.descriptor($metabasename, $tablename, $tablename).' FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = <uniquevalue>', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)) : $uniquevalue) : null
           )
         )
       )

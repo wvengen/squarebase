@@ -1,6 +1,6 @@
 <?php
   function probability_image($field) {
-    return preg_match('/^(tiny||medium|long)blob\b/', $field['Type']) ? 0.5 : 0;
+    return preg_match('@^(tiny||medium|long)blob\b@', $field['Type']) ? 0.5 : 0;
   }
 
   function typename_image($field) {

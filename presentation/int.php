@@ -1,10 +1,10 @@
 <?php
   function probability_int($field) {
     // ordinary integers
-    if (preg_match('/^(tinyint|smallint|mediumint|int|integer|bigint)\b/', $field['Type']))
+    if (preg_match('@^(tinyint|smallint|mediumint|int|integer|bigint)\b@', $field['Type']))
       return 0.4;
     // real numbers without decimals
-    if (preg_match('/^(real|double|float|decimal|numeric)\s*\(\s*\d+\s*,\s*0\s*\)/', $field['Type']))
+    if (preg_match('@^(real|double|float|decimal|numeric)\s*\(\s*\d+\s*,\s*0\s*\)@', $field['Type']))
       return 0.4;
     return 0;
   }

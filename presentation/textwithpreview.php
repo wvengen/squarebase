@@ -2,11 +2,11 @@
   require_once('text.php');
 
   function probability_textwithpreview($field) {
-    if (!preg_match('/^(tiny||medium|long)text\b/', $field['Type']))
+    if (!preg_match('@^(tiny||medium|long)text\b@', $field['Type']))
       return 0;
     $texts = query('data', "SELECT $field[Field] FROM `$field[Database]`.$field[Table] WHERE $field[Field] IS NOT NULL LIMIT 10");
     while ($text = mysql_fetch_assoc($texts)) {
-      if (preg_match('/<\w+\b[^<]*>/', $text[$field['Field']]))
+      if (preg_match('@<\w+\b[^<]*>@', $text[$field['Field']]))
         return 0.6;
     }
     return 0;
