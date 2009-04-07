@@ -26,7 +26,7 @@
   textdomain('messages');
 
   $action = parameter('get', 'action', 'login');
-  addtolist('logs', 'action', $action.' '.array_show(parameter('get')));
+  addtolist('logs', 'action', $action.join(' ', array('', '')).array_show(parameter('get')));
 
   /********************************************************************************************/
 
@@ -40,7 +40,7 @@
               html('td', array('class'=>'small'), html('label', array('for'=>'host'    ), _('host'    ))).html('td', array(), html('input', array('type'=>'text',     'id'=>'host',     'name'=>'host',     'value'=>'localhost'))),
               html('td', array('class'=>'small'), html('label', array('for'=>'password'), _('password'))).html('td', array(), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password'))),
               html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale()),
-              html('td', array('class'=>'small'), '&nbsp;').                                              html('td', array(), html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>'button mainsubmit')))
+              html('td', array('class'=>'small'), '&nbsp;').                                              html('td', array(), html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>join(join(' ', array('', '')), array('button', 'mainsubmit')))))
             )
           )
         )
@@ -69,7 +69,7 @@
   /********************************************************************************************/
 
   if ($action == 'index') {
-    $metabases = query('root', 'SHOW DATABASES');
+    $metabases = query('root', join(' ', array('SHOW', 'DATABASES')));
     $rows = array(html('th', array(), array(_('metabase'), _('database'))));
     while ($metabase = mysql_fetch_assoc($metabases)) {
       $metabasename = $metabase['Database'];
@@ -79,7 +79,7 @@
         while ($databasename = mysql_fetch_assoc($databasenames))
           $databaselist[] = internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename['value']), $databasename['value']);
         $rows[] =
-          html('tr', array('class'=>join(' ', array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list'))),
+          html('tr', array('class'=>join(join(' ', array('', '')), array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list'))),
             html('td', array('class'=>'small'),
               internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$metabasename), $metabasename)
             ).
@@ -110,7 +110,7 @@
 
   if ($action == 'new_metabase_from_database') {
     $rows = array(html('th', array(), array(_('database'), _('tables'), '&nbsp;')));
-    $databases = query('root', 'SHOW DATABASES');
+    $databases = query('root', join(' ', array('SHOW', 'DATABASES')));
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['Database'];
       $dblist = array();
@@ -129,14 +129,14 @@
           }
           $fulllist = null;
           if (count($tablelist) > 5) {
-            $fulllist = join(' ', array_slice($tablelist, 4));
+            $fulllist = join(join(' ', array('', '')), array_slice($tablelist, 4));
             array_splice($tablelist, 4);
           }
           $contents = html('ul', array('class'=>'compact'), html('li', array(), $tablelist).($fulllist ? html('li', array('title'=>$fulllist), '&hellip') : ''));
         }
       }
       $rows[] =
-        html('tr', array('class'=>join(' ', array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list'))),
+        html('tr', array('class'=>join(join(' ', array('', '')), array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list'))),
           html('td', array(),
             array(
               internalreference(array('action'=>'language_for_database', 'databasename'=>$databasename), $databasename),
@@ -223,7 +223,7 @@
 
     if (!$metabasename) {
       $mbnames = array();
-      $metabases = query('root', 'SHOW DATABASES');
+      $metabases = query('root', join(' ', array('SHOW', 'DATABASES')));
       while ($metabase = mysql_fetch_assoc($metabases)) {
         $mbname = $metabase['Database'];
         if ($mbname != 'mysql') {
@@ -375,8 +375,8 @@
           html('tr', array('class'=>'list'),
             ($tablestructure 
             ? '' 
-            : html('td', array('class'=>'top nolist', 'rowspan'=>mysql_num_rows($fields[$tablename])), $tablename).
-              html('td', array('class'=>'top nolist', 'rowspan'=>mysql_num_rows($fields[$tablename])), 
+            : html('td', array('class'=>join(join(' ', array('', '')), array('top', 'nolist')), 'rowspan'=>mysql_num_rows($fields[$tablename])), $tablename).
+              html('td', array('class'=>join(join(' ', array('', '')), array('top', 'nolist')), 'rowspan'=>mysql_num_rows($fields[$tablename])), 
                 html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
               )
             ).
@@ -389,14 +389,14 @@
                 ($type != 'int' && $type != 'varchar' && $type != 'datetime' ? html('option', array('value'=>$type, 'selected'=>'selected'), $type) : '')
               )
             ).
-            html('td', array(), html('input', array('type'=>'text', 'class'=>'integer dependsontypename', 'name'=>"$tablename:$fieldname:typelength", 'value'=>$typelength))).
-            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit dependsontypename', 'name'=>"$tablename:$fieldname:typeunsigned", 'checked'=>$typeunsigned ? 'checked' : null)) : '&nbsp;').
-            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit dependsontypename', 'name'=>"$tablename:$fieldname:typezerofill", 'checked'=>$typezerofill ? 'checked' : null)) : '&nbsp;').
+            html('td', array(), html('input', array('type'=>'text', 'class'=>join(join(' ', array('', '')), array('integer', 'dependsontypename')), 'name'=>"$tablename:$fieldname:typelength", 'value'=>$typelength))).
+            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>join(join(' ', array('', '')), array('checkboxedit', 'dependsontypename')), 'name'=>"$tablename:$fieldname:typeunsigned", 'checked'=>$typeunsigned ? 'checked' : null)) : '&nbsp;').
+            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>join(join(' ', array('', '')), array('checkboxedit', 'dependsontypename')), 'name'=>"$tablename:$fieldname:typezerofill", 'checked'=>$typezerofill ? 'checked' : null)) : '&nbsp;').
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:nullallowed", 'checked'=>$nullallowed ? 'checked' : null))).
             html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:autoincrement", 'checked'=>$autoincrement ? 'checked' : null)) : '&nbsp;').
-            html('td', array(), join(' ', array($typeinfo, $extrainfo))).
+            html('td', array(), join(join(' ', array('', '')), array($typeinfo, $extrainfo))).
             html('td', array(), html('input', array('type'=>'text', 'class'=>'typename', 'name'=>"$tablename:$fieldname:typename", 'value'=>$typename))).
-            html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentation", 'class'=>'presentation dependsontypename'), $presentationoptions)).
+            html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentation", 'class'=>join(join(' ', array('', '')), array('presentation', 'dependsontypename'))), $presentationoptions)).
             html('td', array(),
               ($fieldname == $primarykeyfieldname[$tablename]
               ? _('primary').html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$fieldname))
@@ -578,7 +578,7 @@
 
   if ($action == 'form_metabase_to_database') {
     $rows = array();
-    $metabases = query('root', 'SHOW DATABASES');
+    $metabases = query('root', join(' ', array('SHOW', 'DATABASES')));
     while ($metabase = mysql_fetch_assoc($metabases)) {
       $metabasename = $metabase['Database'];
       $databasenames = databasenames($metabasename);
@@ -606,7 +606,7 @@
         html('td', array(),
           html('input', array('type'=>'text', 'name'=>'databasename')).
           html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
-          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_database_from_metabase', 'class'=>'button mainsubmit'))
+          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_database_from_metabase', 'class'=>join(' ', array('button', 'mainsubmit'))))
         );
     }
     page($action, path($metabasename),
@@ -672,7 +672,7 @@
     $rows = array(html('th', array(), 'table'));
     while ($table = mysql_fetch_assoc($tables)) {
       $rows[] =
-        html('tr', array('class'=>join(' ', array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list'))),
+        html('tr', array('class'=>join(join(' ', array('', '')), array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list'))),
           html('td', array(),
             internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$table['tablename'], 'uniquefieldname'=>$table['fieldname']), $table['tablename'])
           )
@@ -734,10 +734,10 @@
     $lines[] =
       html('td', array('class'=>'description'), '&rarr;').
       html('td', array(), 
-        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'show_record' ? 'delete_record' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>'mainsubmit button')).
-        (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit button')) : '').
+        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'show_record' ? 'delete_record' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>join(' ', array('mainsubmit', 'button')))).
+        (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>join(' ', array('minorsubmit', 'button')))) : '').
         internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel')).
-        ($action == 'show_record' ? '' : html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>'mainsubmit button delete')))
+        ($action == 'show_record' ? '' : html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join(' ', array('mainsubmit', 'button', 'delete')))))
       );
 
     if (!is_null($uniquevalue)) {

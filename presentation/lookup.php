@@ -64,7 +64,7 @@
   function list_lookup($metabasename, $databasename, $field, $value) {
     return
       ($field['thisrecord']
-      ? html('span', array('class'=>'thisrecord'), $field['descriptor'])
+      ? $field['descriptor']
       : ($field['descriptor']
         ? internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$field['foreigntablename'], 'uniquefieldname'=>$field['foreignuniquefieldname'], 'uniquevalue'=>$value, 'back'=>parameter('server', 'REQUEST_URI')), $field['descriptor']) 
         : $value

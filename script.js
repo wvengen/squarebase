@@ -297,9 +297,18 @@ ready(
       function() {
         $(this).closest('tr').find('.foreigntablename').toggle($(this).val() == 'lookup');
       }
+    ).
+//  change(). this takes too long on Firefox 3.0, therefore the following lines
+    end().
+    find('.foreigntablename').
+    hide().
+    end().
+    find('.presentation[value=lookup]').
+    each(
+      function() {
+        $(this).closest('tr').find('.foreigntablename').show();
+      }
     );
-    // the next line takes too long on Firefox 3.0
-//  change();
 
     //jquery_document_ready_presentation goes here
   }

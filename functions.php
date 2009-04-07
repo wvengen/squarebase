@@ -312,7 +312,7 @@
           $field['thisrecord'] = !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname;
           include_once("presentation/$field[presentation].php");
           $cell = call_user_func("list_$field[presentation]", $metabasename, $databasename, $field, $value);
-          $line[] = html('td', array('class'=>'column '.$field['presentation']), $cell);
+          $line[] = html('td', array('class'=>join(' ', array_clean(array('column '.$field['presentation'], $field['thisrecord'] ? 'thisrecord' : null)))), $cell);
         }
       }
       $lines[] = 

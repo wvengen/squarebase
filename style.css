@@ -43,7 +43,7 @@ input.minorsubmit.ajaxified { display: none; }
 .ajaxwarning { background-color: #f90 !important; border-color: #c00 !important; }
 
 .column { white-space: nowrap; }
-.thisrecord { color: #000; }
+.thisrecord { display: none; }
 
 .foreigntable { margin-bottom: 1em; }
 
