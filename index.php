@@ -25,6 +25,10 @@
   bindtextdomain('messages', './locale');
   textdomain('messages');
 
+  $ajaxy = parameter('get', 'ajaxy');
+  if (!is_null($ajaxy))
+    $_SESSION['ajaxy'] = $ajaxy == 'on';
+
   $action = parameter('get', 'action', 'login');
   addtolist('logs', 'action', $action.join(' ', array('', '')).array_show(parameter('get')));
 

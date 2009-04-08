@@ -205,13 +205,17 @@
         html('head', array(),
           html('title', array(), $title).
           html('link', array('href'=>'style.php', 'type'=>'text/css', 'rel'=>'stylesheet')).
-          html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
-          html('script', array('type'=>'text/javascript', 'src'=>'script.php'), '')
+          ($_SESSION['ajaxy']
+          ? html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
+            html('script', array('type'=>'text/javascript', 'src'=>'script.php'), '')
+          : ''
+          )
         ).
         html('body', array('class'=>preg_replace('@_@', '', $action)),
           html('div', array('id'=>'header'),
             html('h1', array('id'=>'title'), $title).
-            ($_SESSION['username'] ? html('div', array('id'=>'id'), join(' &ndash; ', array(get_locale(), "$_SESSION[username]@$_SESSION[host]", internalreference(array('action'=>'logout'), 'logout')))) : '').
+            ($_SESSION['username'] ? html('div', array('id'=>'id'), join(' &ndash; ', array(get_locale(), "$_SESSION[username]@$_SESSION[host]", internalreference(parameter('server', 'REQUEST_URI').'&ajaxy='.($_SESSION['ajaxy'] ? 'off' : 'on'), 'ajax is '.($_SESSION['ajaxy'] ? 'on' : 'off')), internalreference(array('action'=>'logout'), 'logout')))) : '').
+            
             html('div', array('id'=>'messages'),
               $error ? html('div', array('class'=>'error'), $error) : ''
             ).
@@ -425,6 +429,7 @@
     $_SESSION['host']     = $host;
     $_SESSION['password'] = $password;
     $_SESSION['language'] = $language;
+    $_SESSION['ajaxy']    = true;
   }
 
   function logout($error = null) {
