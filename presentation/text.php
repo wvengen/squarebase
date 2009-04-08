@@ -11,6 +11,8 @@
   function in_list_text($field) { return false; }
   function in_edit_text($field) { return true; }
 
+  function is_sortable_text() { return true; }
+
   function formfield_text($metabasename, $databasename, $field, $value, $readonly) {
     return html('textarea', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>join(' ', array_clean(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null), preg_replace('@<(.*?)>@', '&lt;$1&gt;', $value));
   }

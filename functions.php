@@ -285,9 +285,10 @@
       if ($orderfieldname == $field['fieldname'])
         array_unshift($ordernames, array_pop($ordernames));
 
+      include_once("presentation/$field[presentation].php");
       $header[] = 
         html('th', !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? array('class'=>'thisrecord') : array(), 
-          !is_null($foreignvalue)
+          !is_null($foreignvalue) || !call_user_func("is_sortable_$field[presentation]")
           ? clean_name($field['fieldname'], $tablename)
           : ($field['fieldname'] == $orderfieldname
             ? clean_name($field['fieldname'], $tablename).' &#x25be;'
@@ -306,14 +307,13 @@
     while ($row = mysql_fetch_assoc($rows)) {
       $line = array();
       for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
-        if ($field['inlist']) {
-          $value = $row["${tablename}_$field[fieldname]"];
-          $field['descriptor'] = $row["$field[foreigntablename]_$field[fieldname]_descriptor"];
-          $field['thisrecord'] = !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname;
-          include_once("presentation/$field[presentation].php");
-          $cell = call_user_func("list_$field[presentation]", $metabasename, $databasename, $field, $value);
-          $line[] = html('td', array('class'=>join(' ', array_clean(array('column '.$field['presentation'], $field['thisrecord'] ? 'thisrecord' : null)))), $cell);
-        }
+        $value = $row["${tablename}_$field[fieldname]"];
+        $field['descriptor'] = $row["$field[foreigntablename]_$field[fieldname]_descriptor"];
+        $field['thisrecord'] = !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname;
+        $field['uniquefieldname'] = $uniquefieldname;
+        $field['uniquevalue'] = $row[$uniquefieldname];
+        $cell = call_user_func("list_$field[presentation]", $metabasename, $databasename, $field, $value);
+        $line[] = html('td', array('class'=>join(' ', array_clean(array('column '.$field['presentation'], $field['thisrecord'] ? 'thisrecord' : null)))), $cell);
       }
       $lines[] = 
         html('tr', array('class'=>join(' ', array(count($lines) % 2 ? 'rowodd' : 'roweven', 'list'))),
@@ -348,7 +348,7 @@
           )
         : (is_null($foreignvalue) ? '' : $tablename)
         ).
-        (count($lines) > 1 ? html('table', array(), join($lines)) : '').
+        (count($lines) > 1 ? html('table', array('class'=>'tablelist'), join($lines)) : '').
         join(' &nbsp; ', $offsets).
         (is_null($foreignvalue) ? internalreference(parameter('server', 'HTTP_REFERER'), 'close', array('class'=>'close')) : '')
       );

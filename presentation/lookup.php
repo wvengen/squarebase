@@ -33,6 +33,8 @@
   function in_list_lookup($field) { return in_desc_lookup($field); }
   function in_edit_lookup($field) { return true; }
 
+  function is_sortable_lookup() { return true; }
+
   function ajax_lookup($metabasename, $databasename, $fieldname, $value, $presentation, $foreigntablename, $foreignuniquefieldname, $nullallowed, $readonly) {
     if (!$foreigntablename)
       error(sprintf(_('no foreigntablename for %s'), $fieldname));

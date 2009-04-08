@@ -12,8 +12,26 @@ $.extend(
   }
 );
 
+//hash equivalent of serialize
+$.fn.formhash = function() {
+  var hash = {};
+  this.
+  find(':input[name]:not([type=submit])').
+  each(
+    function() {
+      var name = $(this).attr('name');
+      if (hash[name] == undefined)
+        hash[name] = $(this).formvalue();
+//    else
+//      alert(name + ' ' + $(this).formvalue() + ' is already ' + hash[name]);
+    }
+  );
+  return hash;
+};
+    
 jQuery.fn.formvalue = function() {
-  return $(this).attr('type') == 'checkbox' ? $(this).attr('checked') : $(this).val();
+  var type = $(this).attr('type');
+  return type == 'checkbox' ? $(this).attr('checked') : (type == 'radio' ? $(this).closest('form').find('input[name=' + $(this).attr('name') + ']:checked').val() : $(this).val());
 }
 
 jQuery.fn.setid = function(id) {
@@ -102,10 +120,7 @@ jQuery.fn.ajaxsubmit = function() {
         attr('action') + ' #content',
 
         $(this).
-        find(':disabled').
-        attr('disabled', null).
-        end().
-        serialize(),
+        formhash(),
 
         function() {
           $(this).
@@ -181,7 +196,9 @@ jQuery.fn.ajaxify = function() {
         find('.ajaxcontainer:first').
         load(
           this.href + ' #content',
+
           null,
+
           function() {
             $(this).
             find('form').
@@ -191,7 +208,8 @@ jQuery.fn.ajaxify = function() {
             addClass('ajaxified').
             click(
               function() {
-                // the following line is needed because jquery doesn't include the name=value of the submit button in form.serialize()
+                // the following line is needed because the name=value of the submit button isn't included in form.serialize()/form.formhash()
+                // because there is no way to know which submit button is pressed
                 $(this).
                 append('<input type="hidden" name="action" value="' + $(this).val() + '"/>');
                 return true;
@@ -274,10 +292,10 @@ ready(
                   var first = $(firsttypenames[typename]).closest('tr').find('[name$=' + $(this).attr('name').regexmatch(':\\w+$') + ']');
                   if ($(this).formvalue() == first.formvalue())
                     $(this).closest('td').
-                    removeClass('ajaxwarning');
+                    removeClass('ajaxincompatibility');
                   else
                     $(this).closest('td').
-                    addClass('ajaxwarning');
+                    addClass('ajaxincompatibility');
                 }
               );
 

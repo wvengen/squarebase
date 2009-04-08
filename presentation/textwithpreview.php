@@ -20,6 +20,8 @@
   function in_list_textwithpreview($field) { return false; }
   function in_edit_textwithpreview($field) { return true; }
 
+  function is_sortable_textwithpreview() { return true; }
+
   function formfield_textwithpreview($metabasename, $databasename, $field, $value, $readonly) {
     return formfield_text($metabasename, $databasename, $field, $value, $readonly);
   }

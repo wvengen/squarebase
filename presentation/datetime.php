@@ -11,6 +11,8 @@
   function in_list_datetime($field) { return false; }
   function in_edit_datetime($field) { return true; }
 
+  function is_sortable_datetime() { return true; }
+
   function formfield_datetime($metabasename, $databasename, $field, $value, $readonly) {
     return 
       html('input', array('type'=>'text', 'class'=>join(' ', array_clean(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>datetime2local($value), 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null)).

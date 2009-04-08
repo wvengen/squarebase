@@ -40,7 +40,8 @@ a.ajaxified, input.ajaxified { background-color: #cff; }
 input.minorsubmit.ajaxified { display: none; }
 .ajaxcontainer { padding-left: 1em; }
 .ajaxproblem { border-color: #c00 !important; }
-.ajaxwarning { background-color: #f90 !important; border-color: #c00 !important; }
+.ajaxincompatibility { background-color: #f90 !important; border-color: #c00 !important; }
+.ajaxwarning { display: none; color: #c00; }
 
 .column { white-space: nowrap; }
 .thisrecord { display: none; }

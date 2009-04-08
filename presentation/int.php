@@ -17,6 +17,8 @@
   function in_list_int($field) { return false; }
   function in_edit_int($field) { return true; }
 
+  function is_sortable_int() { return true; }
+
   function formfield_int($metabasename, $databasename, $field, $value, $readonly) {
     return html('input', array('type'=>'text', 'class'=>join(' ', array_clean(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$readonly ? 'disabled' : null));
   }

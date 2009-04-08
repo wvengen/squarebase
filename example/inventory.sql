@@ -1,9 +1,7 @@
 # From http://www.itc.virginia.edu/desktop/web/database/mysql_instructions.html
 # Enhanced by Squarebase
 
-DROP DATABASE IF EXISTS inventory;
-
-CREATE DATABASE inventory;
+CREATE DATABASE IF NOT EXISTS inventory;
 
 USE inventory;
 
@@ -21,6 +19,7 @@ CREATE TABLE employees (
    employeeID   INT(11)      NOT NULL AUTO_INCREMENT,
    firstName    VARCHAR(15)  NOT NULL,
    lastName     VARCHAR(25)  NOT NULL,
+   picture      BLOB,
    PRIMARY KEY (employeeID)
 );
 
