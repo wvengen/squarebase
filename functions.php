@@ -485,25 +485,38 @@
     return strftime($to, mktime($matches['tm_hour'], $matches['tm_min'], $matches['tm_sec'], $matches['tm_mon'], $matches['tm_mday'], $matches['tm_year']));
   }
 
-  function set_best_locale($accepted_locales, $encoding = null) {
-    //$accepted_locales is of the form (<locale>(;q=<number>))*
-    $locales = array();
-    $parts = explode(',', $accepted_locales);
-    foreach ($parts as $part)
+  function explode_with_priority($text) {
+    $exploded = array();
+    $parts = explode(',', $text);
+    foreach ($parts as $part) {
       if (preg_match('/([^;]+)(?:;q=(\d*\.\d*))?/i', $part, $matches)) {
-        $locale_with_encoding = $matches[1].(preg_match('/\./', $matches[1]) ? '' : ($encoding ? '.'.$encoding : ''));
-        $locales[$locale_with_encoding] = max($locales[$locale_with_encoding], (float) (isset($matches[2]) ? $matches[2] : 1));
+        $id = preg_replace('@[^a-z0-9\.]@', '', strtolower($matches[1]));
+        $value = (float) (isset($matches[2]) ? $matches[2] : 1);
+        $exploded[$id] = max($exploded[$id], $value);
       }
-    arsort($locales);
-    $locales = array_keys($locales);
-
-    $best_locale = setlocale(LC_ALL, $locales);
-
-    foreach ($locales as $locale) {
-      if ($locale == $best_locale)
-        break;
-      addtolist('warnings', 'warning', sprintf(_('preferred locale %s not found on operating system level, falling back to %s'), $locale, $best_locale));
     }
+    arsort($exploded);
+    return $exploded;
+  }
+
+  function set_best_locale($accepted_languages, $accepted_charsets) {
+    //$accepted_* is of the form (<id>(;q=<number>))*
+    $wanted_languages = explode_with_priority($accepted_languages);
+    $wanted_charsets = explode_with_priority($accepted_charsets);
+
+    $wanted_locales = array();
+    $system_locales = get_system_locales();
+    foreach ($system_locales as $system_locale) {
+      list($language, $charset) = explode('.', preg_replace('@[^a-z0-9\.]@', '', strtolower($system_locale)));
+      $wanted_locales[$system_locale] = 10 * $wanted_languages[$language] + 1 * $wanted_charsets[$charset];
+    }
+    arsort($wanted_locales);
+    $wanted_locales = array_keys($wanted_locales);
+
+    $best_locale = setlocale(LC_ALL, $wanted_locales);
+
+//  if ($best_locale != $preferred_locale)
+//    addtolist('warnings', 'warning', sprintf(_('preferred locale %s not found on operating system level, falling back to %s'), $preferred_locale, $best_locale));
   }
 
   function get_locale() {
@@ -519,8 +532,8 @@
     $current_locale = get_locale();
 
     $localeoptions = array();
-    $locales = get_system_locales();
-    foreach ($locales as $locale)
+    $system_locales = get_system_locales();
+    foreach ($system_locales as $locale)
       $localeoptions[] = html('option', array('value'=>$locale, 'selected'=>$locale == $current_locale ? 'selected' : null), $locale);
 
     return html('select', array('id'=>$name, 'name'=>$name), join($localeoptions));

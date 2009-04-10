@@ -6,20 +6,25 @@
   session_start();
 
   set_best_locale(
-    preg_replace(array('@-@', '@_([a-z]+)@e'), array('_', 'strtoupper("\\1")'),
-      join(',',
-        array_clean(
-          array(
-            parameter('get', 'metabasename') && mysql_num_rows(query('meta', "SHOW DATABASES LIKE '<metabasename>'", array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE \'metaconstant\'', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT value FROM `<metabasename>`.metavalue mv LEFT JOIN `<metabasename>`.metaconstant mc ON mv.constantid = mc.constantid WHERE constantname = \'language\'', array('metabasename'=>parameter('get', 'metabasename'))).';q=4.0' : null,
-            parameter('get', 'language')     ? parameter('get', 'language').';q=3.0' : null,
-            parameter('session', 'language') ? parameter('session', 'language').';q=2.0' : null,
-            parameter('server', 'HTTP_ACCEPT_LANGUAGE'),
-            'en-us;q=0.0'
-          )
+    join(',',
+      array_clean(
+        array(
+          parameter('get', 'metabasename') && mysql_num_rows(query('meta', "SHOW DATABASES LIKE '<metabasename>'", array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE \'metaconstant\'', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT value FROM `<metabasename>`.metavalue mv LEFT JOIN `<metabasename>`.metaconstant mc ON mv.constantid = mc.constantid WHERE constantname = \'language\'', array('metabasename'=>parameter('get', 'metabasename'))).';q=4.0' : null,
+          parameter('get', 'language')     ? parameter('get', 'language').';q=3.0' : null,
+          parameter('session', 'language') ? parameter('session', 'language').';q=2.0' : null,
+          parameter('server', 'HTTP_ACCEPT_LANGUAGE'),
+          'en-us;q=0.0'
         )
       )
     ),
-    'utf8'
+    join(',',
+      array_clean(
+        array(
+          parameter('server', 'HTTP_ACCEPT_CHARSET'),
+          '*;q=0'
+        )
+      )
+    )
   );
 
   bindtextdomain('messages', './locale');
