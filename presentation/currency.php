@@ -1,26 +1,21 @@
 <?php
-
   // list of auto-detected currencies
   // see also: http://en.wikipedia.org/wiki/List_of_circulating_currencies
   global $currencies;
   $currencies = array(
-    'price' => NULL,
-    'currency' => NULL,
-    'cost' => NULL,
-    'bucks' => '$',
-    'dollar' => '$',
-    'euro' => '&euro;'
+    _('price')=> NULL,
+    _('currency')=> NULL,
+    _('cost')=> NULL,
+    _('bucks')=> '$',
+    _('dollar')=> '$',
+    _('euro')=> '&euro;'
   );
 
   function probability_currency($field) {
     global $currencies;
-    static $currencyregexp;
-    if (!$currencyregexp)
-      $currencyregexp = '@('.join('|',array_keys($currencies)).')@';
-
     if (!probability_int($field) && !probability_float($field))
       return 0;
-    if (preg_match($currencyregexp, $field['Field']))
+    if (preg_match('@('.join('|',array_keys($currencies)).')@', $field['Field']))
       return 0.5;
     return 0.2;
   }

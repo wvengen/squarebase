@@ -14,9 +14,7 @@
   function is_sortable_autoincrement() { return false; }
 
   function formfield_autoincrement($metabasename, $databasename, $field, $value, $readonly) {
-    return 
-      html('span', array('class'=>$field['presentation']), is_null($value) ? '?' : $value).
-      html('input', array('type'=>'hidden', 'name'=>"field:$field[fieldname]", 'value'=>$value));
+    return html('input', array('type'=>'text', 'class'=>join(' ', array_clean(array($field['presentation'], 'readonly'))), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>'readonly'));
   }
 
   function formvalue_autoincrement($field) {
@@ -28,6 +26,6 @@
   }
   
   function css_autoincrement() {
-    return ".autoincrement { color: #666; }\n";
+    return ".autoincrement { width: 20em; }\n";
   }
 ?>
