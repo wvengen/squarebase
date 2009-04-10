@@ -6,14 +6,18 @@
   session_start();
 
   set_best_locale(
-    join(',',
-      array_clean(
-        array(
-          parameter('get', 'metabasename') && mysql_num_rows(query('meta', "SHOW DATABASES LIKE '<metabasename>'", array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE \'metaconstant\'', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT value FROM `<metabasename>`.metavalue mv LEFT JOIN `<metabasename>`.metaconstant mc ON mv.constantid = mc.constantid WHERE constantname = \'language\'', array('metabasename'=>parameter('get', 'metabasename'))).';q=4.0' : null,
-          parameter('get', 'language')     ? parameter('get', 'language').';q=3.0' : null,
-          parameter('session', 'language') ? parameter('session', 'language').';q=2.0' : null,
-          parameter('server', 'HTTP_ACCEPT_LANGUAGE'),
-          'en-us;q=0.0'
+    preg_replace(
+      array('@\.[a-z][a-z0-9\-]*@', '@_([a-z]+)@ie'),
+      array('',                     '"-".strtolower("\1")'),
+      join(',',
+        array_clean(
+          array(
+            parameter('get', 'metabasename') && mysql_num_rows(query('meta', "SHOW DATABASES LIKE '<metabasename>'", array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE \'metaconstant\'', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT value FROM `<metabasename>`.metavalue mv LEFT JOIN `<metabasename>`.metaconstant mc ON mv.constantid = mc.constantid WHERE constantname = \'language\'', array('metabasename'=>parameter('get', 'metabasename'))).';q=4.0' : null,
+            parameter('get', 'language')     ? parameter('get', 'language').';q=3.0' : null,
+            parameter('session', 'language') ? parameter('session', 'language').';q=2.0' : null,
+            parameter('server', 'HTTP_ACCEPT_LANGUAGE'),
+            'en;q=0.0'
+          )
         )
       )
     ),
@@ -21,7 +25,7 @@
       array_clean(
         array(
           parameter('server', 'HTTP_ACCEPT_CHARSET'),
-          '*;q=0'
+          '*;q=0.0'
         )
       )
     )
@@ -204,9 +208,9 @@
         html('table', array(),
           html('tr', array(),
             array(
-              html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename:disabled', 'value'=>$databasename, 'readonly'=>'readonly', 'disabled'=>'disabled', 'class'=>'readonly'))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename:readonly', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
               html('td', array('class'=>'small'), html('label', array(), _('tables'))).html('td', array(),
-                html('input', array('type'=>'text', 'name'=>'tables:disabled', 'value'=>$tables, 'readonly'=>'readonly', 'disabled'=>'disabled', 'class'=>'readonly')).
+                html('input', array('type'=>'text', 'name'=>'tables:readonly', 'value'=>$tables, 'readonly'=>'readonly', 'class'=>'readonly')).
                 html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename))
               ),
               html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale())
@@ -225,7 +229,7 @@
   if ($action == 'form_metabase_for_database') {
     $metabasename = parameter('get', 'metabasename');
     $databasename = parameter('get', 'databasename');
-    $language = 
+    $language =
       $metabasename
       ? query1field('meta', 'SELECT value FROM `<metabasename>`.metavalue mv LEFT JOIN `<metabasename>`.metaconstant mc ON mv.constantid = mc.constantid WHERE constantname = \'language\'', array('metabasename'=>parameter('get', 'metabasename')))
       : parameter('get', 'language');
@@ -325,12 +329,12 @@
           $extrainfo = $field['Extra'];
           list($extrainfo, $autoincrement) = preg_delete('@(auto_increment) *@', $extrainfo);
 
-          $augmentedfield = 
+          $augmentedfield =
             array_merge(
-              $field, 
+              $field,
               array(
-                'Database'=>$databasename, 
-                'Table'=>$tablename, 
+                'Database'=>$databasename,
+                'Table'=>$tablename,
                 'Linkedtable'=>$linkedtable,
                 'Alltables'=>$alltables,
                 'Primarykeyfieldname'=>$primarykeyfieldname,
@@ -382,10 +386,10 @@
         $issimpletype = preg_match('@^(tinyint|smallint|mediumint|int|integer|bigint|char|varchar|date|datetime)$@', $type);
         $tablestructure[] =
           html('tr', array('class'=>'list'),
-            ($tablestructure 
-            ? '' 
+            ($tablestructure
+            ? ''
             : html('td', array('class'=>join(join(' ', array('', '')), array('top', 'nolist')), 'rowspan'=>mysql_num_rows($fields[$tablename])), $tablename).
-              html('td', array('class'=>join(join(' ', array('', '')), array('top', 'nolist')), 'rowspan'=>mysql_num_rows($fields[$tablename])), 
+              html('td', array('class'=>join(join(' ', array('', '')), array('top', 'nolist')), 'rowspan'=>mysql_num_rows($fields[$tablename])),
                 html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
               )
             ).
@@ -431,8 +435,8 @@
           html('tr', array(),
             array(
               html('td', array('class'=>'small'), html('label', array('for'=>'metabasename'), _('metabasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename ? $metabasename : (count($mbnames) == 1 ? $mbnames[0] : ''), 'class'=>'notempty'))),
-              html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename:disabled', 'value'=>$databasename, 'readonly'=>'readonly', 'disabled'=>'disabled', 'class'=>'readonly')).html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename))),
-              html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'language:disabled', 'value'=>$language, 'readonly'=>'readonly', 'disabled'=>'disabled', 'class'=>'readonly')).html('input', array('type'=>'hidden', 'name'=>'language', 'value'=>$language)))
+              html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename:readonly', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'language:readonly', 'value'=>$language, 'readonly'=>'readonly', 'class'=>'readonly')))
             )
           )
         ).
@@ -742,7 +746,7 @@
 
     $lines[] =
       html('td', array('class'=>'description'), '&rarr;').
-      html('td', array(), 
+      html('td', array(),
         html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'show_record' ? 'delete_record' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>join(' ', array('mainsubmit', 'button')))).
         (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>join(' ', array('minorsubmit', 'button')))) : '').
         internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel')).

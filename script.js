@@ -285,8 +285,8 @@ ready(
               $(this).
               closest('tr').
               find('.dependsontypename').
-              attr('disabled', firsttypenames[typename] ? 'disabled' : null).
-              filter(':disabled').
+              attr('readonly', firsttypenames[typename] ? 'readonly' : null).
+              filter('.readonly').
               each(
                 function() {
                   var first = $(firsttypenames[typename]).closest('tr').find('[name$=' + $(this).attr('name').regexmatch(':\\w+$') + ']');

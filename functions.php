@@ -481,16 +481,20 @@
   function change_datetime_format($value, $from, $to) {
     if (!$value)
       return $value;
-    $matches = strptime($from, $value);
+    $matches = strptime($value, $from);
     return strftime($to, mktime($matches['tm_hour'], $matches['tm_min'], $matches['tm_sec'], $matches['tm_mon'], $matches['tm_mday'], $matches['tm_year']));
+  }
+
+  function bare($text) {
+    return preg_replace('@[^a-z0-9\._]@', '', strtolower($text));
   }
 
   function explode_with_priority($text) {
     $exploded = array();
     $parts = explode(',', $text);
     foreach ($parts as $part) {
-      if (preg_match('/([^;]+)(?:;q=(\d*\.\d*))?/i', $part, $matches)) {
-        $id = preg_replace('@[^a-z0-9\.]@', '', strtolower($matches[1]));
+      if (preg_match('/([^;]+)(?:;q=(\d*(\.\d*)?))?/i', $part, $matches)) {
+        $id = bare($matches[1]);
         $value = (float) (isset($matches[2]) ? $matches[2] : 1);
         $exploded[$id] = max($exploded[$id], $value);
       }
@@ -501,14 +505,19 @@
 
   function set_best_locale($accepted_languages, $accepted_charsets) {
     //$accepted_* is of the form (<id>(;q=<number>))*
-    $wanted_languages = explode_with_priority($accepted_languages);
+    $wanted_languages = explode_with_priority(preg_replace('@-@', '_', $accepted_languages));
     $wanted_charsets = explode_with_priority($accepted_charsets);
 
     $wanted_locales = array();
     $system_locales = get_system_locales();
     foreach ($system_locales as $system_locale) {
-      list($language, $charset) = explode('.', preg_replace('@[^a-z0-9\.]@', '', strtolower($system_locale)));
-      $wanted_locales[$system_locale] = 10 * $wanted_languages[$language] + 1 * $wanted_charsets[$charset];
+      $matches = explode('.', $system_locale);
+      $language = bare($matches[0]);
+      $charset = bare($matches[1]);
+      $general_language = preg_replace('@_[a-z]*@', '', $language);
+      $wanted_locales[$system_locale] = 
+        10 * (array_key_exists($language, $wanted_languages) ? 1 + $wanted_languages[$language] : (array_key_exists($general_language, $wanted_languages) ? 1 + $wanted_languages[$general_language] : 0)) + 
+         1 * (array_key_exists($charset, $wanted_charsets) ? 1 + $wanted_charsets[$charset] : 0);
     }
     arsort($wanted_locales);
     $wanted_locales = array_keys($wanted_locales);
