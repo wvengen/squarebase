@@ -208,9 +208,9 @@
         html('table', array(),
           html('tr', array(),
             array(
-              html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename:readonly', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
               html('td', array('class'=>'small'), html('label', array(), _('tables'))).html('td', array(),
-                html('input', array('type'=>'text', 'name'=>'tables:readonly', 'value'=>$tables, 'readonly'=>'readonly', 'class'=>'readonly')).
+                html('input', array('type'=>'text', 'name'=>'tables', 'value'=>$tables, 'readonly'=>'readonly', 'class'=>'readonly')).
                 html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename))
               ),
               html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale())
@@ -435,8 +435,8 @@
           html('tr', array(),
             array(
               html('td', array('class'=>'small'), html('label', array('for'=>'metabasename'), _('metabasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename ? $metabasename : (count($mbnames) == 1 ? $mbnames[0] : ''), 'class'=>'notempty'))),
-              html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename:readonly', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
-              html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'language:readonly', 'value'=>$language, 'readonly'=>'readonly', 'class'=>'readonly')))
+              html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'language', 'value'=>$language, 'readonly'=>'readonly', 'class'=>'readonly')))
             )
           )
         ).

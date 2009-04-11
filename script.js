@@ -120,6 +120,9 @@ jQuery.fn.ajaxsubmit = function() {
         attr('action') + ' #content',
 
         $(this).
+        find('input:disabled').
+        attr('disabled', null).
+        end().
         formhash(),
 
         function() {
