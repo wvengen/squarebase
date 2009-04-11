@@ -27,7 +27,7 @@ ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 input, select, textarea { font-size: 1em; font-family: inherit; background-color: #ffe; border: 0.1em solid #999; }
 input:focus, select:focus, textarea:focus { background-color: #ffc; }
 select { height: 1.25em; }
-input.readonly, select.readonly { border-color: #999; color: #999; }
+input.readonly, select.readonly { border-color: #ccc; color: #999; }
 input.button { border: 0.15em solid #fff; border-color: #fff #999 #999 #fff; color: #33f; padding: 0 0.2em; }
 input.mainsubmit, input.minorsubmit, .cancel, .done { margin-right: 1em; }
 input.mainsubmit:hover, input.minorsubmit:hover { background-color: #090 !important; color: #fff; }
@@ -58,7 +58,7 @@ input.minorsubmit.ajaxified { display: none; }
 
 #warnings { padding: 0; }
 #warnings li { list-style-type: none; }
-p.error, .problem, .warning { font-weight: bold; color: #f00; }
+div.error, .problem, .warning { font-weight: bold; color: #f00; }
 .help { color: #999; margin-left: 0.5em; }
 
 .trace { white-space: nowrap; }

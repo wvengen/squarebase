@@ -22,7 +22,7 @@
   }
 
   function array_show($array) {
-    return preg_replace('/^Array/', '', print_r($array, true));
+    return preg_replace('@^Array@', '', print_r($array, true));
   }
 
   function html($tag, $parameters = array(), $text = null) {
@@ -86,7 +86,7 @@
       $args = array();
       if ($element['args']) {
         foreach ($element['args'] as $arg)
-          $args[] = preg_replace('/<(.*?)>/', '&lt;\1&gt;', "'$arg'");
+          $args[] = preg_replace('@<(.*?)>@', '&lt;\1&gt;', "'$arg'");
       }
       $traces[] = html('div', array('class'=>'trace'), "$element[file]:$element[line] $element[function](".join(',', $args).")");
     }
@@ -100,7 +100,7 @@
   function addtolist($list, $class, $text) {
     if (!$_SESSION[$list])
       $_SESSION[$list] = array();
-    $_SESSION[$list][] = html('li', array('class'=>$class), htmlspecialchars(preg_replace("/\r/", '\\n', $text)));
+    $_SESSION[$list][] = html('li', array('class'=>$class), htmlspecialchars(preg_replace("@\r@", '\\n', $text)));
   }
 
   function getlist($list) {
@@ -114,12 +114,12 @@
     if (!$connection) {
       if (!extension_loaded('mysql'))
         logout(_('mysql module not found'));
-      $connection = mysql_connect($_SESSION['host'], $_SESSION['username'], $_SESSION['password']);
-      if ($connection === FALSE)
+      $connection = @mysql_connect($_SESSION['host'], $_SESSION['username'], $_SESSION['password']);
+      if (mysql_errno())
         logout(sprintf(_('problem connecting to the databasemanager: %s'), mysql_error()));
     }
 
-    $fullquery = preg_replace(array("/'/", '/(["`])?<(\w+)>(["`])?/e'), array('"', '(is_null($arguments["\\2"]) ? "NULL" : (is_numeric($arguments["\\2"]) ? (int) $arguments["\\2"] : "\\1".mysql_escape_string($arguments["\\2"])."\\3"))'), $query);
+    $fullquery = preg_replace(array("@'@", '@(["`])?<(\w+)>(["`])?@e'), array('"', '(is_null($arguments["\\2"]) ? "NULL" : (is_numeric($arguments["\\2"]) ? (int) $arguments["\\2"] : "\\1".mysql_escape_string($arguments["\\2"])."\\3"))'), $query);
 
     $before = microtime();
     $result = mysql_query($fullquery);
@@ -265,7 +265,7 @@
   
   function clean_name($name, $forbiddennoun = null) {
     return preg_replace(
-      array('/(?<=\w)id$/i', '/(?<=[a-z])([A-Z]+)/e', "/\b$forbiddennoun\b/i", "/\b".singularize_noun($forbiddennoun)."\b/i"),
+      array('@(?<=\w)id$@i', '@(?<=[a-z])([A-Z]+)@e', "@\b$forbiddennoun\b@i", "@\b".singularize_noun($forbiddennoun)."\b@i"),
       array('',              'strtolower(" \\1")',    '',                      ''                                           ),
       $name
     );
@@ -421,7 +421,7 @@
         $arguments[] = "<table>.$descriptorfield[fieldname]";
       $descriptors[$tablename] = count($arguments) == 1 ? $arguments[0] : 'CONCAT_WS(" ", '.join(', ', $arguments).')';
     }
-    return preg_replace('/<table>/', $tablealias, $descriptors[$tablename]);
+    return preg_replace('@<table>@', $tablealias, $descriptors[$tablename]);
   }
 
   function login($username, $host, $password, $language) {
@@ -444,7 +444,7 @@
       return $presentations;
     $dir = opendir('presentation');
     while ($file = readdir($dir)) {
-      if (preg_match('/^(.*)\.php$/', $file, $matches)) {
+      if (preg_match('@^(.*)\.php$@', $file, $matches)) {
         $presentations[] = $matches[1];
         include("presentation/$file");
       }
@@ -493,7 +493,7 @@
     $exploded = array();
     $parts = explode(',', $text);
     foreach ($parts as $part) {
-      if (preg_match('/([^;]+)(?:;q=(\d*(\.\d*)?))?/i', $part, $matches)) {
+      if (preg_match('@([^;]+)(?:;q=(\d*(\.\d*)?))?@i', $part, $matches)) {
         $id = bare($matches[1]);
         $value = (float) (isset($matches[2]) ? $matches[2] : 1);
         $exploded[$id] = max($exploded[$id], $value);
