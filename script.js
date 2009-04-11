@@ -253,6 +253,10 @@ jQuery.fn.ajaxify = function() {
 $(document).
 ready(
   function() {
+    $('html').
+    ajaxStart(function() { $(this).addClass('ajaxbusy'); }).
+    ajaxStop(function() { $(this).removeClass('ajaxbusy'); });
+
     $('body.editrecord, body.newrecord, body.showtable, body.showdatabase').
     find('.ajax').
     ajaxify();

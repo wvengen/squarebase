@@ -1,5 +1,6 @@
 * { margin: 0; border: 0; padding: 0; }
 body { margin: 0.5em; overflow-y: scroll; }
+.ajaxbusy { cursor: wait !important; }
 h2 { margin-bottom: 0.5em; }
 form { background-color: #ddf; padding: 0.5em; }
 fieldset { border: 0.1em solid #ccc; padding: 0.2em; }
