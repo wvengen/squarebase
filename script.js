@@ -120,9 +120,6 @@ jQuery.fn.ajaxsubmit = function() {
         attr('action') + ' #content',
 
         $(this).
-        find('input:disabled').
-        attr('disabled', null).
-        end().
         formhash(),
 
         function() {
@@ -283,33 +280,33 @@ ready(
       function() {
         $(this).
         closest('form').
+
+        find('.ajaxincompatible').
+        removeClass('ajaxincompatible').
+        end().
+
         find('.typename').
         each(
-          (function() {
-            var firsttypenames = {};
-            return function () {
-              var typename = $(this).val();
-              $(this).
-              closest('tr').
-              find('.dependsontypename').
-              attr('readonly', firsttypenames[typename] ? 'readonly' : null).
-              filter('.readonly').
-              each(
-                function() {
-                  var first = $(firsttypenames[typename]).closest('tr').find('[name$=' + $(this).attr('name').regexmatch(':\\w+$') + ']');
-                  if ($(this).formvalue() == first.formvalue())
-                    $(this).closest('td').
-                    removeClass('ajaxincompatibility');
-                  else
-                    $(this).closest('td').
-                    addClass('ajaxincompatibility');
-                }
-              );
-
-              if (!firsttypenames[typename])
-                firsttypenames[typename] = this;
-            }
-          })()
+          function() {
+            var first_typename_with_this_value = $('.typename[value=' + $(this).val() + ']').get(0);
+            $(this).
+            closest('tr').
+            find('.dependsontypename').
+            attr('readonly', first_typename_with_this_value != this ? 'readonly' : null).
+            toggleClass('readonly', first_typename_with_this_value != this).
+            filter('.readonly').
+            each(
+              function() {
+                var first_typename_with_this_value = $('.typename[value=' + $(this).closest('tr').find('.typename').val() + ']').get(0);
+                var same = $(this).formvalue() == $(first_typename_with_this_value).closest('tr').find('[name$=' + $(this).attr('name').regexmatch(':\\w+$') + ']').formvalue();
+                $(this).
+                attr('readonly', same ? 'readonly' : null).
+                toggleClass('readonly', same).
+                closest('td').
+                toggleClass('ajaxincompatible', !same);
+              }
+            );
+          }
         );
       }
     ).

@@ -17,7 +17,7 @@
   function is_sortable_boolean() { return true; }
 
   function formfield_boolean($metabasename, $databasename, $field, $value, $readonly, $disabled = false) {
-    return html('input', array('type'=>'checkbox', 'class'=>join(' ', array_clean(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$disabled ? 'disabled' : null, 'checked'=>$value ? 'checked' : null));
+    return html('input', array('type'=>'checkbox', 'class'=>join_clean(' ', $field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'readonly'=>$readonly ? 'readonly' : null, 'disabled'=>$disabled ? 'disabled' : null, 'checked'=>$value ? 'checked' : null));
   }
 
   function formvalue_boolean($field) {

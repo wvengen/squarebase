@@ -9,25 +9,17 @@
     preg_replace(
       array('@\.[a-z][a-z0-9\-]*@', '@_([a-z]+)@ie'),
       array('',                     '"-".strtolower("\1")'),
-      join(',',
-        array_clean(
-          array(
-            parameter('get', 'metabasename') && mysql_num_rows(query('meta', "SHOW DATABASES LIKE '<metabasename>'", array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE \'metaconstant\'', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT value FROM `<metabasename>`.metavalue mv LEFT JOIN `<metabasename>`.metaconstant mc ON mv.constantid = mc.constantid WHERE constantname = \'language\'', array('metabasename'=>parameter('get', 'metabasename'))).';q=4.0' : null,
-            parameter('get', 'language')     ? parameter('get', 'language').';q=3.0' : null,
-            parameter('session', 'language') ? parameter('session', 'language').';q=2.0' : null,
-            parameter('server', 'HTTP_ACCEPT_LANGUAGE'),
-            'en;q=0.0'
-          )
-        )
+      join_clean(',',
+        parameter('get', 'metabasename') && mysql_num_rows(query('meta', "SHOW DATABASES LIKE '<metabasename>'", array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE \'metaconstants\'', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT value FROM `<metabasename>`.metavalues mv LEFT JOIN `<metabasename>`.metaconstants mc ON mv.constantid = mc.constantid WHERE constantname = \'language\'', array('metabasename'=>parameter('get', 'metabasename'))).';q=4.0' : null,
+        parameter('get', 'language')     ? parameter('get', 'language').';q=3.0' : null,
+        parameter('session', 'language') ? parameter('session', 'language').';q=2.0' : null,
+        parameter('server', 'HTTP_ACCEPT_LANGUAGE'),
+        'en;q=0.0'
       )
     ),
-    join(',',
-      array_clean(
-        array(
-          parameter('server', 'HTTP_ACCEPT_CHARSET'),
-          '*;q=0.0'
-        )
-      )
+    join_clean(',',
+      parameter('server', 'HTTP_ACCEPT_CHARSET'),
+      '*;q=0.0'
     )
   );
 
@@ -39,7 +31,7 @@
     $_SESSION['ajaxy'] = $ajaxy == 'on';
 
   $action = parameter('get', 'action', 'login');
-  addtolist('logs', 'action', $action.join(' ', array('', '')).array_show(parameter('get')));
+  addtolist('logs', 'action', $action.' '.array_show(parameter('get')));
 
   /********************************************************************************************/
 
@@ -53,7 +45,7 @@
               html('td', array('class'=>'small'), html('label', array('for'=>'host'    ), _('host'    ))).html('td', array(), html('input', array('type'=>'text',     'id'=>'host',     'name'=>'host',     'value'=>'localhost'))),
               html('td', array('class'=>'small'), html('label', array('for'=>'password'), _('password'))).html('td', array(), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password'))),
               html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale()),
-              html('td', array('class'=>'small'), '&nbsp;').                                              html('td', array(), html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>join(join(' ', array('', '')), array('button', 'mainsubmit')))))
+              html('td', array('class'=>'small'), '&nbsp;').                                              html('td', array(), html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>join_clean(' ', 'button', 'mainsubmit'))))
             )
           )
         )
@@ -82,7 +74,7 @@
   /********************************************************************************************/
 
   if ($action == 'index') {
-    $metabases = query('root', join(' ', array('SHOW', 'DATABASES')));
+    $metabases = query('root', 'SHOW DATABASES');
     $rows = array(html('th', array(), array(_('metabase'), _('database'))));
     while ($metabase = mysql_fetch_assoc($metabases)) {
       $metabasename = $metabase['Database'];
@@ -92,7 +84,7 @@
         while ($databasename = mysql_fetch_assoc($databasenames))
           $databaselist[] = internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename['value']), $databasename['value']);
         $rows[] =
-          html('tr', array('class'=>join(join(' ', array('', '')), array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list'))),
+          html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
             html('td', array('class'=>'small'),
               internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$metabasename), $metabasename)
             ).
@@ -123,7 +115,7 @@
 
   if ($action == 'new_metabase_from_database') {
     $rows = array(html('th', array(), array(_('database'), _('tables'), '&nbsp;')));
-    $databases = query('root', join(' ', array('SHOW', 'DATABASES')));
+    $databases = query('root', 'SHOW DATABASES');
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['Database'];
       $dblist = array();
@@ -142,14 +134,14 @@
           }
           $fulllist = null;
           if (count($tablelist) > 5) {
-            $fulllist = join(join(' ', array('', '')), array_slice($tablelist, 4));
+            $fulllist = join(' ', array_slice($tablelist, 4));
             array_splice($tablelist, 4);
           }
           $contents = html('ul', array('class'=>'compact'), html('li', array(), $tablelist).($fulllist ? html('li', array('title'=>$fulllist), '&hellip') : ''));
         }
       }
       $rows[] =
-        html('tr', array('class'=>join(join(' ', array('', '')), array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list'))),
+        html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array(),
             array(
               internalreference(array('action'=>'language_for_database', 'databasename'=>$databasename), $databasename),
@@ -231,12 +223,12 @@
     $databasename = parameter('get', 'databasename');
     $language =
       $metabasename
-      ? query1field('meta', 'SELECT value FROM `<metabasename>`.metavalue mv LEFT JOIN `<metabasename>`.metaconstant mc ON mv.constantid = mc.constantid WHERE constantname = \'language\'', array('metabasename'=>parameter('get', 'metabasename')))
+      ? query1field('meta', 'SELECT value FROM `<metabasename>`.metavalues mv LEFT JOIN `<metabasename>`.metaconstants mc ON mv.constantid = mc.constantid WHERE constantname = \'language\'', array('metabasename'=>parameter('get', 'metabasename')))
       : parameter('get', 'language');
 
     if (!$metabasename) {
       $mbnames = array();
-      $metabases = query('root', join(' ', array('SHOW', 'DATABASES')));
+      $metabases = query('root', 'SHOW DATABASES');
       while ($metabase = mysql_fetch_assoc($metabases)) {
         $mbname = $metabase['Database'];
         if ($mbname != 'mysql') {
@@ -293,7 +285,7 @@
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
         $fieldname = $field['Field'];
 
-        $originals = $metabasename ? query('meta', 'SELECT mt.intablelist, typename, type, typelength, typeunsigned, typezerofill, presentation, nullallowed, autoincrement, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.metatable AS mt LEFT JOIN `<metabasename>`.metafield AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.metatype AS my ON my.typeid = mf.typeid LEFT JOIN `<metabasename>`.metapresentation mr ON mr.presentationid = my.presentationid LEFT JOIN `<metabasename>`.metatable AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = \'<tablename>\' AND fieldname = \'<fieldname>\'', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
+        $originals = $metabasename ? query('meta', 'SELECT mt.intablelist, typename, type, typelength, typeunsigned, typezerofill, presentation, nullallowed, autoincrement, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.metatables AS mt LEFT JOIN `<metabasename>`.metafields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.metatypes AS my ON my.typeid = mf.typeid LEFT JOIN `<metabasename>`.metapresentations mr ON mr.presentationid = my.presentationid LEFT JOIN `<metabasename>`.metatables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = \'<tablename>\' AND fieldname = \'<fieldname>\'', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
         if ($originals) {
           $original = mysql_fetch_assoc($originals);
           $type            = $original['type'];
@@ -388,8 +380,8 @@
           html('tr', array('class'=>'list'),
             ($tablestructure
             ? ''
-            : html('td', array('class'=>join(join(' ', array('', '')), array('top', 'nolist')), 'rowspan'=>mysql_num_rows($fields[$tablename])), $tablename).
-              html('td', array('class'=>join(join(' ', array('', '')), array('top', 'nolist')), 'rowspan'=>mysql_num_rows($fields[$tablename])),
+            : html('td', array('class'=>join_clean(' ', 'top', 'nolist'), 'rowspan'=>mysql_num_rows($fields[$tablename])), $tablename).
+              html('td', array('class'=>join_clean(' ', 'top', 'nolist'), 'rowspan'=>mysql_num_rows($fields[$tablename])),
                 html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
               )
             ).
@@ -402,14 +394,14 @@
                 ($type != 'int' && $type != 'varchar' && $type != 'datetime' ? html('option', array('value'=>$type, 'selected'=>'selected'), $type) : '')
               )
             ).
-            html('td', array(), html('input', array('type'=>'text', 'class'=>join(join(' ', array('', '')), array('integer', 'dependsontypename')), 'name'=>"$tablename:$fieldname:typelength", 'value'=>$typelength))).
-            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>join(join(' ', array('', '')), array('checkboxedit', 'dependsontypename')), 'name'=>"$tablename:$fieldname:typeunsigned", 'checked'=>$typeunsigned ? 'checked' : null)) : '&nbsp;').
-            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>join(join(' ', array('', '')), array('checkboxedit', 'dependsontypename')), 'name'=>"$tablename:$fieldname:typezerofill", 'checked'=>$typezerofill ? 'checked' : null)) : '&nbsp;').
+            html('td', array(), html('input', array('type'=>'text', 'class'=>join_clean(' ', 'integer', 'dependsontypename'), 'name'=>"$tablename:$fieldname:typelength", 'value'=>$typelength))).
+            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>join_clean(' ', 'checkboxedit', 'dependsontypename'), 'name'=>"$tablename:$fieldname:typeunsigned", 'checked'=>$typeunsigned ? 'checked' : null)) : '&nbsp;').
+            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>join_clean(' ', 'checkboxedit', 'dependsontypename'), 'name'=>"$tablename:$fieldname:typezerofill", 'checked'=>$typezerofill ? 'checked' : null)) : '&nbsp;').
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:nullallowed", 'checked'=>$nullallowed ? 'checked' : null))).
             html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:autoincrement", 'checked'=>$autoincrement ? 'checked' : null)) : '&nbsp;').
-            html('td', array(), join(join(' ', array('', '')), array($typeinfo, $extrainfo))).
+            html('td', array(), join_clean(' ', $typeinfo, $extrainfo)).
             html('td', array(), html('input', array('type'=>'text', 'class'=>'typename', 'name'=>"$tablename:$fieldname:typename", 'value'=>$typename))).
-            html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentation", 'class'=>join(join(' ', array('', '')), array('presentation', 'dependsontypename'))), $presentationoptions)).
+            html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentation", 'class'=>join_clean(' ', 'presentation', 'dependsontypename')), $presentationoptions)).
             html('td', array(),
               ($fieldname == $primarykeyfieldname[$tablename]
               ? _('primary').html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$fieldname))
@@ -465,7 +457,7 @@
 
     query('meta', 'CREATE DATABASE IF NOT EXISTS `<metabasename>`', array('metabasename'=>$metabasename));
 
-    query('meta', 'CREATE TABLE `<metabasename>`.metaconstant ('.
+    query('meta', 'CREATE TABLE `<metabasename>`.metaconstants ('.
           '  constantid      INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
           '  constantname    VARCHAR(100) NOT NULL,'.
           '  UNIQUE KEY (constantname)'.
@@ -473,7 +465,7 @@
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', 'CREATE TABLE `<metabasename>`.metavalue ('.
+    query('meta', 'CREATE TABLE `<metabasename>`.metavalues ('.
           '  valueid         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
           '  constantid      INT UNSIGNED NOT NULL,'.
           '  value           VARCHAR(100) NOT NULL,'.
@@ -482,7 +474,7 @@
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', 'CREATE TABLE `<metabasename>`.metatable ('.
+    query('meta', 'CREATE TABLE `<metabasename>`.metatables ('.
           '  tableid         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
           '  tablename       VARCHAR(100) NOT NULL,'.
           '  uniquefieldid   INT UNSIGNED NOT NULL,'.
@@ -492,7 +484,7 @@
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', 'CREATE TABLE `<metabasename>`.metafield ('.
+    query('meta', 'CREATE TABLE `<metabasename>`.metafields ('.
           '  fieldid         INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
           '  tableid         INT UNSIGNED NOT NULL,'.
           '  fieldname       VARCHAR(100) NOT NULL,'.
@@ -508,7 +500,7 @@
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', 'CREATE TABLE `<metabasename>`.metatype ('.
+    query('meta', 'CREATE TABLE `<metabasename>`.metatypes ('.
           '  typeid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
           '  typename        VARCHAR(100) NOT NULL,'.
           '  type            VARCHAR(100) NOT NULL,'.
@@ -521,7 +513,7 @@
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', 'CREATE TABLE `<metabasename>`.metapresentation ('.
+    query('meta', 'CREATE TABLE `<metabasename>`.metapresentations ('.
           '  presentationid  INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
           '  presentation    VARCHAR(100) NOT NULL,'.
           '  UNIQUE KEY (presentation)'.
@@ -529,19 +521,19 @@
           array('metabasename'=>$metabasename)
     );
 
-    insertorupdate($metabasename, 'metavalue', array('constantid'=>insertorupdate($metabasename, 'metaconstant', array('constantname'=>'database'), 'constantid'), 'value'=>$databasename));
-    insertorupdate($metabasename, 'metavalue', array('constantid'=>insertorupdate($metabasename, 'metaconstant', array('constantname'=>'language'), 'constantid'), 'value'=>parameter('get', 'language')));
+    insertorupdate($metabasename, 'metavalues', array('constantid'=>insertorupdate($metabasename, 'metaconstants', array('constantname'=>'database'), 'constantid'), 'value'=>$databasename));
+    insertorupdate($metabasename, 'metavalues', array('constantid'=>insertorupdate($metabasename, 'metaconstants', array('constantname'=>'language'), 'constantid'), 'value'=>parameter('get', 'language')));
 
     $presentations = get_presentations();
     $presentationids = array();
     foreach ($presentations as $presentation)
-      $presentationids[$presentation] = insertorupdate($metabasename, 'metapresentation', array('presentation'=>$presentation));
+      $presentationids[$presentation] = insertorupdate($metabasename, 'metapresentations', array('presentation'=>$presentation));
 
     $tables = query('data', 'SHOW TABLES FROM `<databasename>`', array('databasename'=>$databasename));
     $tableids = array();
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table["Tables_in_$databasename"];
-      $tableids[$tablename] = insertorupdate($metabasename, 'metatable', array('tablename'=>$tablename, 'intablelist'=>parameter('get', "$tablename:intablelist") == 'on'), 'tableid');
+      $tableids[$tablename] = insertorupdate($metabasename, 'metatables', array('tablename'=>$tablename, 'intablelist'=>parameter('get', "$tablename:intablelist") == 'on'), 'tableid');
     }
 
     $errors = array();
@@ -556,7 +548,7 @@
 
         $typename = parameter('get', "$tablename:$fieldname:typename");
         if (!$typeids[$typename]) {
-          $typeids[$typename] = insertorupdate($metabasename, 'metatype', array('typename'=>$typename, 'type'=>parameter('get', "$tablename:$fieldname:type"), 'typelength'=>parameter('get', "$tablename:$fieldname:typelength"), 'typeunsigned'=>parameter('get', "$tablename:$fieldname:typeunsigned") ? 1 : 0, 'typezerofill'=>parameter('get', "$tablename:$fieldname:typezerofill") ? 1 : 0, 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentation")]), 'typeid');
+          $typeids[$typename] = insertorupdate($metabasename, 'metatypes', array('typename'=>$typename, 'type'=>parameter('get', "$tablename:$fieldname:type"), 'typelength'=>parameter('get', "$tablename:$fieldname:typelength"), 'typeunsigned'=>parameter('get', "$tablename:$fieldname:typeunsigned") ? 1 : 0, 'typezerofill'=>parameter('get', "$tablename:$fieldname:typezerofill") ? 1 : 0, 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentation")]), 'typeid');
         }
 
         $foreigntablename = parameter('get', "$tablename:$fieldname:foreigntablename");
@@ -565,14 +557,14 @@
         $inlist = parameter('get', "$tablename:$fieldname:inlist") ? 1 : 0;
         $inedit = parameter('get', "$tablename:$fieldname:inedit") ? 1 : 0;
 
-        $fieldid = insertorupdate($metabasename, 'metafield', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'typeid'=>$typeids[$typename], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'autoincrement'=>parameter('get', "$tablename:$fieldname:autoincrement") ? 1 : 0, 'nullallowed'=>parameter('get', "$tablename:$fieldname:nullallowed") ? 1 : 0, 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit), 'fieldid');
+        $fieldid = insertorupdate($metabasename, 'metafields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'typeid'=>$typeids[$typename], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'autoincrement'=>parameter('get', "$tablename:$fieldname:autoincrement") ? 1 : 0, 'nullallowed'=>parameter('get', "$tablename:$fieldname:nullallowed") ? 1 : 0, 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit), 'fieldid');
 
         $indescs += $indesc;
         $inlists += $inlist;
         $inedits += $inedit;
 
         if (parameter('get', "$tablename:primary") == $fieldname)
-          query('meta', 'UPDATE `<metabasename>`.metatable SET uniquefieldid = <fieldid> WHERE tableid = <tableid>', array('metabasename'=>$metabasename, 'fieldid'=>$fieldid, 'tableid'=>$tableid));
+          query('meta', 'UPDATE `<metabasename>`.metatables SET uniquefieldid = <fieldid> WHERE tableid = <tableid>', array('metabasename'=>$metabasename, 'fieldid'=>$fieldid, 'tableid'=>$tableid));
       }
       if (!$indescs)
         $errors[] = sprintf(_('no fields to desc for %s'), $tablename);
@@ -591,7 +583,7 @@
 
   if ($action == 'form_metabase_to_database') {
     $rows = array();
-    $metabases = query('root', join(' ', array('SHOW', 'DATABASES')));
+    $metabases = query('root', 'SHOW DATABASES');
     while ($metabase = mysql_fetch_assoc($metabases)) {
       $metabasename = $metabase['Database'];
       $databasenames = databasenames($metabasename);
@@ -619,7 +611,7 @@
         html('td', array(),
           html('input', array('type'=>'text', 'name'=>'databasename')).
           html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
-          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_database_from_metabase', 'class'=>join(' ', array('button', 'mainsubmit'))))
+          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_database_from_metabase', 'class'=>join_clean(' ', 'button', 'mainsubmit')))
         );
     }
     page($action, path($metabasename),
@@ -635,11 +627,11 @@
     $metabasename = parameter('get', 'metabasename');
     $databasename = parameter('get', 'databasename');
 
-    query('meta', 'INSERT IGNORE INTO `<metabasename>`.metavalue (constantid, value) SELECT constantid, "<databasename>" FROM `<metabasename>`.metaconstant WHERE constantname = \'<database>\'', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
+    query('meta', 'INSERT IGNORE INTO `<metabasename>`.metavalues (constantid, value) SELECT constantid, "<databasename>" FROM `<metabasename>`.metaconstants WHERE constantname = \'<database>\'', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
 
     query('data', 'CREATE DATABASE IF NOT EXISTS `<databasename>`', array('databasename'=>$databasename));
 
-    $metatables = query('meta', 'SELECT * FROM `<metabasename>`.metatable mt LEFT JOIN `<metabasename>`.metafield mf ON mf.fieldid = mt.uniquefieldid LEFT JOIN `<metabasename>`.metatype my ON mf.typeid = my.typeid', array('metabasename'=>$metabasename));
+    $metatables = query('meta', 'SELECT * FROM `<metabasename>`.metatables mt LEFT JOIN `<metabasename>`.metafields mf ON mf.fieldid = mt.uniquefieldid LEFT JOIN `<metabasename>`.metatypes my ON mf.typeid = my.typeid', array('metabasename'=>$metabasename));
     while ($metatable = mysql_fetch_assoc($metatables)) {
       $totaltype = totaltype($metatable);
       query('data', 'CREATE TABLE IF NOT EXISTS `<databasename>`.`<tablename>` (<fieldname> <totaltype>)', array('databasename'=>$databasename, 'tablename'=>$metatable['tablename'], 'fieldname'=>$metatable['fieldname'], 'totaltype'=>$totaltype));
@@ -655,7 +647,7 @@
         if ($oldindex['Seq_in_index'] == 1)
           $associatedoldindices[$oldindex['Column_name']] = $oldindex;
 
-      $metafields = query('meta', 'SELECT mt.tablename, mf.fieldid, mf.fieldname, mf.foreigntableid, mt.uniquefieldid, my.type, my.typelength, my.typeunsigned, my.typezerofill, mf.nullallowed FROM `<metabasename>`.metafield mf LEFT JOIN `<metabasename>`.metatable mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.metatype my ON mf.typeid = my.typeid WHERE mf.tableid = <tableid>', array('metabasename'=>$metabasename, 'tableid'=>$metatable['tableid']));
+      $metafields = query('meta', 'SELECT mt.tablename, mf.fieldid, mf.fieldname, mf.foreigntableid, mt.uniquefieldid, my.type, my.typelength, my.typeunsigned, my.typezerofill, mf.nullallowed FROM `<metabasename>`.metafields mf LEFT JOIN `<metabasename>`.metatables mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.metatypes my ON mf.typeid = my.typeid WHERE mf.tableid = <tableid>', array('metabasename'=>$metabasename, 'tableid'=>$metatable['tableid']));
       while ($metafield = mysql_fetch_assoc($metafields)) {
         if ($metafield['uniquefieldid'] != $metafield['fieldid']) {
           $oldfield = $associatedoldfields[$metafield['fieldname']];
@@ -681,18 +673,18 @@
   if ($action == 'show_database') {
     $metabasename = parameter('get', 'metabasename');
     $databasename = parameter('get', 'databasename');
-    $tables = query('meta', 'SELECT * FROM `<metabasename>`.metatable LEFT JOIN `<metabasename>`.metafield ON metatable.uniquefieldid = metafield.fieldid WHERE intablelist = TRUE ORDER BY tablename', array('metabasename'=>$metabasename));
+    $tables = query('meta', 'SELECT * FROM `<metabasename>`.metatables LEFT JOIN `<metabasename>`.metafields ON metatables.uniquefieldid = metafields.fieldid WHERE intablelist = TRUE ORDER BY tablename', array('metabasename'=>$metabasename));
     $rows = array(html('th', array(), 'table'));
     while ($table = mysql_fetch_assoc($tables)) {
       $rows[] =
-        html('tr', array('class'=>join(join(' ', array('', '')), array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list'))),
+        html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array(),
             internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$table['tablename'], 'uniquefieldname'=>$table['fieldname']), $table['tablename'])
           )
         );
     }
     page($action, path($metabasename, $databasename),
-      html('div', array('class'=>'ajax', 'id'=>''),
+      html('div', array('class'=>'ajax'),
         html('table', array(), join($rows))
       )
     );
@@ -747,14 +739,14 @@
     $lines[] =
       html('td', array('class'=>'description'), '&rarr;').
       html('td', array(),
-        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'show_record' ? 'delete_record' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>join(' ', array('mainsubmit', 'button')))).
-        (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>join(' ', array('minorsubmit', 'button')))) : '').
+        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'show_record' ? 'delete_record' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>join_clean(' ', 'mainsubmit', 'button'))).
+        (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>join_clean(' ', 'minorsubmit', 'button'))) : '').
         internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel')).
-        ($action == 'show_record' ? '' : html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join(' ', array('mainsubmit', 'button', 'delete')))))
+        ($action == 'show_record' ? '' : html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_clean(' ', 'mainsubmit', 'button', 'delete'))))
       );
 
     if (!is_null($uniquevalue)) {
-      $referringfields = query('meta', 'SELECT mt.tablename, mf.fieldname AS fieldname, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.metafield mf LEFT JOIN `<metabasename>`.metatable mtf ON mtf.tableid = mf.foreigntableid LEFT JOIN `<metabasename>`.metatable mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.metafield mfu ON mt.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
+      $referringfields = query('meta', 'SELECT mt.tablename, mf.fieldname AS fieldname, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.metafields mf LEFT JOIN `<metabasename>`.metatables mtf ON mtf.tableid = mf.foreigntableid LEFT JOIN `<metabasename>`.metatables mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.metafields mfu ON mt.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
         $lines[] =
           html('td', array('class'=>'description'), $referringfield['tablename']).

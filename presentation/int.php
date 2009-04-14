@@ -20,7 +20,7 @@
   function is_sortable_int() { return true; }
 
   function formfield_int($metabasename, $databasename, $field, $value, $readonly) {
-    return html('input', array('type'=>'text', 'class'=>join(' ', array_clean(array($field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'))), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null));
+    return html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null));
   }
 
   function formvalue_int($field) {
