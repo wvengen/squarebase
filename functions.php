@@ -85,7 +85,7 @@
           $output = list_table($parameters['metabasename'], $parameters['databasename'], $parameters['tablename'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['orderfieldid'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
           break;
         case 'ajax_lookup':
-          $output = ajax_lookup($parameters['metabasename'], $parameters['databasename'], $parameters['fieldname'], query1field('data', 'SELECT MAX(<foreignuniquefieldname>) FROM `<databasename>`.<foreigntablename>', array('foreigntablename'=>$parameters['foreigntablename'], 'foreignuniquefieldname'=>$parameters['foreignuniquefieldname'], 'databasename'=>$parameters['databasename'])), $parameters['presentation'], $parameters['foreigntablename'], $parameters['foreignuniquefieldname'], $parameters['nullallowed'], $parameters['readonly']);
+          $output = ajax_lookup($parameters['metabasename'], $parameters['databasename'], $parameters['fieldname'], query1field('data', 'SELECT MAX(<foreignuniquefieldname>) FROM `<databasename>`.<foreigntablename>', array('foreigntablename'=>$parameters['foreigntablename'], 'foreignuniquefieldname'=>$parameters['foreignuniquefieldname'], 'databasename'=>$parameters['databasename'])), $parameters['presentationname'], $parameters['foreigntablename'], $parameters['foreignuniquefieldname'], $parameters['nullallowed'], $parameters['readonly']);
           break;
       }
       page($parameters['function'], null, $output);
@@ -257,8 +257,8 @@
     if ($tables)
       while ($table = mysql_fetch_assoc($tables)) {
         $tablename = $table["Tables_in_$metabasename"];
-        if ($tablename == 'metaconstants')
-          return query('meta', 'SELECT * FROM `<metabasename>`.metavalues mv LEFT JOIN `<metabasename>`.metaconstants mc ON mv.constantid = mc.constantid WHERE constantname = \'database\'', array('metabasename'=>$metabasename));
+        if ($tablename == 'constants')
+          return query('meta', 'SELECT * FROM `<metabasename>`.values mv LEFT JOIN `<metabasename>`.constants mc ON mv.constantid = mc.constantid WHERE constantname = \'database\'', array('metabasename'=>$metabasename));
       }
     return null;
   }
@@ -301,10 +301,10 @@
       if (!$orderfieldname)
         $orderfieldname = $field['fieldname'];
 
-      include_once("presentation/$field[presentation].php");
+      include_once("presentation/$field[presentationname].php");
       $header[] = 
         html('th', !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? array('class'=>'thisrecord') : array(), 
-          !is_null($foreignvalue) || !call_user_func("is_sortable_$field[presentation]")
+          !is_null($foreignvalue) || !call_user_func("is_sortable_$field[presentationname]")
           ? clean_name($field['fieldname'], $tablename)
           : ($field['fieldname'] == $orderfieldname
             ? clean_name($field['fieldname'], $tablename).' &#x25be;'
@@ -328,8 +328,8 @@
         $field['uniquefieldname'] = $uniquefieldname;
         $field['uniquevalue'] = $row[$uniquefieldname];
         $columns[] =
-          html('td', array('class'=>join_clean(' ', 'column', $field['presentation'], $field['thisrecord'] ? 'thisrecord' : null)),
-            call_user_func("list_$field[presentation]", $metabasename, $databasename, $field, $row["${tablename}_$field[fieldname]"])
+          html('td', array('class'=>join_clean(' ', 'column', $field['presentationname'], $field['thisrecord'] ? 'thisrecord' : null)),
+            call_user_func("list_$field[presentationname]", $metabasename, $databasename, $field, $row["${tablename}_$field[fieldname]"])
           );
       }
       $rows[] = 
@@ -389,14 +389,14 @@
     return array(preg_replace($pattern, '', $subject), $matches[1]);
   }
   
-  function totaltype($metafield) {
+  function totaltype($field) {
     return
-      strtoupper($metafield['type']).
-      ($metafield['typelength']                             ? "($metafield[typelength])" : '').
-      ($metafield['typeunsigned']                           ? " UNSIGNED"                : '').
-      ($metafield['autoincrement']                          ? " AUTO_INCREMENT"          : '').
-      ($metafield['uniquefieldid'] == $metafield['fieldid'] ? " PRIMARY KEY"             : '').
-      (!$metafield['nullallowed']                           ? " NOT NULL"                : '');
+      strtoupper($field['type']).
+      ($field['typelength']                         ? "($field[typelength])" : '').
+      ($field['typeunsigned']                       ? " UNSIGNED"                : '').
+      ($field['autoincrement']                      ? " AUTO_INCREMENT"          : '').
+      ($field['uniquefieldid'] == $field['fieldid'] ? " PRIMARY KEY"             : '').
+      (!$field['nullallowed']                       ? " NOT NULL"                : '');
   }
   
   function mysql_data_reset($results) {
@@ -406,13 +406,13 @@
   
   function fieldsforpurpose($metabasename, $tablename, $purpose) {
     return query('meta', 
-      "SELECT mt.tablename, mt.tableid, mf.fieldid, mf.fieldname, mr.presentation, mf.autoincrement, mf.foreigntableid, mf.nullallowed, mf.indesc, mf.inlist, mf.inedit, mt2.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname ".
-      "FROM `<metabasename>`.metatables mt ".
-      "RIGHT JOIN `<metabasename>`.metafields mf ON mf.tableid = mt.tableid ".
-      "LEFT JOIN `<metabasename>`.metatypes my ON my.typeid = mf.typeid ".
-      "LEFT JOIN `<metabasename>`.metapresentations mr ON mr.presentationid = my.presentationid ".
-      "LEFT JOIN `<metabasename>`.metatables mt2 ON mt2.tableid = mf.foreigntableid ".
-      "LEFT JOIN `<metabasename>`.metafields mf2 ON mf2.fieldid = mt2.uniquefieldid ".
+      "SELECT mt.tablename, mt.tableid, mf.fieldid, mf.fieldname, mr.presentationname, mf.autoincrement, mf.foreigntableid, mf.nullallowed, mf.indesc, mf.inlist, mf.inedit, mt2.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname ".
+      "FROM `<metabasename>`.tables mt ".
+      "RIGHT JOIN `<metabasename>`.fields mf ON mf.tableid = mt.tableid ".
+      "LEFT JOIN `<metabasename>`.types my ON my.typeid = mf.typeid ".
+      "LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = my.presentationid ".
+      "LEFT JOIN `<metabasename>`.tables mt2 ON mt2.tableid = mf.foreigntableid ".
+      "LEFT JOIN `<metabasename>`.fields mf2 ON mf2.fieldid = mt2.uniquefieldid ".
       "WHERE mt.tablename = '<tablename>' AND mf.<purpose> ".
       "ORDER BY mf.fieldid",
       array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'purpose'=>$purpose)
@@ -445,20 +445,20 @@
     internalredirect(array('action'=>'login', 'error'=>$error));
   }
 
-  function get_presentations() {
-    static $presentations = array();
-    if ($presentations)
-      return $presentations;
+  function get_presentationnames() {
+    static $presentationnames = array();
+    if ($presentationnames)
+      return $presentationnames;
     $dir = opendir('presentation');
     while ($file = readdir($dir)) {
       if (preg_match('@^(.*)\.php$@', $file, $matches)) {
-        $presentations[] = $matches[1];
+        $presentationnames[] = $matches[1];
         include("presentation/$file");
       }
     }
     closedir($dir);
-    sort($presentations);
-    return $presentations;
+    sort($presentationnames);
+    return $presentationnames;
   }
 
   function read_file($filename, $flags = null) {
@@ -470,11 +470,11 @@
     $content = join(read_file($filename));
 
     if (preg_match_all('@// *(\w+)_presentation\b@', $content, $function_prefixes, PREG_SET_ORDER)) {
-      $presentations = get_presentations();
+      $presentationnames = get_presentationnames();
       foreach ($function_prefixes as $function_prefix) {
         $extra = array();
-        foreach ($presentations as $presentation)
-          $extra[] = @call_user_func("$function_prefix[1]_$presentation");
+        foreach ($presentationnames as $presentationname)
+          $extra[] = @call_user_func("$function_prefix[1]_$presentationname");
 
         $content = preg_replace("@( *)// *$function_prefix[1]_presentation\b.*\n@e", '"\\1".preg_replace("@\n(?=.)@", "\n\\1", join($extra))', $content);
       }

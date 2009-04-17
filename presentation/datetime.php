@@ -15,7 +15,7 @@
 
   function formfield_datetime($metabasename, $databasename, $field, $value, $readonly) {
     return 
-      html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentation'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>datetime2local($value), 'readonly'=>$readonly ? 'readonly' : null)).
+      html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>datetime2local($value), 'readonly'=>$readonly ? 'readonly' : null)).
       html('span', array('class'=>'help'), strftime(_('e.g. %x %X')));
   }
 

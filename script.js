@@ -183,9 +183,11 @@ jQuery.fn.ajaxify = function() {
             ? '<tr class="ajaxcontent"><td colspan="' + $(containingblock).children().length + '" style="padding: 0;"><div class="ajaxcontainer"></div></td></tr>'
             : '<div class="ajaxcontent"><div class="ajaxcontainer"></div></div>'
           );
-        else
-          ajaxcontent.
-          unload();
+        else {
+          if (ajaxcontent.attr('ajaxurl') == this.href)
+            ajaxcontent.
+            unload();
+        }
         ajaxcontent =
           containingblock.
           next('.ajaxcontent');
@@ -193,6 +195,7 @@ jQuery.fn.ajaxify = function() {
 
       if (ajaxcontent.length > 0) {
         ajaxcontent.
+        attr('ajaxurl', this.href).
         find('.ajaxcontainer:first').
         load(
           this.href + ' #content',
@@ -314,7 +317,7 @@ ready(
     change().
     end().
     end().
-    find('.presentation').
+    find('.presentationname').
     change(
       function() {
         $(this).closest('tr').find('.foreigntablename').toggle($(this).val() == 'lookup');
@@ -325,7 +328,7 @@ ready(
     find('.foreigntablename').
     hide().
     end().
-    find('.presentation[value=lookup]').
+    find('.presentationname[value=lookup]').
     each(
       function() {
         $(this).closest('tr').find('.foreigntablename').show();
