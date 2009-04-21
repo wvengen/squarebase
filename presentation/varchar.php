@@ -1,6 +1,6 @@
 <?php
   function special_nameparts() {
-    return '('.join_clean('|', array_map(_, array('name', 'title', 'description', 'acronym', 'abbr', 'abbreviation', 'value'))).')';
+    return '('.join_clean('|', _('name'), _('title'), _('description'), _('acronym'), _('abbr'), _('abbreviation'), _('value')).')';
   }
 
   function probability_varchar($field) {
@@ -8,7 +8,7 @@
   }
 
   function typename_varchar($field) {
-    return preg_match('@'.special_nameparts().'@i', $field['Field'], $matches) ? $matches[1] : strtolower($field['Field']);
+    return strtolower(preg_match('@'.special_nameparts().'@i', $field['Field'], $matches) ? $matches[1] : $field['Field']);
   }
 
   function in_desc_varchar($field) { return $field['FieldNr'] < 5 && preg_match('@'.special_nameparts().'@i', $field['Field']); }

@@ -457,66 +457,72 @@
 
     query('meta', 'CREATE DATABASE IF NOT EXISTS `<metabasename>`', array('metabasename'=>$metabasename));
 
-    query('meta', 'CREATE TABLE `<metabasename>`.constants ('.
-          '  constantid       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-          '  constantname     VARCHAR(100) NOT NULL,'.
-          '  UNIQUE KEY (constantname)'.
+    query('meta',
+          'CREATE TABLE `<metabasename>`.constants ('.
+            'constantid       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+            'constantname     VARCHAR(100) NOT NULL,'.
+            'UNIQUE KEY (constantname)'.
           ')',
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', 'CREATE TABLE `<metabasename>`.values ('.
-          '  valueid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-          '  constantid       INT UNSIGNED NOT NULL,'.
-          '  value            VARCHAR(100) NOT NULL,'.
-          '  UNIQUE KEY (constantid, value)'.
+    query('meta',
+          'CREATE TABLE `<metabasename>`.values ('.
+            'valueid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+            'constantid       INT UNSIGNED NOT NULL,'.
+            'value            VARCHAR(100) NOT NULL,'.
+            'UNIQUE KEY (constantid, value)'.
           ')',
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', 'CREATE TABLE `<metabasename>`.tables ('.
-          '  tableid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-          '  tablename        VARCHAR(100) NOT NULL,'.
-          '  uniquefieldid    INT UNSIGNED NOT NULL,'.
-          '  intablelist      BOOLEAN NOT NULL,'.
-          '  UNIQUE KEY (tablename)'.
+    query('meta',
+          'CREATE TABLE `<metabasename>`.tables ('.
+            'tableid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+            'tablename        VARCHAR(100) NOT NULL,'.
+            'uniquefieldid    INT UNSIGNED NOT NULL,'.
+            'intablelist      BOOLEAN      NOT NULL,'.
+            'UNIQUE KEY (tablename)'.
           ')',
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', 'CREATE TABLE `<metabasename>`.fields ('.
-          '  fieldid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-          '  tableid          INT UNSIGNED NOT NULL,'.
-          '  fieldname        VARCHAR(100) NOT NULL,'.
-          '  autoincrement    BOOLEAN NOT NULL,'.
-          '  typeid           INT UNSIGNED NOT NULL,'.
-          '  nullallowed      BOOLEAN NOT NULL,'.
-          '  indesc           BOOLEAN NOT NULL,'.
-          '  inlist           BOOLEAN NOT NULL,'.
-          '  inedit           BOOLEAN NOT NULL,'.
-          '  foreigntableid   INT UNSIGNED         ,'.
-          '  UNIQUE KEY (tableid, fieldname)'.
+    query('meta',
+          'CREATE TABLE `<metabasename>`.fields ('.
+            'fieldid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+            'tableid          INT UNSIGNED NOT NULL,'.
+            'fieldname        VARCHAR(100) NOT NULL,'.
+            'autoincrement    BOOLEAN      NOT NULL,'.
+            'typeid           INT UNSIGNED NOT NULL,'.
+            'nullallowed      BOOLEAN      NOT NULL,'.
+            'indesc           BOOLEAN      NOT NULL,'.
+            'inlist           BOOLEAN      NOT NULL,'.
+            'inedit           BOOLEAN      NOT NULL,'.
+            'foreigntableid   INT UNSIGNED         ,'.
+            'UNIQUE KEY (tableid, fieldname)'.
           ')',
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', 'CREATE TABLE `<metabasename>`.types ('.
-          '  typeid           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-          '  typename         VARCHAR(100) NOT NULL,'.
-          '  type             VARCHAR(100) NOT NULL,'.
-          '  typelength       INT UNSIGNED         ,'.
-          '  typeunsigned     INT UNSIGNED         ,'.
-          '  typezerofill     INT UNSIGNED         ,'.
-          '  presentationid   INT UNSIGNED         ,'.
-          '  UNIQUE KEY (typename)'.
+    query('meta',
+          'CREATE TABLE `<metabasename>`.types ('.
+            'typeid           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+            'typename         VARCHAR(100) NOT NULL,'.
+            'type             VARCHAR(100) NOT NULL,'.
+            'typelength       INT UNSIGNED         ,'.
+            'typeunsigned     BOOLEAN      NOT NULL,'.
+            'typezerofill     BOOLEAN      NOT NULL,'.
+            'presentationid   INT UNSIGNED NOT NULL,'.
+            'UNIQUE KEY (typename)'.
           ')',
           array('metabasename'=>$metabasename)
     );
 
-    query('meta', 'CREATE TABLE `<metabasename>`.presentations ('.
-          '  presentationid   INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-          '  presentationname VARCHAR(100) NOT NULL,'.
-          '  UNIQUE KEY (presentationname)'.
+    query('meta',
+          'CREATE TABLE `<metabasename>`.presentations ('.
+            'presentationid   INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+            'presentationname VARCHAR(100) NOT NULL,'.
+            'UNIQUE KEY (presentationname)'.
           ')',
           array('metabasename'=>$metabasename)
     );

@@ -29,8 +29,8 @@
     return 'lookup';
   }
 
-  function in_desc_lookup($field) { return $field['FieldNr'] < 5; }
-  function in_list_lookup($field) { return in_desc_lookup($field); }
+  function in_desc_lookup($field) { return false; }
+  function in_list_lookup($field) { return $field['FieldNr'] < 5; }
   function in_edit_lookup($field) { return true; }
 
   function is_sortable_lookup() { return true; }

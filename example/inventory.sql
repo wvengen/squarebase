@@ -17,8 +17,8 @@ DROP TABLE IF EXISTS employees;
 
 CREATE TABLE employees (
    employeeID   INT(11)      NOT NULL AUTO_INCREMENT,
-   firstName    VARCHAR(15)  NOT NULL,
-   lastName     VARCHAR(25)  NOT NULL,
+   firstName    VARCHAR(20)  NOT NULL,
+   lastName     VARCHAR(20)  NOT NULL,
    picture      BLOB,
    PRIMARY KEY (employeeID)
 );

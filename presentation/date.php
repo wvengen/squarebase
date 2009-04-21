@@ -16,7 +16,7 @@
   function formfield_date($metabasename, $databasename, $field, $value, $readonly) {
     return 
       html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'value'=>date2local($value), 'readonly'=>$readonly ? 'readonly' : null)).
-      html('span', array('class'=>'help'), strftime(_('e.g. %x')));
+      html('span', array('class'=>'help'), find_datetime_format('%x'));
   }
 
   function formvalue_date($field) {

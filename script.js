@@ -190,12 +190,12 @@ jQuery.fn.ajaxify = function() {
         }
         ajaxcontent =
           containingblock.
-          next('.ajaxcontent');
+          next('.ajaxcontent').
+          attr('ajaxurl', this.href);
       }
 
       if (ajaxcontent.length > 0) {
         ajaxcontent.
-        attr('ajaxurl', this.href).
         find('.ajaxcontainer:first').
         load(
           this.href + ' #content',

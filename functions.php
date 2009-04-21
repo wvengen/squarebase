@@ -276,7 +276,7 @@
   
   function clean_name($name, $forbiddennoun = null) {
     return preg_replace(
-      array('@(?<=[a-z])([A-Z]+)@e', "@\b$forbiddennoun\b@i", "@\b".singularize_noun($forbiddennoun)."\b@i", '@(?<=\w)id$@i'),
+      array('@(?<=[a-z])([A-Z]+)@e', "@\b$forbiddennoun\b@i", "@\b".singularize_noun($forbiddennoun)."\b@i", '@(?<=[\w ])id$@i'),
       array('strtolower(" \\1")',    '',                      ''                                           , ''             ),
       $name
     );
@@ -490,6 +490,18 @@
       return $value;
     $matches = strptime($value, $from);
     return strftime($to, mktime($matches['tm_hour'], $matches['tm_min'], $matches['tm_sec'], $matches['tm_mon'] + 1, $matches['tm_mday'], $matches['tm_year']));
+  }
+
+  function find_datetime_format($format) {
+    $fmts = array('d'=>_('dd'), 'e'=>_('d'), 'b'=>_('mon'), 'B'=>_('month'), 'm'=>_('mm'), 'y'=>_('yy'), 'Y'=>_('yyyy'), 'H'=>_('hh'), 'I'=>_('hh'), 'l'=>_('hh'), 'M'=>_('mm'), 'p'=>_('AM/PM'), 'P'=>_('am/pm'), 'S'=>_('ss'));
+    $matches = array('tm_hour'=>23, 'tm_min'=>34, 'tm_sec'=>45, 'tm_mon'=>4, 'tm_mday'=>2, 'tm_year'=>2003);
+    $date = mktime($matches['tm_hour'], $matches['tm_min'], $matches['tm_sec'], $matches['tm_mon'], $matches['tm_mday'], $matches['tm_year']);
+    $output = strftime($format, $date);
+    foreach ($fmts as $fmt=>$representation) {
+      $result = strftime("%$fmt", $date);
+      $output = preg_replace("@\b$result\b@", $representation, $output);
+    }
+    return $output;
   }
 
   function bare($text) {
