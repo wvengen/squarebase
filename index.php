@@ -1,14 +1,23 @@
 <?php
   include('functions.php');
 
+  $action = parameter('get', 'action', 'login');
+
+  if ($action == 'style')
+    augment_file('style.css', 'text/css');
+  if ($action == 'script')
+    augment_file('script.js', 'text/javascript');
+
+  addtolist('logs', 'action', $action.' '.array_show(parameter('get')));
+
   session_set_cookie_params(7 * 24 * 60 * 60);
   session_save_path('session');
   session_start();
 
   set_best_locale(
     preg_replace(
-      array('@\.[a-z][a-z0-9\-]*@', '@_([a-z]+)@ie'),
-      array('',                     '"-".strtolower("\1")'),
+      array('@\.[a-z][a-z0-9\-]*@', '@_([a-z]+)@ie'       ),
+      array(''                    , '"-".strtolower("$1")'),
       join_clean(',',
         parameter('get', 'metabasename') && mysql_num_rows(query('meta', "SHOW DATABASES LIKE '<metabasename>'", array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE \'constants\'', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT value FROM `<metabasename>`.values mv LEFT JOIN `<metabasename>`.constants mc ON mv.constantid = mc.constantid WHERE constantname = \'language\'', array('metabasename'=>parameter('get', 'metabasename'))).';q=4.0' : null,
         parameter('get', 'language')     ? parameter('get', 'language').';q=3.0' : null,
@@ -29,9 +38,6 @@
   $ajaxy = parameter('get', 'ajaxy');
   if (!is_null($ajaxy))
     $_SESSION['ajaxy'] = $ajaxy == 'on';
-
-  $action = parameter('get', 'action', 'login');
-  addtolist('logs', 'action', $action.' '.array_show(parameter('get')));
 
   /********************************************************************************************/
 

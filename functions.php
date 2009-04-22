@@ -101,7 +101,7 @@
       $args = array();
       if ($element['args']) {
         foreach ($element['args'] as $arg)
-          $args[] = preg_replace('@<(.*?)>@', '&lt;\1&gt;', "'$arg'");
+          $args[] = preg_replace('@<(.*?)>@', '&lt;$1&gt;', "'$arg'");
       }
       $traces[] = html('div', array('class'=>'trace'), "$element[file]:$element[line] $element[function](".join(',', $args).")");
     }
@@ -134,7 +134,7 @@
         logout(sprintf(_('problem connecting to the databasemanager: %s'), mysql_error()));
     }
 
-    $fullquery = preg_replace(array("@'@", '@(["`])?<(\w+)>(["`])?@e'), array('"', '(is_null($arguments["\\2"]) ? "NULL" : (is_numeric($arguments["\\2"]) ? (int) $arguments["\\2"] : "\\1".mysql_escape_string($arguments["\\2"])."\\3"))'), $query);
+    $fullquery = preg_replace(array("@'@", '@(["`])?<(\w+)>(["`])?@e'), array('"', '(is_null($arguments["$2"]) ? "NULL" : (is_numeric($arguments["$2"]) ? (int) $arguments["$2"] : "$1".mysql_escape_string($arguments["$2"])."$3"))'), $query);
 
     $before = microtime();
     $result = mysql_query($fullquery);
@@ -219,10 +219,10 @@
       html('html', array(),
         html('head', array(),
           html('title', array(), $title).
-          html('link', array('href'=>'style.php', 'type'=>'text/css', 'rel'=>'stylesheet')).
+          html('link', array('href'=>internalurl(array('action'=>'style')), 'type'=>'text/css', 'rel'=>'stylesheet')).
           ($_SESSION['ajaxy']
           ? html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
-            html('script', array('type'=>'text/javascript', 'src'=>'script.php'), '')
+            html('script', array('type'=>'text/javascript', 'src'=>internalurl(array('action'=>'script'))), '')
           : ''
           )
         ).
@@ -276,8 +276,8 @@
   
   function clean_name($name, $forbiddennoun = null) {
     return preg_replace(
-      array('@(?<=[a-z])([A-Z]+)@e', "@\b$forbiddennoun\b@i", "@\b".singularize_noun($forbiddennoun)."\b@i", '@(?<=[\w ])id$@i'),
-      array('strtolower(" \\1")',    '',                      ''                                           , ''             ),
+      array('@(?<=[a-z])([A-Z]+)@e', "@^(.*)\b($forbiddennoun|".singularize_noun($forbiddennoun).")\b(.*)$@ie", '@(?<=[\w ])id$@i', '@ {2,}@', '@(^ +| +$)@'),
+      array('strtolower(" $1")'   , '"$1" || "$3" ? "$1$3" : "$0"'                                           , ''                , ' '      , ''           ),
       $name
     );
   }
@@ -476,7 +476,7 @@
         foreach ($presentationnames as $presentationname)
           $extra[] = @call_user_func("$function_prefix[1]_$presentationname");
 
-        $content = preg_replace("@( *)// *$function_prefix[1]_presentation\b.*\n@e", '"\\1".preg_replace("@\n(?=.)@", "\n\\1", join($extra))', $content);
+        $content = preg_replace("@( *)// *$function_prefix[1]_presentation\b.*\n@e", '"$1".preg_replace("@\n(?=.)@", "\n$1", join($extra))', $content);
       }
     }
 
