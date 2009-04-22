@@ -31,7 +31,7 @@ $.fn.formhash = function() {
     
 jQuery.fn.formvalue = function() {
   var type = $(this).attr('type');
-  return type == 'checkbox' ? $(this).attr('checked') : (type == 'radio' ? $(this).closest('form').find('input[name=' + $(this).attr('name') + ']:checked').val() : $(this).val());
+  return type == 'checkbox' ? ($(this).attr('checked') ? 'on' : '') : (type == 'radio' ? $(this).closest('form').find('input[name=' + $(this).attr('name') + ']:checked').val() : $(this).val());
 }
 
 jQuery.fn.setid = function(id) {
