@@ -488,7 +488,8 @@
             'tablename        VARCHAR(100) NOT NULL,'.
             'uniquefieldid    INT UNSIGNED NOT NULL,'.
             'intablelist      BOOLEAN      NOT NULL,'.
-            'UNIQUE KEY (tablename)'.
+            'UNIQUE KEY (tablename),'.
+            'INDEX (uniquefieldid)'.
           ')',
           array('metabasename'=>$metabasename)
     );
@@ -505,7 +506,9 @@
             'inlist           BOOLEAN      NOT NULL,'.
             'inedit           BOOLEAN      NOT NULL,'.
             'foreigntableid   INT UNSIGNED         ,'.
-            'UNIQUE KEY (tableid, fieldname)'.
+            'UNIQUE KEY (tableid, fieldname),'.
+            'INDEX (foreigntableid),'.
+            'INDEX (typeid)'.
           ')',
           array('metabasename'=>$metabasename)
     );
@@ -519,7 +522,8 @@
             'typeunsigned     BOOLEAN      NOT NULL,'.
             'typezerofill     BOOLEAN      NOT NULL,'.
             'presentationid   INT UNSIGNED NOT NULL,'.
-            'UNIQUE KEY (typename)'.
+            'UNIQUE KEY (typename),'.
+            'INDEX (presentationid)'.
           ')',
           array('metabasename'=>$metabasename)
     );
@@ -639,7 +643,7 @@
     $metabasename = parameter('get', 'metabasename');
     $databasename = parameter('get', 'databasename');
 
-    query('meta', 'INSERT IGNORE INTO `<metabasename>`.values (constantid, value) SELECT constantid, "<databasename>" FROM `<metabasename>`.constants WHERE constantname = \'<database>\'', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
+    query('meta', 'INSERT IGNORE INTO `<metabasename>`.values (constantid, value) SELECT constantid, "<databasename>" FROM `<metabasename>`.constants WHERE constantname = \'database\'', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
 
     query('data', 'CREATE DATABASE IF NOT EXISTS `<databasename>`', array('databasename'=>$databasename));
 
@@ -735,7 +739,9 @@
 
     get_presentationnames();
 
-    $line = array();
+    $lines = array(
+      html('td', array('class'=>'header', 'colspan'=>2), singularize_noun($tablename))
+    );
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
       $field['uniquefieldname'] = $uniquefieldname;
       $field['uniquevalue'] = $uniquevalue;
@@ -761,7 +767,7 @@
       $referringfields = query('meta', 'SELECT mt.tablename, mf.fieldname AS fieldname, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mtf ON mtf.tableid = mf.foreigntableid LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.fields mfu ON mt.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
         $lines[] =
-          html('td', array('class'=>'description'), $referringfield['tablename']).
+          html('td', array('class'=>'description'), $referringfield['tablename'].html('div', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['fieldname']))).
           html('td', array(), list_table($metabasename, $databasename, $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tablename, $action != 'show_record'));
       }
     }

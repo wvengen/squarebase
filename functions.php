@@ -74,7 +74,7 @@
   function internalredirect($parameters) {
     redirect(httpurl($parameters));
   }
-  
+
   function back() {
     $ajax = parameter('get', 'ajax');
     if ($ajax) {
@@ -111,7 +111,7 @@
     );
     exit;
   }
-  
+
   function addtolist($list, $class, $text) {
     if (!$_SESSION[$list])
       $_SESSION[$list] = array();
@@ -144,7 +144,7 @@
 
     $errno = mysql_errno();
 
-    addtolist('logs', 
+    addtolist('logs',
       "query$metaordata",
       '['.
       sprintf('%.2f sec', ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).
@@ -194,7 +194,7 @@
     }
     error(_('problem while querying the databasemanager').html('p', array('class'=>'error'), "$errno: ".mysql_error()).$fullquery);
   }
-  
+
   function query1($metaordata, $query, $arguments = array()) {
     $results = query($metaordata, $query, $arguments);
     if ($results && mysql_num_rows($results) == 1)
@@ -206,7 +206,7 @@
     $result = query1($metaordata, $query, $arguments);
     return is_null($field) ? (count($result) == 1 ? array_shift(array_values($result)) : error(sprintf(_('problem retrieving 1 field, because there are %s fields'), count($result)))) : $result[$field];
   }
-  
+
   function page($action, $path, $content) {
     $title = str_replace('_', ' ', $action);
 
@@ -230,7 +230,7 @@
           html('div', array('id'=>'header'),
             html('h1', array('id'=>'title'), $title).
             ($_SESSION['username'] ? html('div', array('id'=>'id'), join(' &ndash; ', array(get_locale(), "$_SESSION[username]@$_SESSION[host]", internalreference(parameter('server', 'REQUEST_URI').'&ajaxy='.($_SESSION['ajaxy'] ? 'off' : 'on'), 'ajax is '.($_SESSION['ajaxy'] ? 'on' : 'off')), internalreference(array('action'=>'logout'), 'logout')))) : '').
-            
+
             html('div', array('id'=>'messages'),
               $error ? html('div', array('class'=>'error'), $error) : ''
             ).
@@ -251,7 +251,7 @@
   function form($content) {
     return html('form', array('action'=>parameter('server', 'SCRIPT_NAME'), 'enctype'=>'multipart/form-data', 'method'=>'post'), $content);
   }
-  
+
   function databasenames($metabasename) {
     $tables = query('meta', 'SHOW TABLES FROM `<metabasename>`', array('metabasename'=>$metabasename));
     if ($tables)
@@ -262,9 +262,9 @@
       }
     return null;
   }
-  
+
   function path($metabasename, $databasename = null, $tablename = null, $uniquefieldname = null, $uniquevalue = null) {
-    return html('h2', array(), 
+    return html('h2', array(),
       join_clean(' - ',
         !is_null($metabasename) ? $metabasename : '&hellip;',
         !is_null($databasename) ? ($metabasename ? internalreference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'back'=>parameter('server', 'REQUEST_URI')), $databasename) : $databasename) : null,
@@ -273,11 +273,11 @@
       )
     );
   }
-  
+
   function clean_name($name, $forbiddennoun = null) {
     return preg_replace(
-      array('@(?<=[a-z])([A-Z]+)@e', "@^(.*)\b($forbiddennoun|".singularize_noun($forbiddennoun).")\b(.*)$@ie", '@(?<=[\w ])id$@i', '@ {2,}@', '@(^ +| +$)@'),
-      array('strtolower(" $1")'   , '"$1" || "$3" ? "$1$3" : "$0"'                                           , ''                , ' '      , ''           ),
+      array('@(?<=[a-z])([A-Z]+)@e', '@id$@i', "@^(.*?)\b( *(?:$forbiddennoun|".singularize_noun($forbiddennoun).") *)\b(.*?)$@ie", '@(?<=[\w ])id$@i', '@ {2,}@', '@(^ +| +$)@'),
+      array('strtolower(" $1")'    , ' id'   ,'"$1" && "$3" ? "$1 $3" : ("$1" || "$3" ? "$1$3" : "$0")'                          , ''                , ' '      , ''           ),
       $name
     );
   }
@@ -302,21 +302,31 @@
         $orderfieldname = $field['fieldname'];
 
       include_once("presentation/$field[presentationname].php");
-      $header[] = 
-        html('th', !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? array('class'=>'thisrecord') : array(), 
+      $header[] =
+        html('th', !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? array('class'=>'thisrecord') : array(),
           !is_null($foreignvalue) || !call_user_func("is_sortable_$field[presentationname]")
           ? clean_name($field['fieldname'], $tablename)
           : ($field['fieldname'] == $orderfieldname
             ? clean_name($field['fieldname'], $tablename).' &#x25be;'
             : internalreference(
-                array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$field['fieldname']), 
+                array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$field['fieldname']),
                 clean_name($field['fieldname'], $tablename),
                 array('class'=>'ajaxreload')
               )
             )
         );
     }
-    $records = query('data', "SELECT ".($limit ? "SQL_CALC_FOUND_ROWS " : "")."$tablename.$uniquefieldname AS $uniquefieldname".($selectnames ? ', '.join(', ', $selectnames) : '')." FROM `$databasename`.$tablename".join(array_unique($joins)).(!is_null($foreignvalue) ? " WHERE $tablename.$foreignfieldname = '$foreignvalue'" : '').($ordernames ? " ORDER BY ".join(', ', $ordernames) : '').($limit ? " LIMIT $limit".($offset ? " OFFSET $offset" : '') : ''));
+    $records = query('data',
+      "SELECT ".
+      ($limit ? "SQL_CALC_FOUND_ROWS " : "").
+      "$tablename.$uniquefieldname AS $uniquefieldname".
+      ($selectnames ? ', '.join(', ', $selectnames) : '').
+      " FROM `$databasename`.$tablename".
+      join(array_unique($joins)).
+      (!is_null($foreignvalue) ? " WHERE $tablename.$foreignfieldname = '$foreignvalue'" : '').
+      ($ordernames ? " ORDER BY ".join(', ', $ordernames) : '').
+      ($limit ? " LIMIT $limit".($offset ? " OFFSET $offset" : '') : '')
+    );
     $foundrecords = $limit ? query1('data', 'SELECT FOUND_ROWS() AS number') : null;
 
     $rows = array(html('tr', array(), join($header)));
@@ -332,7 +342,7 @@
             call_user_func("list_$field[presentationname]", $metabasename, $databasename, $field, $row["${tablename}_$field[fieldname]"])
           );
       }
-      $rows[] = 
+      $rows[] =
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           ($interactive ? html('td', array('class'=>'small'), internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), 'edit')) : '').
           join($columns)
@@ -348,8 +358,8 @@
       }
     }
 
-    return 
-      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablename'=>$tablename, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))), 
+    return
+      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablename'=>$tablename, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
         ($interactive
         ? html('div', array(),
             internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), singularize_noun($tablename))).
@@ -362,7 +372,7 @@
         (is_null($foreignvalue) ? internalreference(parameter('server', 'HTTP_REFERER'), 'close', array('class'=>'close')) : '')
       );
   }
-  
+
   function insertorupdate($databasename, $tablename, $fieldnamesandvalues, $uniquefieldname = null, $uniquevalue = null) {
     $sets = $arguments = array();
     foreach ($fieldnamesandvalues as $fieldname=>$fieldvalue) {
@@ -371,41 +381,41 @@
       $arguments["_value_$fieldname"] = $fieldvalue;
     }
     query('data',
-      $uniquevalue
+      $uniquefieldname && !is_null($uniquevalue)
       ? "UPDATE `<databasename>`.`<tablename>` SET ".join(', ', $sets)." WHERE <uniquefieldname> = '<uniquevalue>'"
       : "INSERT INTO `<databasename>`.`<tablename>` SET ".join(', ', $sets),
       array_merge($arguments, array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue))
     );
-    return $uniquevalue ? $uniquevalue : mysql_insert_id();
+    return !is_null($uniquevalue) ? $uniquevalue : mysql_insert_id();
   }
-  
+
   function preg_match1($pattern, $subject, $default = null) {
     return preg_match($pattern, $subject, $matches) ? (count($matches) == 2 ? $matches[1] : $matches[0]) : $default;
   }
-  
+
   function preg_delete($pattern, $subject) {
     if (!preg_match($pattern, $subject, $matches))
       return array($subject, null);
     return array(preg_replace($pattern, '', $subject), $matches[1]);
   }
-  
+
   function totaltype($field) {
     return
       strtoupper($field['type']).
       ($field['typelength']                         ? "($field[typelength])" : '').
-      ($field['typeunsigned']                       ? " UNSIGNED"                : '').
-      ($field['autoincrement']                      ? " AUTO_INCREMENT"          : '').
-      ($field['uniquefieldid'] == $field['fieldid'] ? " PRIMARY KEY"             : '').
-      (!$field['nullallowed']                       ? " NOT NULL"                : '');
+      ($field['typeunsigned']                       ? " UNSIGNED"            : '').
+      ($field['autoincrement']                      ? " AUTO_INCREMENT"      : '').
+      ($field['uniquefieldid'] == $field['fieldid'] ? " PRIMARY KEY"         : '').
+      (!$field['nullallowed']                       ? " NOT NULL"            : '');
   }
-  
+
   function mysql_data_reset($results) {
     if (mysql_num_rows($results) > 0)
       mysql_data_seek($results, 0);
   }
-  
+
   function fieldsforpurpose($metabasename, $tablename, $purpose) {
-    return query('meta', 
+    return query('meta',
       "SELECT mt.tablename, mt.tableid, mf.fieldid, mf.fieldname, mr.presentationname, mf.autoincrement, mf.foreigntableid, mf.nullallowed, mf.indesc, mf.inlist, mf.inedit, mt2.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname ".
       "FROM `<metabasename>`.tables mt ".
       "RIGHT JOIN `<metabasename>`.fields mf ON mf.tableid = mt.tableid ".
@@ -418,13 +428,13 @@
       array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'purpose'=>$purpose)
     );
   }
-  
+
   function descriptor($metabasename, $tablename, $tablealias) {
     static $descriptors = array();
     if (!$descriptor[$tablename]) {
       $arguments = array();
       $descriptorfields = fieldsforpurpose($metabasename, $tablename, 'indesc');
-      while($descriptorfield = mysql_fetch_assoc($descriptorfields) ) 
+      while($descriptorfield = mysql_fetch_assoc($descriptorfields) )
         $arguments[] = "<table>.$descriptorfield[fieldname]";
       $descriptors[$tablename] = count($arguments) == 1 ? $arguments[0] : 'CONCAT_WS(" ", '.join(', ', $arguments).')';
     }
@@ -480,7 +490,7 @@
       }
     }
 
-    header("Content-Type: $content_type"); 
+    header("Content-Type: $content_type");
     print $content;
     exit;
   }
@@ -534,8 +544,8 @@
       $language = bare($matches[0]);
       $charset = bare($matches[1]);
       $general_language = preg_replace('@_[a-z]*@', '', $language);
-      $wanted_locales[$system_locale] = 
-        10 * (array_key_exists($language, $wanted_languages) ? 1 + $wanted_languages[$language] : (array_key_exists($general_language, $wanted_languages) ? 1 + $wanted_languages[$general_language] : 0)) + 
+      $wanted_locales[$system_locale] =
+        10 * (array_key_exists($language, $wanted_languages) ? 1 + $wanted_languages[$language] : (array_key_exists($general_language, $wanted_languages) ? 1 + $wanted_languages[$general_language] : 0)) +
          1 * (array_key_exists($charset, $wanted_charsets) ? 1 + $wanted_charsets[$charset] : 0);
     }
     arsort($wanted_locales);

@@ -18,6 +18,7 @@ th.wide, td.wide { width: 99%; }
 th.small, td.small { width: 1%; }
 tr.list:hover { background-color: #ffc; }
 tr.list:hover td.nolist { background-color: #ddf; }
+td.header { font-weight: bold; }
 
 ul, ol { padding: 0.5em 2.5em; }
 ul.compact { margin: 0; padding: 0; max-width: 30em; overflow: hidden; }
@@ -25,6 +26,7 @@ ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 
 .integer { width: 2em; text-align: right; }
 
+.referrer { font-size: 0.8em; }
 input, select, textarea { font-size: 1em; font-family: inherit; background-color: #ffe; border: 0.1em solid #999; }
 input:focus, select:focus, textarea:focus { background-color: #ffc; }
 select { height: 1.25em; }
