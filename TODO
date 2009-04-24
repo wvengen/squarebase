@@ -1,0 +1,3 @@
+* deleting/changing a foreign key should handle referring fields (ON DELETE/UPDATE RESTRICT/CASCADE/SET_NULL/NO_ACTION)
+* user rights management for databases, tables (MySQL), columns and individual rows (ALTER/CREATE/DELETE/DROP/INSERT/SELECT/UPDATE)
+* a query builder for interactive reports
