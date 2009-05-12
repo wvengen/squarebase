@@ -13,7 +13,7 @@ th, td { padding: 0.1em; vertical-align: top; }
 th { text-align: left; background: #ddd; }
 td.description { width: 0.1em; height: 1.5em; white-space: nowrap; }
 td.number { text-align: right; }
-td.center { text-align: center; }
+.center { text-align: center; }
 th.wide, td.wide { width: 99%; }
 th.small, td.small { width: 1%; }
 tr.list:hover { background-color: #ffc; }

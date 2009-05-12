@@ -253,14 +253,13 @@
   }
 
   function databasenames($metabasename) {
-    $tables = query('meta', 'SHOW TABLES FROM `<metabasename>`', array('metabasename'=>$metabasename));
-    if ($tables)
-      while ($table = mysql_fetch_assoc($tables)) {
-        $tablename = $table["Tables_in_$metabasename"];
-        if ($tablename == 'constants')
-          return query('meta', 'SELECT * FROM `<metabasename>`.values mv LEFT JOIN `<metabasename>`.constants mc ON mv.constantid = mc.constantid WHERE constantname = \'database\'', array('metabasename'=>$metabasename));
-      }
-    return null;
+    if (mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE \'databases\'', array('metabasename'=>$metabasename))) == 0)
+      return array();
+    $databases = array();
+    $results = query('meta', 'SELECT databasename FROM `<metabasename>`.`databases`', array('metabasename'=>$metabasename));
+    while ($result = mysql_fetch_assoc($results))
+      $databases[] = $result['databasename'];
+    return $databases;
   }
 
   function path($metabasename, $databasename = null, $tablename = null, $uniquefieldname = null, $uniquevalue = null) {
@@ -463,7 +462,7 @@
     while ($file = readdir($dir)) {
       if (preg_match('@^(.*)\.php$@', $file, $matches)) {
         $presentationnames[] = $matches[1];
-        include("presentation/$file");
+        include_once("presentation/$file");
       }
     }
     closedir($dir);

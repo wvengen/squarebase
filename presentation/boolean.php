@@ -29,6 +29,6 @@
   }
   
   function css_boolean() {
-    return '';
+    return ".column.boolean { text-align: center; }\n";
   }
 ?>

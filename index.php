@@ -19,7 +19,7 @@
       array('@\.[a-z][a-z0-9\-]*@', '@_([a-z]+)@ie'       ),
       array(''                    , '"-".strtolower("$1")'),
       join_clean(',',
-        parameter('get', 'metabasename') && mysql_num_rows(query('meta', "SHOW DATABASES LIKE '<metabasename>'", array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE \'constants\'', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT value FROM `<metabasename>`.values mv LEFT JOIN `<metabasename>`.constants mc ON mv.constantid = mc.constantid WHERE constantname = \'language\'', array('metabasename'=>parameter('get', 'metabasename'))).';q=4.0' : null,
+        parameter('get', 'metabasename') && mysql_num_rows(query('meta', "SHOW DATABASES LIKE '<metabasename>'", array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE \'languages\'', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))).';q=4.0' : null,
         parameter('get', 'language')     ? parameter('get', 'language').';q=3.0' : null,
         parameter('session', 'language') ? parameter('session', 'language').';q=2.0' : null,
         parameter('server', 'HTTP_ACCEPT_LANGUAGE'),
@@ -81,21 +81,20 @@
 
   if ($action == 'index') {
     $metabases = query('root', 'SHOW DATABASES');
-    $rows = array(html('th', array(), array(_('metabase'), _('database'))));
+    $rows = array(html('th', array(), array(_('database'), _('metabase'))));
     while ($metabase = mysql_fetch_assoc($metabases)) {
       $metabasename = $metabase['Database'];
       $databasenames = databasenames($metabasename);
-      if ($databasenames) {
-        $databaselist = array();
-        while ($databasename = mysql_fetch_assoc($databasenames))
-          $databaselist[] = internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename['value']), $databasename['value']);
+      foreach ($databasenames as $databasename) {
         $rows[] =
           html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
-            html('td', array('class'=>'small'),
-              internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$metabasename), $metabasename)
-            ).
             html('td', array(),
-              html('ul', array('class'=>'compact'), html('li', array(), $databaselist))
+              internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $databasename)
+            ).
+            html('td', array('class'=>'small'),
+              array(
+                internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$metabasename), $metabasename)
+              )
             )
           );
       }
@@ -103,7 +102,13 @@
     page($action, null,
       internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')).
       html('table', array(), join($rows)).
-      internalreference(array('action'=>'test_inflection_singular_plural'), _('test inflection singular plural'))
+      html('ul', array(),
+        html('li', array(),
+          array(
+            internalreference(array('action'=>'test_inflection_singular_plural'), _('test inflection singular plural'))
+          )
+        )
+      )
     );
   }
 
@@ -127,8 +132,8 @@
       $dblist = array();
       $dbs = databasenames($databasename);
       if ($dbs) {
-        while ($db = mysql_fetch_assoc($dbs))
-          $dblist[] = internalreference(array('action'=>'form_metabase_for_database', 'databasename'=>$db['value'], 'metabasename'=>$databasename), $db['value']);
+        foreach ($dbs as $db)
+          $dblist[] = internalreference(array('action'=>'form_metabase_for_database', 'databasename'=>$db, 'metabasename'=>$databasename), $db);
         $contents = html('ul', array('class'=>'compact'), html('li', array(), $dblist));
       }
       else {
@@ -229,7 +234,7 @@
     $databasename = parameter('get', 'databasename');
     $language =
       $metabasename
-      ? query1field('meta', 'SELECT value FROM `<metabasename>`.values mv LEFT JOIN `<metabasename>`.constants mc ON mv.constantid = mc.constantid WHERE constantname = \'language\'', array('metabasename'=>parameter('get', 'metabasename')))
+      ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename')))
       : parameter('get', 'language');
 
     if (!$metabasename) {
@@ -239,10 +244,9 @@
         $mbname = $metabase['Database'];
         if ($mbname != 'mysql') {
           $dbs = databasenames($mbname);
-          if ($dbs)
-            while ($db = mysql_fetch_assoc($dbs))
-              if ($db['value'] == $databasename)
-                $mbnames[] = $mbname;
+          foreach ($dbs as $db)
+            if ($db == $databasename)
+              $mbnames[] = $mbname;
         }
       }
     }
@@ -464,81 +468,81 @@
     query('meta', 'CREATE DATABASE IF NOT EXISTS `<metabasename>`', array('metabasename'=>$metabasename));
 
     query('meta',
-          'CREATE TABLE `<metabasename>`.constants ('.
-            'constantid       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-            'constantname     VARCHAR(100) NOT NULL,'.
-            'UNIQUE KEY (constantname)'.
-          ')',
-          array('metabasename'=>$metabasename)
+      'CREATE TABLE `<metabasename>`.languages ('.
+        'languageid       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+        'languagename     VARCHAR(100) NOT NULL,'.
+        'UNIQUE KEY (languagename)'.
+      ')',
+      array('metabasename'=>$metabasename)
     );
 
     query('meta',
-          'CREATE TABLE `<metabasename>`.values ('.
-            'valueid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-            'constantid       INT UNSIGNED NOT NULL,'.
-            'value            VARCHAR(100) NOT NULL,'.
-            'UNIQUE KEY (constantid, value)'.
-          ')',
-          array('metabasename'=>$metabasename)
+      'CREATE TABLE `<metabasename>`.databases ('.
+        'databaseid       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+        'databasename     VARCHAR(100) NOT NULL,'.
+        'UNIQUE KEY (databasename)'.
+      ')',
+      array('metabasename'=>$metabasename)
     );
 
     query('meta',
-          'CREATE TABLE `<metabasename>`.tables ('.
-            'tableid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-            'tablename        VARCHAR(100) NOT NULL,'.
-            'uniquefieldid    INT UNSIGNED NOT NULL,'.
-            'intablelist      BOOLEAN      NOT NULL,'.
-            'UNIQUE KEY (tablename),'.
-            'INDEX (uniquefieldid)'.
-          ')',
-          array('metabasename'=>$metabasename)
+      'CREATE TABLE `<metabasename>`.tables ('.
+        'tableid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+        'tablename        VARCHAR(100) NOT NULL,'.
+        'uniquefieldid    INT UNSIGNED NOT NULL REFERENCES `fields` (fieldid),'.
+        'intablelist      BOOLEAN      NOT NULL,'.
+        'UNIQUE KEY (tablename),'.
+        'INDEX (uniquefieldid)'.
+      ')',
+      array('metabasename'=>$metabasename)
     );
 
     query('meta',
-          'CREATE TABLE `<metabasename>`.fields ('.
-            'fieldid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-            'tableid          INT UNSIGNED NOT NULL,'.
-            'fieldname        VARCHAR(100) NOT NULL,'.
-            'autoincrement    BOOLEAN      NOT NULL,'.
-            'typeid           INT UNSIGNED NOT NULL,'.
-            'nullallowed      BOOLEAN      NOT NULL,'.
-            'indesc           BOOLEAN      NOT NULL,'.
-            'inlist           BOOLEAN      NOT NULL,'.
-            'inedit           BOOLEAN      NOT NULL,'.
-            'foreigntableid   INT UNSIGNED         ,'.
-            'UNIQUE KEY (tableid, fieldname),'.
-            'INDEX (foreigntableid),'.
-            'INDEX (typeid)'.
-          ')',
-          array('metabasename'=>$metabasename)
+      'CREATE TABLE `<metabasename>`.fields ('.
+        'fieldid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+        'tableid          INT UNSIGNED NOT NULL REFERENCES `tables` (tableid),'.
+        'fieldname        VARCHAR(100) NOT NULL,'.
+        'autoincrement    BOOLEAN      NOT NULL,'.
+        'typeid           INT UNSIGNED NOT NULL REFERENCES `types` (typeid),'.
+        'nullallowed      BOOLEAN      NOT NULL,'.
+        'indesc           BOOLEAN      NOT NULL,'.
+        'inlist           BOOLEAN      NOT NULL,'.
+        'inedit           BOOLEAN      NOT NULL,'.
+        'foreigntableid   INT UNSIGNED          REFERENCES `tables` (tableid),'.
+        'UNIQUE KEY (tableid, fieldname),'.
+        'INDEX (foreigntableid),'.
+        'INDEX (typeid)'.
+      ')',
+      array('metabasename'=>$metabasename)
     );
 
     query('meta',
-          'CREATE TABLE `<metabasename>`.types ('.
-            'typeid           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-            'typename         VARCHAR(100) NOT NULL,'.
-            'type             VARCHAR(100) NOT NULL,'.
-            'typelength       INT UNSIGNED         ,'.
-            'typeunsigned     BOOLEAN      NOT NULL,'.
-            'typezerofill     BOOLEAN      NOT NULL,'.
-            'presentationid   INT UNSIGNED NOT NULL,'.
-            'UNIQUE KEY (typename),'.
-            'INDEX (presentationid)'.
-          ')',
-          array('metabasename'=>$metabasename)
+      'CREATE TABLE `<metabasename>`.types ('.
+        'typeid           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+        'typename         VARCHAR(100) NOT NULL,'.
+        'type             VARCHAR(100) NOT NULL,'.
+        'typelength       INT UNSIGNED         ,'.
+        'typeunsigned     BOOLEAN      NOT NULL,'.
+        'typezerofill     BOOLEAN      NOT NULL,'.
+        'presentationid   INT UNSIGNED NOT NULL REFERENCES `presentations` (presentationid),'.
+        'UNIQUE KEY (typename),'.
+        'INDEX (presentationid)'.
+      ')',
+      array('metabasename'=>$metabasename)
     );
 
     query('meta',
-          'CREATE TABLE `<metabasename>`.presentations ('.
-            'presentationid   INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-            'presentationname VARCHAR(100) NOT NULL,'.
-            'UNIQUE KEY (presentationname)'.
-          ')',
-          array('metabasename'=>$metabasename)
+      'CREATE TABLE `<metabasename>`.presentations ('.
+        'presentationid   INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+        'presentationname VARCHAR(100) NOT NULL,'.
+        'UNIQUE KEY (presentationname)'.
+      ')',
+      array('metabasename'=>$metabasename)
     );
 
-    insertorupdate($metabasename, 'values', array('constantid'=>insertorupdate($metabasename, 'constants', array('constantname'=>'database'), 'constantid'), 'value'=>$databasename));
-    insertorupdate($metabasename, 'values', array('constantid'=>insertorupdate($metabasename, 'constants', array('constantname'=>'language'), 'constantid'), 'value'=>parameter('get', 'language')));
+    insertorupdate($metabasename, 'languages', array('languagename'=>parameter('get', 'language')));
+
+    insertorupdate($metabasename, 'databases', array('databasename'=>$databasename));
 
     $presentationnames = get_presentationnames();
     $presentationids = array();
@@ -549,7 +553,7 @@
     $tableids = array();
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table["Tables_in_$databasename"];
-      $tableids[$tablename] = insertorupdate($metabasename, 'tables', array('tablename'=>$tablename, 'intablelist'=>parameter('get', "$tablename:intablelist") == 'on'), 'tableid');
+      $tableids[$tablename] = insertorupdate($metabasename, 'tables', array('tablename'=>$tablename, 'intablelist'=>parameter('get', "$tablename:intablelist") == 'on'));
     }
 
     $errors = array();
@@ -564,7 +568,7 @@
 
         $typename = parameter('get', "$tablename:$fieldname:typename");
         if (!$typeids[$typename]) {
-          $typeids[$typename] = insertorupdate($metabasename, 'types', array('typename'=>$typename, 'type'=>parameter('get', "$tablename:$fieldname:type"), 'typelength'=>parameter('get', "$tablename:$fieldname:typelength"), 'typeunsigned'=>parameter('get', "$tablename:$fieldname:typeunsigned") ? 1 : 0, 'typezerofill'=>parameter('get', "$tablename:$fieldname:typezerofill") ? 1 : 0, 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")]), 'typeid');
+          $typeids[$typename] = insertorupdate($metabasename, 'types', array('typename'=>$typename, 'type'=>parameter('get', "$tablename:$fieldname:type"), 'typelength'=>parameter('get', "$tablename:$fieldname:typelength"), 'typeunsigned'=>parameter('get', "$tablename:$fieldname:typeunsigned") ? 1 : 0, 'typezerofill'=>parameter('get', "$tablename:$fieldname:typezerofill") ? 1 : 0, 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")]));
         }
 
         $foreigntablename = parameter('get', "$tablename:$fieldname:foreigntablename");
@@ -573,7 +577,7 @@
         $inlist = parameter('get', "$tablename:$fieldname:inlist") ? 1 : 0;
         $inedit = parameter('get', "$tablename:$fieldname:inedit") ? 1 : 0;
 
-        $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'typeid'=>$typeids[$typename], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'autoincrement'=>parameter('get', "$tablename:$fieldname:autoincrement") ? 1 : 0, 'nullallowed'=>parameter('get', "$tablename:$fieldname:nullallowed") ? 1 : 0, 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit), 'fieldid');
+        $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'typeid'=>$typeids[$typename], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'autoincrement'=>parameter('get', "$tablename:$fieldname:autoincrement") ? 1 : 0, 'nullallowed'=>parameter('get', "$tablename:$fieldname:nullallowed") ? 1 : 0, 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
 
         $indescs += $indesc;
         $inlists += $inlist;
@@ -618,10 +622,10 @@
     $rows = array();
     $databasenames = databasenames($metabasename);
     if ($databasenames) {
-      while ($databasename = mysql_fetch_assoc($databasenames))
+      foreach ($databasenames as $databasename)
         $rows[] =
           html('td', array(),
-            internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename['value']), $databasename['value'])
+            internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $databasename)
           );
       $rows[] =
         html('td', array(),
@@ -643,7 +647,7 @@
     $metabasename = parameter('get', 'metabasename');
     $databasename = parameter('get', 'databasename');
 
-    query('meta', 'INSERT IGNORE INTO `<metabasename>`.values (constantid, value) SELECT constantid, "<databasename>" FROM `<metabasename>`.constants WHERE constantname = \'database\'', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
+    query('meta', 'INSERT IGNORE INTO `<metabasename>`.databases SET databasename = "<databasename>"', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
 
     query('data', 'CREATE DATABASE IF NOT EXISTS `<databasename>`', array('databasename'=>$databasename));
 
