@@ -51,7 +51,7 @@
               html('td', array('class'=>'small'), html('label', array('for'=>'host'    ), _('host'    ))).html('td', array(), html('input', array('type'=>'text',     'id'=>'host',     'name'=>'host',     'value'=>'localhost'))),
               html('td', array('class'=>'small'), html('label', array('for'=>'password'), _('password'))).html('td', array(), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password'))),
               html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale()),
-              html('td', array('class'=>'small'), '&nbsp;').                                              html('td', array(), html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>join_clean(' ', 'button', 'mainsubmit'))))
+              html('td', array('class'=>'small'), '').                                                    html('td', array(), html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>join_clean(' ', 'button', 'mainsubmit'))))
             )
           )
         )
@@ -81,7 +81,7 @@
 
   if ($action == 'index') {
     $metabases = query('root', 'SHOW DATABASES');
-    $rows = array(html('th', array(), array(_('database'), _('metabase'))));
+    $rows = array(html('th', array(), array(_('database'), _('metabase'), '')));
     while ($metabase = mysql_fetch_assoc($metabases)) {
       $metabasename = $metabase['Database'];
       $databasenames = databasenames($metabasename);
@@ -93,7 +93,8 @@
             ).
             html('td', array('class'=>'small'),
               array(
-                internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$metabasename), $metabasename)
+                internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$metabasename), $metabasename),
+                internalreference(array('action'=>'drop_database', 'databasename'=>$metabasename), 'drop')
               )
             )
           );
@@ -125,7 +126,7 @@
   /********************************************************************************************/
 
   if ($action == 'new_metabase_from_database') {
-    $rows = array(html('th', array(), array(_('database'), _('tables'), '&nbsp;')));
+    $rows = array(html('th', array(), array(_('database'), _('tables'), '')));
     $databases = query('root', 'SHOW DATABASES');
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['Database'];
@@ -405,10 +406,10 @@
               )
             ).
             html('td', array(), html('input', array('type'=>'text', 'class'=>join_clean(' ', 'integer', 'dependsontypename'), 'name'=>"$tablename:$fieldname:typelength", 'value'=>$typelength))).
-            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>join_clean(' ', 'checkboxedit', 'dependsontypename'), 'name'=>"$tablename:$fieldname:typeunsigned", 'checked'=>$typeunsigned ? 'checked' : null)) : '&nbsp;').
-            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>join_clean(' ', 'checkboxedit', 'dependsontypename'), 'name'=>"$tablename:$fieldname:typezerofill", 'checked'=>$typezerofill ? 'checked' : null)) : '&nbsp;').
+            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>join_clean(' ', 'checkboxedit', 'dependsontypename'), 'name'=>"$tablename:$fieldname:typeunsigned", 'checked'=>$typeunsigned ? 'checked' : null)) : '').
+            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>join_clean(' ', 'checkboxedit', 'dependsontypename'), 'name'=>"$tablename:$fieldname:typezerofill", 'checked'=>$typezerofill ? 'checked' : null)) : '').
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:nullallowed", 'checked'=>$nullallowed ? 'checked' : null))).
-            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:autoincrement", 'checked'=>$autoincrement ? 'checked' : null)) : '&nbsp;').
+            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:autoincrement", 'checked'=>$autoincrement ? 'checked' : null)) : '').
             html('td', array(), join_clean(' ', $typeinfo, $extrainfo)).
             html('td', array(), html('input', array('type'=>'text', 'class'=>'typename', 'name'=>"$tablename:$fieldname:typename", 'value'=>$typename))).
             html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>join_clean(' ', 'presentationname', 'dependsontypename')), $presentationnameoptions)).
@@ -419,7 +420,7 @@
                 ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename", 'class'=>'foreigntablename'),
                     join($tableoptions)
                   )
-                : '&nbsp;'
+                : ''
                 )
               )
             ).

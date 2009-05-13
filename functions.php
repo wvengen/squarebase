@@ -17,6 +17,10 @@
     return $value ? str_replace("\\'", "'", $value) : $default;
   }
 
+  function is_not_null($var) {
+    return !is_null($var);
+  }
+
   function join_clean() {
     $args = func_get_args();
     switch (count($args)) {
@@ -33,7 +37,7 @@
     foreach ($args as $arg)
       $pieces = array_merge($pieces, is_array($arg) ? $arg : array($arg));
 
-    return join($glue, array_diff($pieces, array(null)));
+    return join($glue, array_filter($pieces, 'is_not_null'));
   }
 
   function array_show($array) {
@@ -284,7 +288,7 @@
   function list_table($metabasename, $databasename, $tablename, $limit, $offset, $uniquefieldname, $orderfieldname, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = TRUE) {
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
-    $header = array(html('th', array('class'=>'small'), '&nbsp;'));
+    $header = array(html('th', array('class'=>'small'), ''));
     $fields = fieldsforpurpose($metabasename, $tablename, 'inlist');
     while ($field = mysql_fetch_assoc($fields)) {
       $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
@@ -367,7 +371,7 @@
         : (is_null($foreignvalue) ? '' : $tablename)
         ).
         (count($rows) > 1 ? html('table', array('class'=>'tablelist'), join($rows)) : '').
-        join(' &nbsp; ', $offsets).
+        join(' ', $offsets).
         (is_null($foreignvalue) ? internalreference(parameter('server', 'HTTP_REFERER'), 'close', array('class'=>'close')) : '')
       );
   }
