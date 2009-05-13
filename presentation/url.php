@@ -3,6 +3,8 @@
     if (!preg_match('@^(var)?char\b@', $field['Type']))
       return 0;
     $texts = query('data', "SELECT $field[Field] FROM `$field[Database]`.$field[Table] WHERE $field[Field] IS NOT NULL LIMIT 10");
+    if (mysql_num_rows($texts) == 0)
+      return 0;
     while ($text = mysql_fetch_assoc($texts)) {
       if (!preg_match('@^https?://@', $text[$field['Field']]))
         return 0;

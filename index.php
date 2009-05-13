@@ -100,6 +100,10 @@
           );
       }
     }
+
+    if (count($rows) == 1) // no metabases found
+      internalredirect(array('action'=>'new_metabase_from_database'));
+
     page($action, null,
       internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')).
       html('table', array(), join($rows)).
