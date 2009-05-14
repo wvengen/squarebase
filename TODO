@@ -37,3 +37,7 @@
   which is synchronized at column level with MySQL's user rights administration (GRANT/REVOKE).
 
 * a query builder for interactive reports
+
+* handle DECIMAL(5,2) better
+
+* handle LONGTEXT better

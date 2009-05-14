@@ -437,26 +437,28 @@
     }
 
     page($action, path(null, $databasename),
-      form(
-        html('table', array(),
-          html('tr', array(),
-            array(
-              html('td', array('class'=>'small'), html('label', array('for'=>'metabasename'), _('metabasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename ? $metabasename : (count($mbnames) == 1 ? $mbnames[0] : ''), 'class'=>'notempty'))),
-              html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
-              html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'language', 'value'=>$language, 'readonly'=>'readonly', 'class'=>'readonly')))
-            )
-          )
-        ).
-        html('table', array(),
-          join($totalstructure)
-        ).
-        ($metabasename ? "* = from $metabasename" : '').
-        html('p', array(),
-          $tableswithoutsinglevaluedprimarykey
-          ? html('span', array('class'=>'error'), sprintf(_('no single valued primary key for table(s) %s'), join(', ', $tableswithoutsinglevaluedprimarykey)))
-          : html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract_structure_from_database_to_metabase', 'class'=>'button'))
+      $tableswithoutsinglevaluedprimarykey
+      ? html('p', array(),
+          html('span', array('class'=>'error'), sprintf(_('no single valued primary key for table(s) %s'), join(', ', $tableswithoutsinglevaluedprimarykey)))
         )
-      )
+      : form(
+          html('table', array(),
+            html('tr', array(),
+              array(
+                html('td', array('class'=>'small'), html('label', array('for'=>'metabasename'), _('metabasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename ? $metabasename : (count($mbnames) == 1 ? $mbnames[0] : ''), 'class'=>'notempty'))),
+                html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
+                html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'language', 'value'=>$language, 'readonly'=>'readonly', 'class'=>'readonly')))
+              )
+            )
+          ).
+          html('table', array(),
+            join($totalstructure)
+          ).
+          ($metabasename ? "* = from $metabasename" : '').
+          html('p', array(),
+            html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract_structure_from_database_to_metabase', 'class'=>'button'))
+          )
+        )
     );
   }
 
