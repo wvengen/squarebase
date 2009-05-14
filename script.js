@@ -310,13 +310,40 @@ ready(
               }
             );
           }
-        );
+        ).
+        end();
       }
     ).
     eq(0).
     change().
     end().
     end().
+
+    find('.insome').
+    change(
+      function() {
+        $(this).
+        closest('form').
+        find('.insome').
+        each(
+          function() {
+            $(this).
+            closest('td').
+            toggleClass('ajaxincompatible',
+              $(this).
+              closest('form').
+              find('.insome[name^=' + $(this).attr('name').regexmatch('^\\w+:') + '][name$=' + $(this).attr('name').regexmatch(':\\w+$') + ']:checked').
+              length == 0
+            );
+          }
+        )
+      }
+    ).
+    eq(0).
+    change().
+    end().
+    end().
+
     find('.presentationname').
     change(
       function() {
