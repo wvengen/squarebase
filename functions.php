@@ -233,7 +233,7 @@
         html('body', array('class'=>preg_replace('@_@', '', $action)),
           html('div', array('id'=>'header'),
             html('h1', array('id'=>'title'), $title).
-            ($_SESSION['username'] ? html('div', array('id'=>'id'), join(' &ndash; ', array(get_locale(), "$_SESSION[username]@$_SESSION[host]", internalreference(parameter('server', 'REQUEST_URI').'&ajaxy='.($_SESSION['ajaxy'] ? 'off' : 'on'), 'ajax is '.($_SESSION['ajaxy'] ? 'on' : 'off')), internalreference(array('action'=>'logout'), 'logout')))) : '').
+            ($_SESSION['username'] ? html('div', array('id'=>'id'), join(' &ndash; ', array(get_locale(), "$_SESSION[username]@$_SESSION[host]", preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internalreference(parameter('server', 'REQUEST_URI').'&ajaxy='.($_SESSION['ajaxy'] ? 'off' : 'on'), 'ajax is '.($_SESSION['ajaxy'] ? 'on' : 'off')) : 'ajax is '.($_SESSION['ajaxy'] ? 'on' : 'off'), internalreference(array('action'=>'logout'), 'logout')))) : '').
 
             html('div', array('id'=>'messages'),
               $error ? html('div', array('class'=>'error'), $error) : ''
