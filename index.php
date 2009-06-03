@@ -153,7 +153,7 @@
             $fulllist = join(' ', array_slice($tablelist, 4));
             array_splice($tablelist, 4);
           }
-          $contents = html('ul', array('class'=>'compact'), html('li', array(), $tablelist).($fulllist ? html('li', array('title'=>$fulllist), '&hellip') : ''));
+          $contents = html('ul', array('class'=>'compact'), html('li', array(), $tablelist).($fulllist ? html('li', array('title'=>$fulllist), '&hellip;') : ''));
         }
       }
       $rows[] =
