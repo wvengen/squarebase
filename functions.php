@@ -512,7 +512,8 @@
     $output = strftime($format, $date);
     foreach ($fmts as $fmt=>$representation) {
       $result = strftime("%$fmt", $date);
-      $output = preg_replace("@\b$result\b@", $representation, $output);
+      if ($result)
+        $output = preg_replace("@\b$result\b@", $representation, $output);
     }
     return $output;
   }
