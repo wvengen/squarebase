@@ -38,7 +38,8 @@
   function ajax_lookup($metabasename, $databasename, $fieldname, $value, $presentationname, $foreigntablename, $foreignuniquefieldname, $nullallowed, $readonly) {
     if (!$foreigntablename)
       error(sprintf(_('no foreigntablename for %s'), $fieldname));
-    $references = query('data', "SELECT $foreignuniquefieldname, ".descriptor($metabasename, $foreigntablename, $foreigntablename)." AS _descriptor FROM `$databasename`.$foreigntablename ORDER BY _descriptor");
+    list($foreignselect, $foreignjoins) = descriptor($metabasename, $databasename, $foreigntablename, $foreigntablename);
+    $references = query('data', "SELECT $foreignuniquefieldname, $foreignselect AS _descriptor FROM `$databasename`.$foreigntablename$foreignjoins ORDER BY _descriptor");
     $options = array();
     while ($reference = mysql_fetch_assoc($references)) {
       $selected = $value == $reference[$foreignuniquefieldname];
