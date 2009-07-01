@@ -434,7 +434,7 @@
 
   function descriptor($metabasename, $tablename, $tablealias) {
     static $descriptors = array();
-    if (!$descriptor[$tablename]) {
+    if (!$descriptors[$tablename]) {
       $arguments = array();
       $descriptorfields = fieldsforpurpose($metabasename, $tablename, 'indesc');
       while($descriptorfield = mysql_fetch_assoc($descriptorfields) )
