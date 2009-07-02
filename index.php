@@ -93,7 +93,7 @@
             ).
             html('td', array('class'=>'small'),
               array(
-                internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$metabasename), $metabasename),
+                internalreference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename),
                 internalreference(array('action'=>'drop_database', 'databasename'=>$metabasename), 'drop')
               )
             )
