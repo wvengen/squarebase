@@ -267,12 +267,22 @@
   }
 
   function path($metabasename, $databasename = null, $tablename = null, $uniquefieldname = null, $uniquevalue = null) {
+    if (!is_null($uniquevalue)) {
+      if ($metabasename && $databasename && $tablename && $uniquefieldname) {
+        $descriptor = descriptor($metabasename, $databasename, $tablename, $tablename);
+        $uniquepart = query1field('data', "SELECT $descriptor[select] FROM `<databasename>`.`<tablename>`$descriptor[joins] WHERE <uniquefieldname> = <uniquevalue>", array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+      }
+      else
+        $uniquepart = $uniquevalue;
+    }
+    else
+      $uniquepart = null;
     return html('h2', array(),
       join_clean(' - ',
         !is_null($metabasename) ? $metabasename : '&hellip;',
         !is_null($databasename) ? ($metabasename ? internalreference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'back'=>parameter('server', 'REQUEST_URI')), $databasename) : $databasename) : null,
         !is_null($tablename)    ? ($metabasename && $databasename && $uniquefieldname ? internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename), $tablename) : $tablename) : null,
-        !is_null($uniquevalue)  ? ($metabasename && $databasename && $tablename && $uniquefieldname ? query1field('data', 'SELECT '.descriptor($metabasename, $databasename, $tablename, $tablename, 'select').' FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = <uniquevalue>', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)) : $uniquevalue) : null
+        $uniquepart
       )
     );
   }
@@ -294,9 +304,9 @@
       $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
       if ($field['foreigntablename']) {
         $joins[] = " LEFT JOIN `$databasename`.$field[foreigntablename] AS $field[foreigntablename]_$field[fieldname] ON $field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = $tablename.$field[fieldname]";
-        list($foreignselect, $foreignjoins) = descriptor($metabasename, $databasename, $field['foreigntablename'], "$field[foreigntablename]_$field[fieldname]");
-        $selectnames[] = $foreignselect." AS $field[foreigntablename]_$field[fieldname]_descriptor";
-        $joins[] = $foreignjoins;
+        $descriptor = descriptor($metabasename, $databasename, $field['foreigntablename'], "$field[foreigntablename]_$field[fieldname]");
+        $selectnames[] = $descriptor['select']." AS $field[foreigntablename]_$field[fieldname]_descriptor";
+        $joins[] = $descriptor['joins'];
         $ordernames[] = "$field[foreigntablename]_$field[fieldname]_descriptor";
       }
       else
@@ -434,7 +444,7 @@
     );
   }
 
-  function descriptor($metabasename, $databasename, $tablename, $tablealias, $returntype = null) {
+  function descriptor($metabasename, $databasename, $tablename, $tablealias) {
     static $descriptors = array();
     if (!$descriptors[$tablename]) {
       $arguments = $joins = array();
@@ -443,26 +453,22 @@
         $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
         if ($field['foreigntablename']) {
           $joins[] = " LEFT JOIN `$databasename`.$field[foreigntablename] AS {tablealias}_$field[foreigntablename]_$field[fieldname] ON {tablealias}_$field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = {tablealias}.$field[fieldname]";
-          list($foreignselect, $foreignjoins) = descriptor($metabasename, $databasename, $field['foreigntablename'], "{tablealias}_$field[foreigntablename]_$field[fieldname]");
-          $arguments[] = $foreignselect;
-          $joins[] = $foreignjoins;
+          $descriptor = descriptor($metabasename, $databasename, $field['foreigntablename'], "{tablealias}_$field[foreigntablename]_$field[fieldname]");
+          $arguments[] = $descriptor['select'];
+          $joins[] = $descriptor['joins'];
         }
         else
           $arguments[] = "{tablealias}.$field[fieldname]";
       }
       $descriptors[$tablename] = array(
         'select'=>count($arguments) == 1 ? $arguments[0] : 'CONCAT_WS(" ", '.join(', ', $arguments).')',
-        'joins'=>$joins ? join($joins) : null
+        'joins' =>$joins ? join($joins) : null
       );
     }
-    return
-      ($returntype == 'select'
-      ? preg_replace('@{tablealias}@', $tablealias, $descriptors[$tablename]['select'])
-      : ($returntype == 'joins'
-        ? preg_replace('@{tablealias}@', $tablealias, $descriptors[$tablename]['joins'])
-        : array(preg_replace('@{tablealias}@', $tablealias, $descriptors[$tablename]['select']), preg_replace('@{tablealias}@', $tablealias, $descriptors[$tablename]['joins']))
-        )
-      );
+    return array(
+      'select'=>preg_replace('@{tablealias}@', $tablealias, $descriptors[$tablename]['select']),
+      'joins' =>preg_replace('@{tablealias}@', $tablealias, $descriptors[$tablename]['joins'])
+    );
   }
 
   function login($username, $host, $password, $language) {
