@@ -27,9 +27,10 @@ ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 .integer { width: 2em; text-align: right; }
 
 .referrer { font-size: 0.8em; }
-input, select, textarea { font-size: 1em; font-family: inherit; background-color: #ffe; border: 0.1em solid #999; }
+input, textarea, select, option { font-size: 1em; font-family: serif !important; }
+input, textarea, select { background-color: #ffe; border: 0.1em solid #999; }
 input:focus, select:focus, textarea:focus { background-color: #ffc; }
-select { height: 1.25em; }
+select { height: 1.5em; }
 input.readonly, select.readonly { border-color: #ccc; color: #999; }
 input.button { border: 0.15em solid #fff; border-color: #fff #999 #999 #fff; color: #33f; padding: 0 0.2em; }
 input.mainsubmit, input.minorsubmit, .cancel, .done { margin-right: 1em; }
@@ -56,7 +57,8 @@ input.minorsubmit.ajaxified { display: none; }
 .pluralsingular label { width: 0.8em; display: inline-block; }
 .pluralsingular input { width: 8em; }
 
-.title, .typename { width: 8em; }
+.title { width: 8em; }
+.presentationname { width: 11em; }
 
 #title { float: left; }
 #id { float: right; }

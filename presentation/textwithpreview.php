@@ -34,8 +34,8 @@
   
   function css_textwithpreview() {
     return
-      ".textwithpreview { width: 20em; height: 10em; white-space: pre-wrap; }\n".
-      ".textwithpreview.blur { color: #ffe; overflow: hidden; }\n".
+      "textarea.textwithpreview { width: 20em; height: 10em; white-space: pre-wrap; }\n".
+      "textarea.textwithpreview.blur { color: #ffe; overflow: hidden; }\n".
       ".preview { width: 20em; height: 10em; margin-top: -10.1em; overflow: auto; border: 0.1em solid #999; }\n".
       ".preview.blur { visibility: hidden; }\n";
   }

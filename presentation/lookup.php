@@ -25,7 +25,7 @@
     return preg_match('@^(int|integer)\b@', $field['Type']) && linkedtable_lookup($field['Table'], $field['Field'], $field['Alltables'], $field['Primarykeyfieldname']) ? 0.6 : 0;
   }
 
-  function in_desc_lookup($field) { return false; }
+  function in_desc_lookup($field) { return $field['FieldNr'] < 5; }
   function in_list_lookup($field) { return $field['FieldNr'] < 5; }
   function in_edit_lookup($field) { return true; }
 
