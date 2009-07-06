@@ -51,7 +51,12 @@ input.minorsubmit.ajaxified { display: none; }
 
 .foreigntable { margin-bottom: 1em; }
 
-.typename { width: 8em; }
+.pluralsingular { margin: 0; padding: 0; }
+.pluralsingular li { list-style-type: none; white-space: nowrap; }
+.pluralsingular label { width: 0.8em; display: inline-block; }
+.pluralsingular input { width: 8em; }
+
+.title, .typename { width: 8em; }
 
 #title { float: left; }
 #id { float: right; }

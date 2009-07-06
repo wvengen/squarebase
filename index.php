@@ -19,7 +19,7 @@
       array('@\.[a-z][a-z0-9\-]*@', '@_([a-z]+)@ie'       ),
       array(''                    , '"-".strtolower("$1")'),
       join_clean(',',
-        parameter('get', 'metabasename') && mysql_num_rows(query('meta', "SHOW DATABASES LIKE '<metabasename>'", array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE \'languages\'', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))).';q=4.0' : null,
+        parameter('get', 'metabasename') && mysql_num_rows(query('meta', "SHOW DATABASES LIKE '<metabasename>'", array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE "languages"', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))).';q=4.0' : null,
         parameter('get', 'language')     ? parameter('get', 'language').';q=3.0' : null,
         parameter('session', 'language') ? parameter('session', 'language').';q=2.0' : null,
         parameter('server', 'HTTP_ACCEPT_LANGUAGE'),
@@ -106,24 +106,7 @@
 
     page($action, null,
       internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')).
-      html('table', array(), join($rows)).
-      html('ul', array(),
-        html('li', array(),
-          array(
-            internalreference(array('action'=>'test_inflection_singular_plural'), _('test inflection singular plural'))
-          )
-        )
-      )
-    );
-  }
-
-  /********************************************************************************************/
-
-  if ($action == 'test_inflection_singular_plural') {
-    $problems = test_inflection_singular_plural();
-    page($action, null,
-      html('h3', array(), sprintf(_('%d problems with inflection singular plural'), count($problems))).
-      ($problems ? html('ol', array(), html('li', array(), $problems)) : '')
+      html('table', array(), join($rows))
     );
   }
 
@@ -286,7 +269,7 @@
       html('tr', array(),
         html('th', array(),
           array(
-            _('table'), _('list'), _('field'), _('type'), _('len'), _('unsg'), _('fill'), _('null'), _('auto'), _('more'), _('typename'), _('presentation'), _('key'), _('desc'), _('list'), _('edit')
+            _('table'), _('list'), _('field'), _('title'), _('type'), _('len'), _('unsg'), _('fill'), _('null'), _('auto'), _('more'), _('typename'), _('presentation'), _('key'), _('desc'), _('list'), _('edit')
           )
         )
       );
@@ -294,15 +277,18 @@
     $totalstructure = array();
     for (mysql_data_reset($tables); $table = mysql_fetch_assoc($tables); ) {
       $tablename = $table["Tables_in_$databasename"];
+      $plural = $tablename;
+      $singular = singularize_noun($plural);
 
       $tablestructure = array();
       $fieldnr = 0;
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
         $fieldname = $field['Field'];
 
-        $originals = $metabasename ? query('meta', 'SELECT mt.intablelist, typename, type, typelength, typeunsigned, typezerofill, presentationname, nullallowed, autoincrement, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.types AS my ON my.typeid = mf.typeid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = my.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = \'<tablename>\' AND fieldname = \'<fieldname>\'', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
+        $originals = $metabasename ? query('meta', 'SELECT mt.intablelist, typename, type, typelength, typeunsigned, typezerofill, presentationname, nullallowed, autoincrement, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.types AS my ON my.typeid = mf.typeid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = my.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
         if ($originals) {
           $original = mysql_fetch_assoc($originals);
+          $title            = $original['title'];
           $type             = $original['type'];
           $typelength       = $original['typelength'];
           $typeunsigned     = $original['typeunsigned'];
@@ -321,6 +307,11 @@
           $numeric = $type == 'int';
         }
         else {
+          $title = preg_replace(
+            array('@(?<=[a-z])([A-Z]+)@e', '@id$@i', "@^(.*?)\b( *(?:$singular|$plural) *)\b(.*?)$@ie"       , '@(?<=[\w ])id$@i', '@ {2,}@', '@(^ +| +$)@'),
+            array('strtolower(" $1")'    , ' id'   ,'"$1" && "$3" ? "$1 $3" : ("$1" || "$3" ? "$1$3" : "$0")', ''                , ' '      , ''           ),
+            $fieldname
+          );
           $intablelist   = TRUE;
           $typeinfo = $field['Type'];
           list($typeinfo, $type          ) = preg_delete('@^(\w+) *@',         $typeinfo);
@@ -395,12 +386,23 @@
           html('tr', array('class'=>'list'),
             ($tablestructure
             ? ''
-            : html('td', array('class'=>join_clean(' ', 'top', 'nolist'), 'rowspan'=>mysql_num_rows($fields[$tablename])), $tablename).
+            : html('td', array('class'=>join_clean(' ', 'top', 'nolist'), 'rowspan'=>mysql_num_rows($fields[$tablename])),
+                $tablename.
+                html('ol', array('class'=>'pluralsingular'),
+                  html('li', array(),
+                    array(
+                      html('label', array('for'=>"$tablename:singular"), '1').html('input', array('type'=>'text', 'name'=>"$tablename:singular", 'id'=>"$tablename:singular", 'value'=>$singular)),
+                      html('label', array('for'=>"$tablename:plural"), '2').html('input', array('type'=>'text', 'name'=>"$tablename:plural", 'id'=>"$tablename:plural", 'value'=>$plural))
+                    )
+                  )
+                )
+              ).
               html('td', array('class'=>join_clean(' ', 'top', 'nolist'), 'rowspan'=>mysql_num_rows($fields[$tablename])),
                 html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
               )
             ).
             html('td', array(), $fieldname.($originals ? '*' : '')).
+            html('td', array(), html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))).
             html('td', array(),
               html('select', array('name'=>"$tablename:$fieldname:type", 'class'=>'dependsontypename'),
                 html('option', array('value'=>'int'     , 'selected'=>$type == 'int'      ? 'selected' : null), 'int'     ).
@@ -496,6 +498,8 @@
       'CREATE TABLE `<metabasename>`.tables ('.
         'tableid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
         'tablename        VARCHAR(100) NOT NULL,'.
+        'singular         VARCHAR(100) NOT NULL,'.
+        'plural           VARCHAR(100) NOT NULL,'.
         'uniquefieldid    INT UNSIGNED NOT NULL REFERENCES `fields` (fieldid),'.
         'intablelist      BOOLEAN      NOT NULL,'.
         'UNIQUE KEY (tablename),'.
@@ -509,6 +513,7 @@
         'fieldid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
         'tableid          INT UNSIGNED NOT NULL REFERENCES `tables` (tableid),'.
         'fieldname        VARCHAR(100) NOT NULL,'.
+        'title            VARCHAR(100) NOT NULL,'.
         'autoincrement    BOOLEAN      NOT NULL,'.
         'typeid           INT UNSIGNED NOT NULL REFERENCES `types` (typeid),'.
         'nullallowed      BOOLEAN      NOT NULL,'.
@@ -560,7 +565,7 @@
     $tableids = array();
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table["Tables_in_$databasename"];
-      $tableids[$tablename] = insertorupdate($metabasename, 'tables', array('tablename'=>$tablename, 'intablelist'=>parameter('get', "$tablename:intablelist") == 'on'));
+      $tableids[$tablename] = insertorupdate($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>parameter('get', "$tablename:singular"), 'plural'=>parameter('get', "$tablename:plural"), 'intablelist'=>parameter('get', "$tablename:intablelist") == 'on'));
     }
 
     $errors = array();
@@ -584,7 +589,7 @@
         $inlist = parameter('get', "$tablename:$fieldname:inlist") ? 1 : 0;
         $inedit = parameter('get', "$tablename:$fieldname:inedit") ? 1 : 0;
 
-        $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'typeid'=>$typeids[$typename], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'autoincrement'=>parameter('get', "$tablename:$fieldname:autoincrement") ? 1 : 0, 'nullallowed'=>parameter('get', "$tablename:$fieldname:nullallowed") ? 1 : 0, 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
+        $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'typeid'=>$typeids[$typename], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'autoincrement'=>parameter('get', "$tablename:$fieldname:autoincrement") ? 1 : 0, 'nullallowed'=>parameter('get', "$tablename:$fieldname:nullallowed") ? 1 : 0, 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
 
         $indescs += $indesc;
         $inlists += $inlist;
@@ -746,12 +751,12 @@
 
     $row = array();
     if (!is_null($uniquevalue))
-      $row = query1('data', 'SELECT * FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = \'<uniquevalue>\'', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+      $row = query1('data', 'SELECT * FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
 
     get_presentationnames();
 
     $lines = array(
-      html('td', array('class'=>'header', 'colspan'=>2), singularize_noun($tablename))
+      html('td', array('class'=>'header', 'colspan'=>2), query1field('meta', 'SELECT singular FROM `<metabasename>`.tables WHERE tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename)))
     );
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
       $field['uniquefieldname'] = $uniquefieldname;
@@ -761,7 +766,7 @@
         $value = $row[$field['fieldname']];
       $cell = call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, $field, $value, $action == 'show_record' || $fixedvalue);
       $lines[] =
-        html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), clean_name($field['fieldname'], $tablename))).
+        html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
         html('td', array(), $cell);
     }
 
@@ -805,7 +810,7 @@
     $uniquefieldname = parameter('get', 'uniquefieldname');
     $uniquevalue     = parameter('get', 'uniquevalue');
 
-    query('data', 'DELETE FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = \'<uniquevalue>\'', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+    query('data', 'DELETE FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
 
     back();
   }
@@ -845,7 +850,7 @@
     $uniquevalue     = parameter('get', 'uniquevalue');
     $fieldname       = parameter('get', 'fieldname');
 
-    $image = query1field('data', 'SELECT <fieldname> FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = \'<uniquevalue>\'', array('fieldname'=>$fieldname, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+    $image = query1field('data', 'SELECT <fieldname> FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('fieldname'=>$fieldname, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
 
 //  As of PHP 5.3, Fileinfo will be shipped with the main distribution and enabled by default.
 //  $finfo = new finfo(FILEINFO_MIME);

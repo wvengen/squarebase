@@ -287,14 +287,6 @@
     );
   }
 
-  function clean_name($name, $forbiddennoun = null) {
-    return preg_replace(
-      array('@(?<=[a-z])([A-Z]+)@e', '@id$@i', "@^(.*?)\b( *(?:$forbiddennoun|".singularize_noun($forbiddennoun).") *)\b(.*?)$@ie", '@(?<=[\w ])id$@i', '@ {2,}@', '@(^ +| +$)@'),
-      array('strtolower(" $1")'    , ' id'   ,'"$1" && "$3" ? "$1 $3" : ("$1" || "$3" ? "$1$3" : "$0")'                          , ''                , ' '      , ''           ),
-      $name
-    );
-  }
-
   function list_table($metabasename, $databasename, $tablename, $limit, $offset, $uniquefieldname, $orderfieldname, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = TRUE) {
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
@@ -320,12 +312,12 @@
       $header[] =
         html('th', !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? array('class'=>'thisrecord') : array(),
           !is_null($foreignvalue) || !call_user_func("is_sortable_$field[presentationname]")
-          ? clean_name($field['fieldname'], $tablename)
+          ? $field['title']
           : ($field['fieldname'] == $orderfieldname
-            ? clean_name($field['fieldname'], $tablename).' &#x25be;'
+            ? $field['title'].' &#x25be;'
             : internalreference(
                 array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$field['fieldname']),
-                clean_name($field['fieldname'], $tablename),
+                $field['title'],
                 array('class'=>'ajaxreload')
               )
             )
@@ -377,7 +369,7 @@
       html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablename'=>$tablename, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
         ($interactive
         ? html('div', array(),
-            internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), singularize_noun($tablename))).
+            internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), query1field('meta', 'SELECT singular FROM `<metabasename>`.tables WHERE tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename)))).
             (is_null($foreignvalue) ? '' : html('span', array('class'=>'changeslost'), _('(changes to form fields are lost)')))
           )
         : (is_null($foreignvalue) ? '' : $tablename)
@@ -431,7 +423,7 @@
 
   function fieldsforpurpose($metabasename, $tablename, $purpose) {
     return query('meta',
-      "SELECT mt.tablename, mt.tableid, mf.fieldid, mf.fieldname, mr.presentationname, mf.autoincrement, mf.foreigntableid, mf.nullallowed, mf.indesc, mf.inlist, mf.inedit, mt2.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname ".
+      "SELECT mt.tablename, mt.singular, mt.plural, mt.tableid, mf.fieldid, mf.fieldname, mf.title, mr.presentationname, mf.autoincrement, mf.foreigntableid, mf.nullallowed, mf.indesc, mf.inlist, mf.inedit, mt2.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname ".
       "FROM `<metabasename>`.tables mt ".
       "RIGHT JOIN `<metabasename>`.fields mf ON mf.tableid = mt.tableid ".
       "LEFT JOIN `<metabasename>`.types my ON my.typeid = mf.typeid ".
