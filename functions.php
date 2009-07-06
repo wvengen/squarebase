@@ -435,16 +435,16 @@
     );
   }
 
-  function descriptor($metabasename, $databasename, $tablename, $tablealias) {
+  function descriptor($metabasename, $databasename, $tablename, $tablealias, $stack = array()) {
     static $descriptors = array();
     if (!$descriptors[$tablename]) {
       $arguments = $joins = array();
       $fields = fieldsforpurpose($metabasename, $tablename, 'indesc');
       while ($field = mysql_fetch_assoc($fields)) {
         $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
-        if ($field['foreigntablename']) {
+        if ($field['foreigntablename'] && !in_array($field['foreigntablename'], $stack)) {
           $joins[] = " LEFT JOIN `$databasename`.$field[foreigntablename] AS {tablealias}_$field[foreigntablename]_$field[fieldname] ON {tablealias}_$field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = {tablealias}.$field[fieldname]";
-          $descriptor = descriptor($metabasename, $databasename, $field['foreigntablename'], "{tablealias}_$field[foreigntablename]_$field[fieldname]");
+          $descriptor = descriptor($metabasename, $databasename, $field['foreigntablename'], "{tablealias}_$field[foreigntablename]_$field[fieldname]", array_merge($stack, array($field['foreigntablename'])));
           $arguments[] = $descriptor['select'];
           $joins[] = $descriptor['joins'];
         }
