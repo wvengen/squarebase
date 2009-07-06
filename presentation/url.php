@@ -12,10 +12,6 @@
     return 0.6;
   }
 
-  function typename_url($field) {
-    return 'url';
-  }
-
   function in_desc_url($field) { return false; }
   function in_list_url($field) { return false; }
   function in_edit_url($field) { return true; }

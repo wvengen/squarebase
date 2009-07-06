@@ -426,8 +426,7 @@
       "SELECT mt.tablename, mt.singular, mt.plural, mt.tableid, mf.fieldid, mf.fieldname, mf.title, mr.presentationname, mf.autoincrement, mf.foreigntableid, mf.nullallowed, mf.indesc, mf.inlist, mf.inedit, mt2.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname ".
       "FROM `<metabasename>`.tables mt ".
       "RIGHT JOIN `<metabasename>`.fields mf ON mf.tableid = mt.tableid ".
-      "LEFT JOIN `<metabasename>`.types my ON my.typeid = mf.typeid ".
-      "LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = my.presentationid ".
+      "LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid ".
       "LEFT JOIN `<metabasename>`.tables mt2 ON mt2.tableid = mf.foreigntableid ".
       "LEFT JOIN `<metabasename>`.fields mf2 ON mf2.fieldid = mt2.uniquefieldid ".
       "WHERE mt.tablename = '<tablename>' AND mf.<purpose> ".

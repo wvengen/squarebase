@@ -3,10 +3,6 @@
     return preg_match('@(auto_increment)@', $field['Extra']) ? 0.7 : 0;
   }
 
-  function typename_autoincrement($field) {
-    return 'autoincrement';
-  }
-
   function in_desc_autoincrement($field) { return false; }
   function in_list_autoincrement($field) { return false; }
   function in_edit_autoincrement($field) { return true; }

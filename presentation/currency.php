@@ -20,10 +20,6 @@
     return 0.2;
   }
 
-  function typename_currency($field) {
-    return $field['Field'];
-  }
-
   function in_desc_currency($field) { return false; }
   function in_list_currency($field) { return false; }
   function in_edit_currency($field) { return true; }

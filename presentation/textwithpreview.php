@@ -14,10 +14,6 @@
     return 0;
   }
 
-  function typename_textwithpreview($field) {
-    return strtolower($field['Field']);
-  }
-
   function in_desc_textwithpreview($field) { return false; }
   function in_list_textwithpreview($field) { return false; }
   function in_edit_textwithpreview($field) { return true; }

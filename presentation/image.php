@@ -5,10 +5,6 @@
     return preg_match('@^(tiny||medium|long)blob\b@', $field['Type']) ? 0.5 : 0;
   }
 
-  function typename_image($field) {
-    return 'image';
-  }
-
   function in_desc_image($field) { return false; }
   function in_list_image($field) { return false; }
   function in_edit_image($field) { return true; }

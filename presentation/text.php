@@ -3,10 +3,6 @@
     return preg_match('@^(tiny||medium|long)text\b@', $field['Type']) ? 0.5 : 0;
   }
 
-  function typename_text($field) {
-    return strtolower($field['Field']);
-  }
-
   function in_desc_text($field) { return false; }
   function in_list_text($field) { return false; }
   function in_edit_text($field) { return true; }

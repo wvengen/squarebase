@@ -269,7 +269,7 @@
       html('tr', array(),
         html('th', array(),
           array(
-            _('table'), _('list'), _('field'), _('title'), _('type'), _('len'), _('unsg'), _('fill'), _('null'), _('auto'), _('more'), _('typename'), _('presentation'), _('key'), _('desc'), _('list'), _('edit')
+            _('table'), _('list'), _('field'), _('title'), _('type'), _('len'), _('unsg'), _('fill'), _('null'), _('auto'), _('more'), _('presentation'), _('key'), _('desc'), _('list'), _('edit')
           )
         )
       );
@@ -285,7 +285,7 @@
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
         $fieldname = $field['Field'];
 
-        $originals = $metabasename ? query('meta', 'SELECT mt.intablelist, typename, type, typelength, typeunsigned, typezerofill, presentationname, nullallowed, autoincrement, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.types AS my ON my.typeid = mf.typeid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = my.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
+        $originals = $metabasename ? query('meta', 'SELECT mt.intablelist, type, typelength, typeunsigned, typezerofill, presentationname, nullallowed, autoincrement, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
         if ($originals) {
           $original = mysql_fetch_assoc($originals);
           $title            = $original['title'];
@@ -294,7 +294,6 @@
           $typeunsigned     = $original['typeunsigned'];
           $typezerofill     = $original['typezerofill'];
           $intablelist      = $original['intablelist'];
-          $typename         = $original['typename'];
           $presentationname = $original['presentationname'];
           $nullallowed      = $original['nullallowed'];
           $autoincrement    = $original['autoincrement'];
@@ -352,7 +351,6 @@
           $presentationnames = array_keys($probabilities);
           $presentationname = $bestpresentationname;
           $linkedtable = $presentationname == 'lookup' ? linkedtable_lookup($tablename, $fieldname) : null;
-          $typename = call_user_func("typename_$presentationname", $augmentedfield);
 
           $indesc = call_user_func("in_desc_$presentationname", $augmentedfield);
           $inlist = call_user_func("in_list_$presentationname", $augmentedfield);
@@ -404,21 +402,20 @@
             html('td', array(), $fieldname.($originals ? '*' : '')).
             html('td', array(), html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))).
             html('td', array(),
-              html('select', array('name'=>"$tablename:$fieldname:type", 'class'=>'dependsontypename'),
+              html('select', array('name'=>"$tablename:$fieldname:type"),
                 html('option', array('value'=>'int'     , 'selected'=>$type == 'int'      ? 'selected' : null), 'int'     ).
                 html('option', array('value'=>'varchar' , 'selected'=>$type == 'varchar'  ? 'selected' : null), 'varchar' ).
                 html('option', array('value'=>'datetime', 'selected'=>$type == 'datetime' ? 'selected' : null), 'datetime').
                 ($type != 'int' && $type != 'varchar' && $type != 'datetime' ? html('option', array('value'=>$type, 'selected'=>'selected'), $type) : '')
               )
             ).
-            html('td', array(), html('input', array('type'=>'text', 'class'=>join_clean(' ', 'integer', 'dependsontypename'), 'name'=>"$tablename:$fieldname:typelength", 'value'=>$typelength))).
-            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>join_clean(' ', 'checkboxedit', 'dependsontypename'), 'name'=>"$tablename:$fieldname:typeunsigned", 'checked'=>$typeunsigned ? 'checked' : null)) : '').
-            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>join_clean(' ', 'checkboxedit', 'dependsontypename'), 'name'=>"$tablename:$fieldname:typezerofill", 'checked'=>$typezerofill ? 'checked' : null)) : '').
+            html('td', array(), html('input', array('type'=>'text', 'class'=>'integer', 'name'=>"$tablename:$fieldname:typelength", 'value'=>$typelength))).
+            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:typeunsigned", 'checked'=>$typeunsigned ? 'checked' : null)) : '').
+            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:typezerofill", 'checked'=>$typezerofill ? 'checked' : null)) : '').
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:nullallowed", 'checked'=>$nullallowed ? 'checked' : null))).
             html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:autoincrement", 'checked'=>$autoincrement ? 'checked' : null)) : '').
             html('td', array(), join_clean(' ', $typeinfo, $extrainfo)).
-            html('td', array(), html('input', array('type'=>'text', 'class'=>'typename', 'name'=>"$tablename:$fieldname:typename", 'value'=>$typename))).
-            html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>join_clean(' ', 'presentationname', 'dependsontypename')), $presentationnameoptions)).
+            html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions)).
             html('td', array(),
               ($fieldname == $primarykeyfieldname[$tablename]
               ? _('primary').html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$fieldname))
@@ -514,30 +511,19 @@
         'tableid          INT UNSIGNED NOT NULL REFERENCES `tables` (tableid),'.
         'fieldname        VARCHAR(100) NOT NULL,'.
         'title            VARCHAR(100) NOT NULL,'.
+        'type             VARCHAR(100) NOT NULL,'.
+        'typelength       INT UNSIGNED         ,'.
+        'typeunsigned     BOOLEAN      NOT NULL,'.
+        'typezerofill     BOOLEAN      NOT NULL,'.
         'autoincrement    BOOLEAN      NOT NULL,'.
-        'typeid           INT UNSIGNED NOT NULL REFERENCES `types` (typeid),'.
         'nullallowed      BOOLEAN      NOT NULL,'.
+        'presentationid   INT UNSIGNED NOT NULL REFERENCES `presentations` (presentationid),'.
         'indesc           BOOLEAN      NOT NULL,'.
         'inlist           BOOLEAN      NOT NULL,'.
         'inedit           BOOLEAN      NOT NULL,'.
         'foreigntableid   INT UNSIGNED          REFERENCES `tables` (tableid),'.
         'UNIQUE KEY (tableid, fieldname),'.
         'INDEX (foreigntableid),'.
-        'INDEX (typeid)'.
-      ')',
-      array('metabasename'=>$metabasename)
-    );
-
-    query('meta',
-      'CREATE TABLE `<metabasename>`.types ('.
-        'typeid           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-        'typename         VARCHAR(100) NOT NULL,'.
-        'type             VARCHAR(100) NOT NULL,'.
-        'typelength       INT UNSIGNED         ,'.
-        'typeunsigned     BOOLEAN      NOT NULL,'.
-        'typezerofill     BOOLEAN      NOT NULL,'.
-        'presentationid   INT UNSIGNED NOT NULL REFERENCES `presentations` (presentationid),'.
-        'UNIQUE KEY (typename),'.
         'INDEX (presentationid)'.
       ')',
       array('metabasename'=>$metabasename)
@@ -578,18 +564,13 @@
       while ($field = mysql_fetch_assoc($fields)) {
         $fieldname = $field['Field'];
 
-        $typename = parameter('get', "$tablename:$fieldname:typename");
-        if (!$typeids[$typename]) {
-          $typeids[$typename] = insertorupdate($metabasename, 'types', array('typename'=>$typename, 'type'=>parameter('get', "$tablename:$fieldname:type"), 'typelength'=>parameter('get', "$tablename:$fieldname:typelength"), 'typeunsigned'=>parameter('get', "$tablename:$fieldname:typeunsigned") ? 1 : 0, 'typezerofill'=>parameter('get', "$tablename:$fieldname:typezerofill") ? 1 : 0, 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")]));
-        }
-
         $foreigntablename = parameter('get', "$tablename:$fieldname:foreigntablename");
 
         $indesc = parameter('get', "$tablename:$fieldname:indesc") ? 1 : 0;
         $inlist = parameter('get', "$tablename:$fieldname:inlist") ? 1 : 0;
         $inedit = parameter('get', "$tablename:$fieldname:inedit") ? 1 : 0;
 
-        $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'typeid'=>$typeids[$typename], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'autoincrement'=>parameter('get', "$tablename:$fieldname:autoincrement") ? 1 : 0, 'nullallowed'=>parameter('get', "$tablename:$fieldname:nullallowed") ? 1 : 0, 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
+        $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'type'=>parameter('get', "$tablename:$fieldname:type"), 'typelength'=>parameter('get', "$tablename:$fieldname:typelength"), 'typeunsigned'=>parameter('get', "$tablename:$fieldname:typeunsigned") ? 1 : 0, 'typezerofill'=>parameter('get', "$tablename:$fieldname:typezerofill") ? 1 : 0, 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'autoincrement'=>parameter('get', "$tablename:$fieldname:autoincrement") ? 1 : 0, 'nullallowed'=>parameter('get', "$tablename:$fieldname:nullallowed") ? 1 : 0, 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
 
         $indescs += $indesc;
         $inlists += $inlist;
@@ -663,7 +644,7 @@
 
     query('data', 'CREATE DATABASE IF NOT EXISTS `<databasename>`', array('databasename'=>$databasename));
 
-    $tables = query('meta', 'SELECT * FROM `<metabasename>`.tables mt LEFT JOIN `<metabasename>`.fields mf ON mf.fieldid = mt.uniquefieldid LEFT JOIN `<metabasename>`.types my ON mf.typeid = my.typeid', array('metabasename'=>$metabasename));
+    $tables = query('meta', 'SELECT * FROM `<metabasename>`.tables mt LEFT JOIN `<metabasename>`.fields mf ON mf.fieldid = mt.uniquefieldid', array('metabasename'=>$metabasename));
     while ($table = mysql_fetch_assoc($tables)) {
       $totaltype = totaltype($table);
       query('data', 'CREATE TABLE IF NOT EXISTS `<databasename>`.`<tablename>` (<fieldname> <totaltype>)', array('databasename'=>$databasename, 'tablename'=>$table['tablename'], 'fieldname'=>$table['fieldname'], 'totaltype'=>$totaltype));
@@ -679,7 +660,7 @@
         if ($oldindex['Seq_in_index'] == 1)
           $associatedoldindices[$oldindex['Column_name']] = $oldindex;
 
-      $fields = query('meta', 'SELECT mt.tablename, mf.fieldid, mf.fieldname, mf.foreigntableid, mt.uniquefieldid, my.type, my.typelength, my.typeunsigned, my.typezerofill, mf.nullallowed FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.types my ON mf.typeid = my.typeid WHERE mf.tableid = <tableid>', array('metabasename'=>$metabasename, 'tableid'=>$table['tableid']));
+      $fields = query('meta', 'SELECT mt.tablename, mf.fieldid, mf.fieldname, mf.foreigntableid, mt.uniquefieldid, mf.type, mf.typelength, mf.typeunsigned, mf.typezerofill, mf.nullallowed FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid WHERE mf.tableid = <tableid>', array('metabasename'=>$metabasename, 'tableid'=>$table['tableid']));
       while ($field = mysql_fetch_assoc($fields)) {
         if ($field['uniquefieldid'] != $field['fieldid']) {
           $oldfield = $associatedoldfields[$field['fieldname']];

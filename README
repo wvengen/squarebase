@@ -11,17 +11,19 @@ Interestingly, the metabase of a metabase (called the "squarebase") is the same 
 
 Notes:
 
-1. Squarebase can be found in the Subversion repository at http://svn.xp-dev.com/svn/fransre-squarebase/
-   Check out with the following command.
-   $ svn checkout http://svn.xp-dev.com/svn/fransre-squarebase/
+1. All information (features, bugs, documentation, source code) can be found at http://squarebase.org.
 
-2. After checking out, perform the following command, because Subversion doesn't set the permissions right.
+2. The source code of Squarebase can be found in the Subversion repository at http://squarebase.org/svn
+   Check out with the following command.
+   $ svn checkout http://squarebase.org/svn
+
+3. After checking out, perform the following command, because Subversion doesn't set the permissions right.
    $ make install
 
-3. There is a demo database named inventory
+4. There is a demo database named inventory
    $ mysql < example/inventory.sql
 
-4. Conventions
+5. Conventions
    a. Table names are plural (e.g. orders instead of order)
    b. Each table has exactly 1 auto_increment field that is the primary key
    c. All foreign key fields have the singular form of table name they are referring to in their name (e.g. orderID)

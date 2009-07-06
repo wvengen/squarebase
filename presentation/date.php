@@ -3,10 +3,6 @@
     return preg_match('@^date\b@', $field['Type']) ? 0.5 : 0;
   }
 
-  function typename_date($field) {
-    return 'date';
-  }
-
   function in_desc_date($field) { return false; }
   function in_list_date($field) { return false; }
   function in_edit_date($field) { return true; }

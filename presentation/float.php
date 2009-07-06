@@ -4,10 +4,6 @@
     return preg_match('@^(real|double|float|decimal|numeric)\b@', $field['Type']) ? 0.3 : 0;
   }
 
-  function typename_float($field) {
-    return strtolower($field['Field']);
-  }
-
   function in_desc_float($field) { return false; }
   function in_list_float($field) { return false; }
   function in_edit_float($field) { return true; }

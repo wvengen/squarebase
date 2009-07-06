@@ -9,10 +9,6 @@
     return 0;
   }
 
-  function typename_int($field) {
-    return strtolower($field['Field']);
-  }
-
   function in_desc_int($field) { return false; }
   function in_list_int($field) { return false; }
   function in_edit_int($field) { return true; }

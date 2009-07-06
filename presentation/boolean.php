@@ -6,10 +6,6 @@
     return $distinct['numberofrows'] > 10 && $distinct['numberofdistinctvalues'] == 2 && $distinct['numberofzeros'] > 1 && $distinct['numberofnonzeros'] > 1 ? 0.5 : 0;
   }
 
-  function typename_boolean($field) {
-    return 'boolean';
-  }
-
   function in_desc_boolean($field) { return false; }
   function in_list_boolean($field) { return false; }
   function in_edit_boolean($field) { return true; }

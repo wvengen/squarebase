@@ -7,10 +7,6 @@
     return 0.1;
   }
 
-  function typename_varchar($field) {
-    return strtolower(preg_match('@'.special_nameparts().'@i', $field['Field'], $matches) ? $matches[1] : $field['Field']);
-  }
-
   function in_desc_varchar($field) { return $field['FieldNr'] < 5 && preg_match('@'.special_nameparts().'@i', $field['Field']); }
   function in_list_varchar($field) { return in_desc_varchar($field); }
   function in_edit_varchar($field) { return true; }

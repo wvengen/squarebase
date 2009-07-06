@@ -3,10 +3,6 @@
     return preg_match('@^datetime\b@', $field['Type']) ? 0.5 : 0;
   }
 
-  function typename_datetime($field) {
-    return 'datetime';
-  }
-
   function in_desc_datetime($field) { return false; }
   function in_list_datetime($field) { return false; }
   function in_edit_datetime($field) { return true; }
