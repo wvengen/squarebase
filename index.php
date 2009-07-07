@@ -712,9 +712,10 @@
     $uniquefieldname = parameter('get', 'uniquefieldname');
     $offset          = parameter('get', 'offset', 0);
     $orderfieldname  = parameter('get', 'orderfieldname');
+    $orderasc        = parameter('get', 'orderasc', 'on') == 'on';
 
     page($action, path($metabasename, $databasename, $tablename, $uniquefieldname),
-      list_table($metabasename, $databasename, $tablename, 0, $offset, $uniquefieldname, $orderfieldname, null, null, null, TRUE)
+      list_table($metabasename, $databasename, $tablename, 0, $offset, $uniquefieldname, $orderfieldname, $orderasc, null, null, null, TRUE)
     );
   }
 
@@ -765,7 +766,7 @@
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
         $lines[] =
           html('td', array('class'=>'description'), $referringfield['tablename'].html('div', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['fieldname']))).
-          html('td', array(), list_table($metabasename, $databasename, $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, $referringfield['fieldname'], $uniquevalue, $tablename, $action != 'show_record'));
+          html('td', array(), list_table($metabasename, $databasename, $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, TRUE, $referringfield['fieldname'], $uniquevalue, $tablename, $action != 'show_record'));
       }
     }
 

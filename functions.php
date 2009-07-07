@@ -14,7 +14,7 @@
     if (!$name)
       return $array;
     $value = $array[$name];
-    return $value ? str_replace("\\'", "'", $value) : $default;
+    return is_null($value) ? $default : str_replace("\\'", "'", $value);
   }
 
   function is_not_null($var) {
@@ -86,7 +86,7 @@
       addtolist('logs', '', 'ajax_'.$parameters['function'].': '.array_show($parameters));
       switch ($parameters['function']) {
         case 'list_table':
-          $output = list_table($parameters['metabasename'], $parameters['databasename'], $parameters['tablename'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['orderfieldid'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
+          $output = list_table($parameters['metabasename'], $parameters['databasename'], $parameters['tablename'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['orderfieldid'], $parameters['orderasc'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
           break;
         case 'ajax_lookup':
           $output = ajax_lookup($parameters['metabasename'], $parameters['databasename'], $parameters['fieldname'], query1field('data', 'SELECT MAX(<foreignuniquefieldname>) FROM `<databasename>`.<foreigntablename>', array('foreigntablename'=>$parameters['foreigntablename'], 'foreignuniquefieldname'=>$parameters['foreignuniquefieldname'], 'databasename'=>$parameters['databasename'])), $parameters['presentationname'], $parameters['foreigntablename'], $parameters['foreignuniquefieldname'], $parameters['nullallowed'], $parameters['readonly']);
@@ -287,7 +287,7 @@
     );
   }
 
-  function list_table($metabasename, $databasename, $tablename, $limit, $offset, $uniquefieldname, $orderfieldname, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = TRUE) {
+  function list_table($metabasename, $databasename, $tablename, $limit, $offset, $uniquefieldname, $orderfieldname, $orderasc = true, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = TRUE) {
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
     $header = array(html('th', array('class'=>'small'), ''));
@@ -313,16 +313,15 @@
         html('th', !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? array('class'=>'thisrecord') : array(),
           !is_null($foreignvalue) || !call_user_func("is_sortable_$field[presentationname]")
           ? $field['title']
-          : ($field['fieldname'] == $orderfieldname
-            ? $field['title'].' &#x25be;'
-            : internalreference(
-                array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$field['fieldname']),
-                $field['title'],
-                array('class'=>'ajaxreload')
-              )
+          : internalreference(
+              array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$field['fieldname'], 'orderasc'=>$field['fieldname'] == $orderfieldname ? ($orderasc ? '' : 'on') : 'on'),
+              $field['title'].($field['fieldname'] == $orderfieldname ? ' '.($orderasc ? '&#x25be;' : '&#x25b4;') : ''),
+              array('class'=>'ajaxreload')
             )
         );
     }
+    if ($ordernames)
+      $ordernames[0] = $ordernames[0].' '.($orderasc ? 'ASC' : 'DESC');
     $records = query('data',
       "SELECT ".
       ($limit ? "SQL_CALC_FOUND_ROWS " : "").
@@ -361,12 +360,12 @@
       for ($otheroffset = 0; $otheroffset < $foundrecords['number']; $otheroffset += $limit) {
         $lastrecord = min($otheroffset + $limit, $foundrecords['number']);
         $text = ($otheroffset + 1).($otheroffset + 1 == $lastrecord ? '' : '-'.$lastrecord);
-        $offsets[] = $offset == $otheroffset ? $text : internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'offset'=>$otheroffset, 'orderfieldname'=>$originalorderfieldname), $text);
+        $offsets[] = $offset == $otheroffset ? $text : internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'offset'=>$otheroffset, 'orderfieldname'=>$originalorderfieldname, 'orderasc'=>$orderasc), $text);
       }
     }
 
     return
-      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablename'=>$tablename, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
+      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablename'=>$tablename, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'orderasc'=>$orderasc ? 'on' : '', 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
         ($interactive
         ? html('div', array(),
             internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), query1field('meta', 'SELECT singular FROM `<metabasename>`.tables WHERE tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename)))).
