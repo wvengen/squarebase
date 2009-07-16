@@ -22,8 +22,6 @@ $.fn.formhash = function() {
       var name = $(this).attr('name');
       if (hash[name] == undefined)
         hash[name] = $(this).formvalue();
-//    else
-//      alert(name + ' ' + $(this).formvalue() + ' is already ' + hash[name]);
     }
   );
   return hash;
@@ -45,8 +43,6 @@ jQuery.fn.setid = function(id) {
 };
 
 jQuery.fn.enhance_form = function() {
-//alert('enhance_form ' + $(this).length);
-
   $(this).
   filter(':not(.enhancedform)').
   addClass('enhancedform').
@@ -143,12 +139,6 @@ jQuery.fn.unload = function() {
 };
 
 jQuery.fn.ajaxify = function() {
-//$(this).
-//css('background', 'red');
-//alert('ajaxify ' + $(this).length);
-//$(this).
-//css('background', null);
-
   $(this).
   find('form').
   enhance_form().
@@ -278,47 +268,6 @@ ready(
     click();
 
     $('body.formmetabasefordatabase').
-    find('.typename, .dependsontypename').
-    change(
-      function() {
-        $(this).
-        closest('form').
-
-        find('.ajaxincompatible').
-        removeClass('ajaxincompatible').
-        end().
-
-        find('.typename').
-        each(
-          function() {
-            var first_typename_with_this_value = $('.typename[value=' + $(this).val() + ']').get(0);
-            $(this).
-            closest('tr').
-            find('.dependsontypename').
-            attr('readonly', first_typename_with_this_value != this ? 'readonly' : null).
-            toggleClass('readonly', first_typename_with_this_value != this).
-            filter('.readonly').
-            each(
-              function() {
-                var first_typename_with_this_value = $('.typename[value=' + $(this).closest('tr').find('.typename').val() + ']').get(0);
-                var same = $(this).formvalue() == $(first_typename_with_this_value).closest('tr').find('[name$=' + $(this).attr('name').regexmatch(':\\w+$') + ']').formvalue();
-                $(this).
-                attr('readonly', same ? 'readonly' : null).
-                toggleClass('readonly', same).
-                closest('td').
-                toggleClass('ajaxincompatible', !same);
-              }
-            );
-          }
-        ).
-        end();
-      }
-    ).
-    eq(0).
-    change().
-    end().
-    end().
-
     find('.insome').
     change(
       function() {
