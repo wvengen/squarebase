@@ -117,6 +117,8 @@
     $databases = query('root', 'SHOW DATABASES');
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['Database'];
+      if ($databasename == 'information_schema')
+        continue;
       $dblist = array();
       $dbs = databasenames($databasename);
       if ($dbs) {

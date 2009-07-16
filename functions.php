@@ -262,7 +262,8 @@
     $databases = array();
     $results = query('meta', 'SELECT databasename FROM `<metabasename>`.`databases`', array('metabasename'=>$metabasename));
     while ($result = mysql_fetch_assoc($results))
-      $databases[] = $result['databasename'];
+      if ($result['databasename'] != 'information_schema')
+        $databases[] = $result['databasename'];
     return $databases;
   }
 
