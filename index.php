@@ -285,7 +285,7 @@
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
         $fieldname = $field['Field'];
 
-        $originals = $metabasename ? query('meta', 'SELECT mt.intablelist, type, typelength, typeunsigned, typezerofill, presentationname, nullallowed, autoincrement, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
+        $originals = $metabasename ? query('meta', 'SELECT mt.intablelist, title, type, typelength, typeunsigned, typezerofill, presentationname, nullallowed, autoincrement, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
         if ($originals) {
           $original = mysql_fetch_assoc($originals);
           $title            = $original['title'];
@@ -444,7 +444,7 @@
           html('table', array(),
             html('tr', array(),
               array(
-                html('td', array('class'=>'small'), html('label', array('for'=>'metabasename'), _('metabasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename ? $metabasename : (count($mbnames) == 1 ? $mbnames[0] : ''), 'class'=>'notempty'))),
+                html('td', array('class'=>'small'), html('label', array('for'=>'metabasename'), _('metabasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename ? $metabasename : (count($mbnames) == 1 ? $mbnames[0] : "${databasename}_metabase"), 'class'=>'notempty'))),
                 html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
                 html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'language', 'value'=>$language, 'readonly'=>'readonly', 'class'=>'readonly')))
               )
@@ -762,10 +762,10 @@
       );
 
     if (!is_null($uniquevalue)) {
-      $referringfields = query('meta', 'SELECT mt.tablename, mf.fieldname AS fieldname, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mtf ON mtf.tableid = mf.foreigntableid LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.fields mfu ON mt.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
+      $referringfields = query('meta', 'SELECT mt.tablename, mf.fieldname AS fieldname, mf.title AS title, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mtf ON mtf.tableid = mf.foreigntableid LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.fields mfu ON mt.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
         $lines[] =
-          html('td', array('class'=>'description'), $referringfield['tablename'].html('div', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['fieldname']))).
+          html('td', array('class'=>'description'), $referringfield['tablename'].html('div', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['title']))).
           html('td', array(), list_table($metabasename, $databasename, $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, TRUE, $referringfield['fieldname'], $uniquevalue, $tablename, $action != 'show_record'));
       }
     }

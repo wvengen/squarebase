@@ -36,7 +36,7 @@ input.button { border: 0.15em solid #fff; border-color: #fff #999 #999 #fff; col
 input.mainsubmit, input.minorsubmit, .cancel, .done { margin-right: 1em; }
 input.mainsubmit:hover, input.minorsubmit:hover { background-color: #090 !important; color: #fff; }
 .cancel { padding: 0.1em 0.5em; }
-option { background-color: #fff; }
+option { background-color: #fff; padding: 0 0.2em; }
 input.mainsubmit.delete:hover, .cancel:hover, .close:hover { background-color: #f00 !important; color: #fff !important; }
 input.mainsubmit.delete{ margin-left: 5em; }
 
