@@ -6,6 +6,7 @@ none:
 install:
 	sudo chown :www-data session
 	chmod g+w session
+	chmod a+x $(PHPFILES)
 
 locales: $(NLDIR)messages.mo
 

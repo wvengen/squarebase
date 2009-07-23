@@ -649,7 +649,7 @@
     $tables = query('meta', 'SELECT * FROM `<metabasename>`.tables mt LEFT JOIN `<metabasename>`.fields mf ON mf.fieldid = mt.uniquefieldid', array('metabasename'=>$metabasename));
     while ($table = mysql_fetch_assoc($tables)) {
       if (!$table['fieldname'])
-        error(sprintf(_('table %s has no single valued primary key'), $table['tablename']);
+        error(sprintf(_('table %s has no single valued primary key'), $table['tablename']));
 
       $totaltype = totaltype($table);
       query('data', 'CREATE TABLE IF NOT EXISTS `<databasename>`.`<tablename>` (<fieldname> <totaltype>)', array('databasename'=>$databasename, 'tablename'=>$table['tablename'], 'fieldname'=>$table['fieldname'], 'totaltype'=>$totaltype));
