@@ -19,7 +19,7 @@
       array('@\.[a-z][a-z0-9\-]*@', '@_([a-z]+)@ie'       ),
       array(''                    , '"-".strtolower("$1")'),
       join_clean(',',
-        parameter('get', 'metabasename') && mysql_num_rows(query('meta', "SHOW DATABASES LIKE '<metabasename>'", array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE "languages"', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))).';q=4.0' : null,
+        parameter('get', 'metabasename') && mysql_num_rows(query('meta', 'SHOW DATABASES LIKE "<metabasename>"', array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE "languages"', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))).';q=4.0' : null,
         parameter('get', 'language')     ? parameter('get', 'language').';q=3.0' : null,
         parameter('session', 'language') ? parameter('session', 'language').';q=2.0' : null,
         parameter('server', 'HTTP_ACCEPT_LANGUAGE'),
@@ -80,32 +80,38 @@
   /********************************************************************************************/
 
   if ($action == 'index') {
-    $metabases = query('root', 'SHOW DATABASES');
+    $metabases = query('root', 'SHOW DATABASES WHERE `Database` != "information_schema"');
     $rows = array(html('th', array(), array(_('database'), _('metabase'), '')));
+    $links = array();
     while ($metabase = mysql_fetch_assoc($metabases)) {
       $metabasename = $metabase['Database'];
       $databasenames = databasenames($metabasename);
       foreach ($databasenames as $databasename) {
+        $link = array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename);
+        $links[] = $link;
         $rows[] =
           html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
             html('td', array(),
-              internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $databasename)
+              internalreference($link, $databasename)
             ).
             html('td', array('class'=>'small'),
               array(
-                internalreference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename),
-                internalreference(array('action'=>'drop_database', 'databasename'=>$metabasename), 'drop')
+                is_granted($metabasename, 'DROP') ? internalreference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename) : null,
+                is_granted($databasename, 'DROP') ? internalreference(array('action'=>'drop_database', 'databasename'=>$metabasename), 'drop') : null
               )
             )
           );
       }
     }
 
-    if (count($rows) == 1) // no metabases found
+    if (count($links) == 0 && is_granted('*', 'CREATE'))
       internalredirect(array('action'=>'new_metabase_from_database'));
 
+    if (count($links) == 1 && !is_granted('*', 'CREATE'))
+      internalredirect($links[0]);
+
     page($action, null,
-      internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')).
+      (is_granted('*', 'CREATE') ? internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')) : '').
       html('table', array(), join($rows))
     );
   }
@@ -114,11 +120,9 @@
 
   if ($action == 'new_metabase_from_database') {
     $rows = array(html('th', array(), array(_('database'), _('tables'), '')));
-    $databases = query('root', 'SHOW DATABASES');
+    $databases = query('root', 'SHOW DATABASES WHERE `Database` != "information_schema"');
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['Database'];
-      if ($databasename == 'information_schema')
-        continue;
       $dblist = array();
       $dbs = databasenames($databasename);
       if ($dbs) {
@@ -229,7 +233,7 @@
 
     if (!$metabasename) {
       $mbnames = array();
-      $metabases = query('root', 'SHOW DATABASES');
+      $metabases = query('root', 'SHOW DATABASES WHERE `Database` != "information_schema"');
       while ($metabase = mysql_fetch_assoc($metabases)) {
         $mbname = $metabase['Database'];
         if ($mbname != 'mysql') {
@@ -598,7 +602,7 @@
 
   if ($action == 'form_metabase_to_database') {
     $rows = array();
-    $metabases = query('root', 'SHOW DATABASES');
+    $metabases = query('root', 'SHOW DATABASES WHERE `Database` != "information_schema"');
     while ($metabase = mysql_fetch_assoc($metabases)) {
       $metabasename = $metabase['Database'];
       $databasenames = databasenames($metabasename);

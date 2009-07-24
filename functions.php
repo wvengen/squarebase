@@ -25,7 +25,7 @@
     $args = func_get_args();
     switch (count($args)) {
       case 0:
-        return false;
+        return FALSE;
       case 1:
         $glue = '';
         break;
@@ -41,7 +41,7 @@
   }
 
   function array_show($array) {
-    return preg_replace('@^Array@', '', print_r($array, true));
+    return preg_replace('@^Array@', '', print_r($array, TRUE));
   }
 
   function html($tag, $parameters = array(), $text = null) {
@@ -262,8 +262,7 @@
     $databases = array();
     $results = query('meta', 'SELECT databasename FROM `<metabasename>`.`databases`', array('metabasename'=>$metabasename));
     while ($result = mysql_fetch_assoc($results))
-      if ($result['databasename'] != 'information_schema')
-        $databases[] = $result['databasename'];
+      $databases[] = $result['databasename'];
     return $databases;
   }
 
@@ -288,7 +287,7 @@
     );
   }
 
-  function list_table($metabasename, $databasename, $tablename, $limit, $offset, $uniquefieldname, $orderfieldname, $orderasc = true, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = TRUE) {
+  function list_table($metabasename, $databasename, $tablename, $limit, $offset, $uniquefieldname, $orderfieldname, $orderasc = TRUE, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = TRUE) {
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
     $header = array(html('th', array('class'=>'small'), ''));
@@ -467,7 +466,7 @@
     $_SESSION['host']     = $host;
     $_SESSION['password'] = $password;
     $_SESSION['language'] = $language;
-    $_SESSION['ajaxy']    = true;
+    $_SESSION['ajaxy']    = TRUE;
   }
 
   function logout($error = null) {
@@ -494,7 +493,7 @@
 
   function read_file($filename, $flags = null) {
     $content = @file($filename, $flags);
-    return $content === false ? array() : $content;
+    return $content === FALSE ? array() : $content;
   }
 
   function augment_file($filename, $content_type) {
@@ -600,5 +599,17 @@
       $localeoptions[] = html('option', array('value'=>$locale, 'selected'=>$locale == $current_locale ? 'selected' : null), $locale);
 
     return html('select', array('id'=>$name, 'name'=>$name), join($localeoptions));
+  }
+
+  function is_granted($databasename, $privilege) {
+    //for privilege see http://dev.mysql.com/doc/refman/5.0/en/privileges-provided.html
+    static $grants = null;
+    if (is_null($grants))
+      $grants = query('top', 'SHOW GRANTS');
+    for (mysql_data_reset($grants); $grant = mysql_fetch_assoc($grants); ) {
+      if (preg_match("/^GRANT (.*?) ON (.*?) /", $grant["Grants for $_SESSION[username]@$_SESSION[host]"], $matches) && ($matches[1] == 'ALL PRIVILEGES' || preg_match("/\b$privilege\b/", $matches[1])) && (preg_match("/^(`$databasename`|\*)/", $matches[2])))
+        return TRUE;
+    }
+    return FALSE;
   }
 ?>
