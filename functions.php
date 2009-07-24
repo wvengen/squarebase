@@ -223,7 +223,7 @@
       html('html', array(),
         html('head', array(),
           html('title', array(), $title).
-          html('link', array('href'=>internalurl(array('action'=>'style')), 'type'=>'text/css', 'rel'=>'stylesheet')).
+          html('link', array('href'=>internalurl(array('action'=>'style', 'metabasename'=>parameter('get', 'metabasename'))), 'type'=>'text/css', 'rel'=>'stylesheet')).
           ($_SESSION['ajaxy']
           ? html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>internalurl(array('action'=>'script'))), '')
@@ -311,7 +311,7 @@
 
       include_once("presentation/$field[presentationname].php");
       $header[] =
-        html('th', !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? array('class'=>'thisrecord') : array(),
+        html('th', array('class'=>join_clean(' ', $field['presentationname'], !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null)),
           !is_null($foreignvalue) || !call_user_func("is_sortable_$field[presentationname]")
           ? $field['title']
           : internalreference(
@@ -510,6 +510,9 @@
         $content = preg_replace("@( *)// *$function_prefix[1]_presentation\b.*\n@e", '"$1".preg_replace("@\n(?=.)@", "\n$1", join($extra))', $content);
       }
     }
+
+    if (parameter('get', 'metabasename'))
+      $content .= join(read_file('metabase/'.parameter('get', 'metabasename').'.css'));
 
     header("Content-Type: $content_type");
     print $content;

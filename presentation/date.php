@@ -32,6 +32,6 @@
   }
   
   function css_date() {
-    return '';
+    return ".date { width: 20em; }\n";
   }
 ?>

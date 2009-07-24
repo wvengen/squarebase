@@ -25,6 +25,6 @@
   }
   
   function css_boolean() {
-    return ".column.boolean { text-align: center; }\n";
+    return "th.boolean, td.boolean { text-align: center; }\n";
   }
 ?>
