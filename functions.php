@@ -601,7 +601,7 @@
     return html('select', array('id'=>$name, 'name'=>$name), join($localeoptions));
   }
 
-  function is_granted($databasename, $privilege) {
+  function has_grant($databasename, $privilege) {
     //for privilege see http://dev.mysql.com/doc/refman/5.0/en/privileges-provided.html
     static $grants = null;
     if (is_null($grants))

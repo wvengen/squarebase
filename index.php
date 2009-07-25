@@ -96,22 +96,22 @@
             ).
             html('td', array('class'=>'small'),
               array(
-                is_granted($metabasename, 'DROP') ? internalreference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename) : null,
-                is_granted($databasename, 'DROP') ? internalreference(array('action'=>'drop_database', 'databasename'=>$metabasename), 'drop') : null
+                has_grant($metabasename, 'DROP') ? internalreference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename) : null,
+                has_grant($databasename, 'DROP') ? internalreference(array('action'=>'drop_database', 'databasename'=>$metabasename), 'drop') : null
               )
             )
           );
       }
     }
 
-    if (count($links) == 0 && is_granted('*', 'CREATE'))
+    if (count($links) == 0 && has_grant('*', 'CREATE'))
       internalredirect(array('action'=>'new_metabase_from_database'));
 
-    if (count($links) == 1 && !is_granted('*', 'CREATE'))
+    if (count($links) == 1 && !has_grant('*', 'CREATE'))
       internalredirect($links[0]);
 
     page($action, null,
-      (is_granted('*', 'CREATE') ? internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')) : '').
+      (has_grant('*', 'CREATE') ? internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')) : '').
       html('table', array(), join($rows))
     );
   }
@@ -646,43 +646,45 @@
     $metabasename = parameter('get', 'metabasename');
     $databasename = parameter('get', 'databasename');
 
-    query('meta', 'INSERT IGNORE INTO `<metabasename>`.databases SET databasename = "<databasename>"', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
+    if (has_grant($metabasename, 'ALL')) {
+      query('meta', 'INSERT IGNORE INTO `<metabasename>`.databases SET databasename = "<databasename>"', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
 
-    query('data', 'CREATE DATABASE IF NOT EXISTS `<databasename>`', array('databasename'=>$databasename));
+      query('data', 'CREATE DATABASE IF NOT EXISTS `<databasename>`', array('databasename'=>$databasename));
 
-    $tables = query('meta', 'SELECT * FROM `<metabasename>`.tables mt LEFT JOIN `<metabasename>`.fields mf ON mf.fieldid = mt.uniquefieldid', array('metabasename'=>$metabasename));
-    while ($table = mysql_fetch_assoc($tables)) {
-      if (!$table['fieldname'])
-        error(sprintf(_('table %s has no single valued primary key'), $table['tablename']));
+      $tables = query('meta', 'SELECT * FROM `<metabasename>`.tables mt LEFT JOIN `<metabasename>`.fields mf ON mf.fieldid = mt.uniquefieldid', array('metabasename'=>$metabasename));
+      while ($table = mysql_fetch_assoc($tables)) {
+        if (!$table['fieldname'])
+          error(sprintf(_('table %s has no single valued primary key'), $table['tablename']));
 
-      $totaltype = totaltype($table);
-      query('data', 'CREATE TABLE IF NOT EXISTS `<databasename>`.`<tablename>` (<fieldname> <totaltype>)', array('databasename'=>$databasename, 'tablename'=>$table['tablename'], 'fieldname'=>$table['fieldname'], 'totaltype'=>$totaltype));
+        $totaltype = totaltype($table);
+        query('data', 'CREATE TABLE IF NOT EXISTS `<databasename>`.`<tablename>` (<fieldname> <totaltype>)', array('databasename'=>$databasename, 'tablename'=>$table['tablename'], 'fieldname'=>$table['fieldname'], 'totaltype'=>$totaltype));
 
-      $associatedoldfields = array();
-      $oldfields = query('data', 'SHOW COLUMNS FROM `<databasename>`.`<tablename>`', array('databasename'=>$databasename, 'tablename'=>$table['tablename']));
-      while ($oldfield = mysql_fetch_assoc($oldfields))
-        $associatedoldfields[$oldfield['Field']] = $oldfield;
+        $associatedoldfields = array();
+        $oldfields = query('data', 'SHOW COLUMNS FROM `<databasename>`.`<tablename>`', array('databasename'=>$databasename, 'tablename'=>$table['tablename']));
+        while ($oldfield = mysql_fetch_assoc($oldfields))
+          $associatedoldfields[$oldfield['Field']] = $oldfield;
 
-      $associatedoldindices = array();
-      $oldindices = query('data', 'SHOW INDEX FROM `<databasename>`.`<tablename>`', array('databasename'=>$databasename, 'tablename'=>$table['tablename']));
-      while ($oldindex = mysql_fetch_assoc($oldindices))
-        if ($oldindex['Seq_in_index'] == 1)
-          $associatedoldindices[$oldindex['Column_name']] = $oldindex;
+        $associatedoldindices = array();
+        $oldindices = query('data', 'SHOW INDEX FROM `<databasename>`.`<tablename>`', array('databasename'=>$databasename, 'tablename'=>$table['tablename']));
+        while ($oldindex = mysql_fetch_assoc($oldindices))
+          if ($oldindex['Seq_in_index'] == 1)
+            $associatedoldindices[$oldindex['Column_name']] = $oldindex;
 
-      $fields = query('meta', 'SELECT mt.tablename, mf.fieldid, mf.fieldname, mf.foreigntableid, mt.uniquefieldid, mf.type, mf.typelength, mf.typeunsigned, mf.typezerofill, mf.nullallowed FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid WHERE mf.tableid = <tableid>', array('metabasename'=>$metabasename, 'tableid'=>$table['tableid']));
-      while ($field = mysql_fetch_assoc($fields)) {
-        if ($field['uniquefieldid'] != $field['fieldid']) {
-          $oldfield = $associatedoldfields[$field['fieldname']];
-          $oldtype = $oldfield['Type'].($oldfield['Null'] == 'YES' ? '' : ' not null');
-          $newtype = totaltype($field);
-          if ($oldfield) {
-            if (strcasecmp($oldtype, $newtype))
-              query('data', 'ALTER TABLE `<databasename>`.`<tablename>` MODIFY COLUMN <fieldname> <newtype> #warning WAS <oldtype>', array('databasename'=>$databasename, 'tablename'=>$field['tablename'], 'fieldname'=>$field['fieldname'], 'newtype'=>$newtype, 'oldtype'=>$oldtype));
+        $fields = query('meta', 'SELECT mt.tablename, mf.fieldid, mf.fieldname, mf.foreigntableid, mt.uniquefieldid, mf.type, mf.typelength, mf.typeunsigned, mf.typezerofill, mf.nullallowed FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid WHERE mf.tableid = <tableid>', array('metabasename'=>$metabasename, 'tableid'=>$table['tableid']));
+        while ($field = mysql_fetch_assoc($fields)) {
+          if ($field['uniquefieldid'] != $field['fieldid']) {
+            $oldfield = $associatedoldfields[$field['fieldname']];
+            $oldtype = $oldfield['Type'].($oldfield['Null'] == 'YES' ? '' : ' not null');
+            $newtype = totaltype($field);
+            if ($oldfield) {
+              if (strcasecmp($oldtype, $newtype))
+                query('data', 'ALTER TABLE `<databasename>`.`<tablename>` MODIFY COLUMN <fieldname> <newtype> #warning WAS <oldtype>', array('databasename'=>$databasename, 'tablename'=>$field['tablename'], 'fieldname'=>$field['fieldname'], 'newtype'=>$newtype, 'oldtype'=>$oldtype));
+            }
+            else
+              query('data', 'ALTER TABLE `<databasename>`.`<tablename>` ADD COLUMN (<fieldname> <newtype>) #warning WAS <oldtype>', array('databasename'=>$databasename, 'tablename'=>$field['tablename'], 'fieldname'=>$field['fieldname'], 'newtype'=>$newtype, 'oldtype'=>$oldtype));
+            if ($field['foreigntableid'] && !$associatedoldindices[$field['fieldname']])
+              query('data', 'ALTER TABLE `<databasename>`.`<tablename>` ADD INDEX (<fieldname>) #warning WAS non-existent', array('databasename'=>$databasename, 'tablename'=>$field['tablename'], 'fieldname'=>$field['fieldname']));
           }
-          else
-            query('data', 'ALTER TABLE `<databasename>`.`<tablename>` ADD COLUMN (<fieldname> <newtype>) #warning WAS <oldtype>', array('databasename'=>$databasename, 'tablename'=>$field['tablename'], 'fieldname'=>$field['fieldname'], 'newtype'=>$newtype, 'oldtype'=>$oldtype));
-          if ($field['foreigntableid'] && !$associatedoldindices[$field['fieldname']])
-            query('data', 'ALTER TABLE `<databasename>`.`<tablename>` ADD INDEX (<fieldname>) #warning WAS non-existent', array('databasename'=>$databasename, 'tablename'=>$field['tablename'], 'fieldname'=>$field['fieldname']));
         }
       }
     }
