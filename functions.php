@@ -41,7 +41,7 @@
   }
 
   function array_show($array) {
-    return preg_replace('@^Array@', '', print_r($array, TRUE));
+    return preg_replace(array('@^Array\s*\(\s*(.*?)\s*\)\s*$@s', '@ *\n *@s'), array('$1', "\n"), print_r($array, TRUE));
   }
 
   function html($tag, $parameters = array(), $text = null) {
@@ -116,10 +116,10 @@
     exit;
   }
 
-  function addtolist($list, $class, $text) {
+  function addtolist($list, $class, $text, $rest = null) {
     if (!$_SESSION[$list])
       $_SESSION[$list] = array();
-    $_SESSION[$list][] = html('li', array('class'=>$class), htmlspecialchars(preg_replace("@\r@", '\\n', $text)));
+    $_SESSION[$list][] = html('li', array('class'=>$class), htmlspecialchars(preg_replace("@\r@", '\\n', $text)).$rest);
   }
 
   function getlist($list) {
@@ -148,6 +148,18 @@
 
     $errno = mysql_errno();
 
+    $numresults = preg_match('@^[^A-Z]*(EXPLAIN|SELECT|SHOW) @i', $fullquery) ? mysql_num_rows($result) : null;
+    if (!is_null($numresults)) {
+      $resultlist = array();
+      while ($resultrow = mysql_fetch_assoc($result)) {
+        if (count($resultlist) == 10 - 1 && $numresults > 10) {
+          $resultlist[] = html('li', array(), "&hellip; $numresults.");
+          break;
+        }
+        $resultlist[] = html('li', array(), array_show($resultrow));
+      }
+      mysql_data_reset($result);
+    }
     addtolist('logs',
       "query$metaordata",
       '['.
@@ -155,8 +167,8 @@
       ', '.
       ($errno
       ? $errno.'='.mysql_error()
-      : (preg_match('@^[^A-Z]*(EXPLAIN|SELECT|SHOW) @i', $fullquery)
-        ? mysql_num_rows($result).' results'
+      : (!is_null($numresults)
+        ? $numresults.' results'
         : mysql_affected_rows($connection).' affected'
         )
       ).
@@ -165,7 +177,10 @@
         array('@<@' , '@>@' , '@& @'  ),
         array('&lt;', '&gt;', '&amp; '),
         $fullquery
-      )
+      ),
+      $resultlist
+      ? html('ol', array('class'=>'resultlist'), join($resultlist))
+      : null
     );
     if (preg_match('@#warning @', $fullquery))
       addtolist('warnings', 'warning', $fullquery);

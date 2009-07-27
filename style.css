@@ -78,5 +78,6 @@ div.error, .problem, .warning { font-weight: bold; color: #f00; }
 #logs .queryroot { padding-left: 2em; }
 #logs .querymeta { padding-left: 4em; }
 #logs .querydata { padding-left: 6em; }
+#logs .resultlist li:hover { white-space: pre; }
 
 //css_presentation goes here
