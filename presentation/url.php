@@ -12,9 +12,9 @@
     return 0.6;
   }
 
-  function in_desc_url($field) { return false; }
-  function in_list_url($field) { return false; }
-  function in_edit_url($field) { return true; }
+  function in_desc_url($field) { return 0; }
+  function in_list_url($field) { return 0; }
+  function in_edit_url($field) { return 1; }
 
   function is_sortable_url() { return false; }
 

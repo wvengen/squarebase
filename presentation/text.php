@@ -3,9 +3,9 @@
     return preg_match('@^(tiny||medium|long)text\b@', $field['Type']) ? 0.5 : 0;
   }
 
-  function in_desc_text($field) { return false; }
-  function in_list_text($field) { return false; }
-  function in_edit_text($field) { return true; }
+  function in_desc_text($field) { return 0; }
+  function in_list_text($field) { return 0; }
+  function in_edit_text($field) { return 1; }
 
   function is_sortable_text() { return true; }
 

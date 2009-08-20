@@ -286,8 +286,49 @@
       $plural = $tablename;
       $singular = singularize_noun($plural);
 
-      $tablestructure = array();
+      $max_in_desc = $max_in_list = $max_in_edit = 0;
+      $fieldextra = array();
       $fieldnr = 0;
+      for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
+        $fieldname = $field['Field'];
+        $fieldextra[$fieldname] = array();
+
+        $augmentedfield =
+          array_merge(
+            $field,
+            array(
+              'Database'=>$databasename,
+              'Table'=>$tablename,
+              'Alltables'=>$alltables,
+              'Primarykeyfieldname'=>$primarykeyfieldname,
+              'FieldNr'=>$fieldnr++,
+              'NumFields'=>mysql_num_rows($fields[$tablename])
+            )
+          );
+        $bestpresentationname = null;
+        $bestprobability = 0;
+        foreach ($presentationnames as $onepresentationname) {
+          $probability = $probabilities[$onepresentationname] = call_user_func("probability_$onepresentationname", $augmentedfield);
+          if ($probability > $bestprobability) {
+            $bestpresentationname = $onepresentationname;
+            $bestprobability = $probability;
+          }
+        }
+
+        $fieldextra[$fieldname]['presentationnames'] = array_keys($probabilities);
+        $fieldextra[$fieldname]['presentationname'] = $bestpresentationname;
+        $fieldextra[$fieldname]['linkedtable'] = $bestpresentationname == 'lookup' ? linkedtable_lookup($tablename, $fieldname) : null;
+
+        $fieldextra[$fieldname]['in_desc'] = call_user_func("in_desc_$bestpresentationname", $augmentedfield);
+        $fieldextra[$fieldname]['in_list'] = call_user_func("in_list_$bestpresentationname", $augmentedfield);
+        $fieldextra[$fieldname]['in_edit'] = call_user_func("in_edit_$bestpresentationname", $augmentedfield);
+
+        $max_in_desc = max($max_in_desc, $fieldextra[$fieldname]['in_desc']);
+        $max_in_list = max($max_in_list, $fieldextra[$fieldname]['in_list']);
+        $max_in_edit = max($max_in_edit, $fieldextra[$fieldname]['in_edit']);
+      }
+
+      $tablestructure = array();
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
         $fieldname = $field['Field'];
 
@@ -332,35 +373,12 @@
           $extrainfo = $field['Extra'];
           list($extrainfo, $autoincrement) = preg_delete('@(auto_increment) *@', $extrainfo);
 
-          $augmentedfield =
-            array_merge(
-              $field,
-              array(
-                'Database'=>$databasename,
-                'Table'=>$tablename,
-                'Linkedtable'=>$linkedtable,
-                'Alltables'=>$alltables,
-                'Primarykeyfieldname'=>$primarykeyfieldname,
-                'FieldNr'=>$fieldnr++,
-                'NumFields'=>mysql_num_rows($fields[$tablename])
-              )
-            );
-          $bestpresentationname = null;
-          $bestprobability = 0;
-          foreach ($presentationnames as $onepresentationname) {
-            $probability = $probabilities[$onepresentationname] = call_user_func("probability_$onepresentationname", $augmentedfield);
-            if ($probability > $bestprobability) {
-              $bestpresentationname = $onepresentationname;
-              $bestprobability = $probability;
-            }
-          }
-          $presentationnames = array_keys($probabilities);
-          $presentationname = $bestpresentationname;
-          $linkedtable = $presentationname == 'lookup' ? linkedtable_lookup($tablename, $fieldname) : null;
+          $presentationname = $fieldextra[$fieldname]['presentationname'];
+          $linkedtable = $fieldextra[$fieldname]['linkedtable'];
 
-          $indesc = call_user_func("in_desc_$presentationname", $augmentedfield);
-          $inlist = call_user_func("in_list_$presentationname", $augmentedfield);
-          $inedit = call_user_func("in_edit_$presentationname", $augmentedfield);
+          $indesc = $fieldextra[$fieldname]['in_desc'] == $max_in_desc;
+          $inlist = $fieldextra[$fieldname]['in_list'] == $max_in_list;
+          $inedit = $fieldextra[$fieldname]['in_edit'] == $max_in_edit;
         }
 
         $tableoptions = array();
@@ -369,7 +387,7 @@
           $tableoptions[] = html('option', array('value'=>$onetable, 'selected'=>$onetable == $linkedtable ? 'selected' : null), $onetable);
 
         $presentationnamespositive = $presentationnameszero = array();
-        foreach ($presentationnames as $onepresentationname)
+        foreach ($fieldextra[$fieldname]['presentationnames'] as $onepresentationname)
           if ($probabilities[$onepresentationname])
             $presentationnamespositive[$onepresentationname] = $probabilities[$onepresentationname];
           else

@@ -20,9 +20,9 @@
     return 0.2;
   }
 
-  function in_desc_currency($field) { return false; }
-  function in_list_currency($field) { return false; }
-  function in_edit_currency($field) { return true; }
+  function in_desc_currency($field) { return 0; }
+  function in_list_currency($field) { return 0; }
+  function in_edit_currency($field) { return 1; }
 
   function is_sortable_currency() { return true; }
 

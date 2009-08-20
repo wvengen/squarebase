@@ -3,9 +3,9 @@
     return preg_match('@^datetime\b@', $field['Type']) ? 0.5 : 0;
   }
 
-  function in_desc_datetime($field) { return false; }
-  function in_list_datetime($field) { return false; }
-  function in_edit_datetime($field) { return true; }
+  function in_desc_datetime($field) { return 0; }
+  function in_list_datetime($field) { return 0; }
+  function in_edit_datetime($field) { return 1; }
 
   function is_sortable_datetime() { return true; }
 

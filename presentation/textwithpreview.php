@@ -14,9 +14,9 @@
     return 0;
   }
 
-  function in_desc_textwithpreview($field) { return false; }
-  function in_list_textwithpreview($field) { return false; }
-  function in_edit_textwithpreview($field) { return true; }
+  function in_desc_textwithpreview($field) { return 0; }
+  function in_list_textwithpreview($field) { return 0; }
+  function in_edit_textwithpreview($field) { return 1; }
 
   function is_sortable_textwithpreview() { return true; }
 

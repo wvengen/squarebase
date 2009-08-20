@@ -1,15 +1,15 @@
 <?php
-  function special_nameparts() {
-    return '('.join_clean('|', _('name'), _('title'), _('description'), _('acronym'), _('abbr'), _('abbreviation'), _('value')).')';
+  function special_nameparts($tablename) {
+    return '('.join_clean('|', _('name'), _('title'), _('description'), _('acronym'), _('abbr'), _('abbreviation'), _('value'), $tablename).')';
   }
 
   function probability_varchar($field) {
     return 0.1;
   }
 
-  function in_desc_varchar($field) { return $field['FieldNr'] < 5 && preg_match('@'.special_nameparts().'@i', $field['Field']); }
-  function in_list_varchar($field) { return $field['FieldNr'] < 5 && preg_match('@'.special_nameparts().'@i', $field['Field']); }
-  function in_edit_varchar($field) { return true; }
+  function in_desc_varchar($field) { return preg_match('@'.special_nameparts($field['Table']).'@i', $field['Field']) ? ($field['FieldNr'] < 5 ? 1 : 0.9) : 0.2; }
+  function in_list_varchar($field) { return preg_match('@'.special_nameparts($field['Table']).'@i', $field['Field']) ? ($field['FieldNr'] < 5 ? 1 : 0.9) : 0.2; }
+  function in_edit_varchar($field) { return 1; }
 
   function is_sortable_varchar() { return true; }
 
