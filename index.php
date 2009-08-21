@@ -493,9 +493,18 @@
     if (!$metabasename)
       error(_('no name given for the metabase'));
 
-    query('meta', 'DROP DATABASE IF EXISTS `<metabasename>`', array('metabasename'=>$metabasename));
-
-    query('meta', 'CREATE DATABASE IF NOT EXISTS `<metabasename>`', array('metabasename'=>$metabasename));
+    if (mysql_num_rows(query('meta', 'SHOW DATABASES LIKE "<metabasename>"', array('metabasename'=>$metabasename)))) {
+      //metabase already exists
+      $tables = query('data', 'SHOW TABLES FROM `<metabasename>`', array('metabasename'=>$metabasename));
+      while ($table = mysql_fetch_assoc($tables)) {
+        $tablename = $table["Tables_in_$metabasename"];
+        query('meta', 'DROP TABLE `<metabasename>`.`<tablename>`', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
+      }
+    }
+    else {
+      //metabase does not exist yet
+      query('meta', 'CREATE DATABASE `<metabasename>`', array('metabasename'=>$metabasename));
+    }
 
     query('meta',
       'CREATE TABLE `<metabasename>`.languages ('.
