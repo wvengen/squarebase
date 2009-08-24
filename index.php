@@ -104,14 +104,14 @@
       }
     }
 
-    if (count($links) == 0 && has_grant('*', 'CREATE'))
+    if (count($links) == 0 && has_grant('?', 'CREATE'))
       internalredirect(array('action'=>'new_metabase_from_database'));
 
-    if (count($links) == 1 && !has_grant('*', 'CREATE'))
+    if (count($links) == 1 && !has_grant('?', 'CREATE'))
       internalredirect($links[0]);
 
     page($action, null,
-      (has_grant('*', 'CREATE') ? internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')) : '').
+      (has_grant('?', 'CREATE') ? internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')) : '').
       html('table', array(), join($rows))
     );
   }

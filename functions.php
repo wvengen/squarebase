@@ -618,11 +618,17 @@
 
   function has_grant($databasename, $privilege) {
     //for privilege see http://dev.mysql.com/doc/refman/5.0/en/privileges-provided.html
+    //$databasename == '*' means privilege on all databases
+    //$databasename == '?' means privilege on at least one database
     static $grants = null;
     if (is_null($grants))
       $grants = query('top', 'SHOW GRANTS');
     for (mysql_data_reset($grants); $grant = mysql_fetch_assoc($grants); ) {
-      if (preg_match("/^GRANT (.*?) ON (.*?) /", $grant["Grants for $_SESSION[username]@$_SESSION[host]"], $matches) && ($matches[1] == 'ALL PRIVILEGES' || preg_match("/\b$privilege\b/", $matches[1])) && (preg_match("/^(`$databasename`|\*)/", $matches[2])))
+      if (
+          preg_match("/^GRANT (.*?) ON (.*?) /", $grant["Grants for $_SESSION[username]@$_SESSION[host]"], $matches) &&
+          preg_match("/(^ALL PRIVILEGES$|\b$privilege\b)/", $matches[1]) &&
+          preg_match("/^(".($databasename == '*' ? "\*" : ($databasename == '?' ? '' : "`$databasename`"))."|\*)/", $matches[2])
+         )
         return TRUE;
     }
     return FALSE;
