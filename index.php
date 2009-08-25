@@ -42,14 +42,18 @@
   /********************************************************************************************/
 
   if ($action == 'login') {
+    $username = parameter('get', 'username', 'root');
+    $host     = parameter('get', 'host', 'localhost');
+    $password = parameter('get', 'password');
+
     page($action, null,
       form(
         html('table', array(),
           html('tr', array(),
             array(
-              html('td', array('class'=>'small'), html('label', array('for'=>'username'), _('username'))).html('td', array(), html('input', array('type'=>'text',     'id'=>'username', 'name'=>'username', 'value'=>'root'))),
-              html('td', array('class'=>'small'), html('label', array('for'=>'host'    ), _('host'    ))).html('td', array(), html('input', array('type'=>'text',     'id'=>'host',     'name'=>'host',     'value'=>'localhost'))),
-              html('td', array('class'=>'small'), html('label', array('for'=>'password'), _('password'))).html('td', array(), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password'))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'username'), _('username'))).html('td', array(), html('input', array('type'=>'text',     'id'=>'username', 'name'=>'username', 'value'=>$username))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'host'    ), _('host'    ))).html('td', array(), html('input', array('type'=>'text',     'id'=>'host',     'name'=>'host',     'value'=>$host))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'password'), _('password'))).html('td', array(), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password', 'value'=>$password))),
               html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale()),
               html('td', array('class'=>'small'), '').                                                    html('td', array(), html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>join_clean(' ', 'button', 'mainsubmit'))))
             )
@@ -493,18 +497,9 @@
     if (!$metabasename)
       error(_('no name given for the metabase'));
 
-    if (mysql_num_rows(query('meta', 'SHOW DATABASES LIKE "<metabasename>"', array('metabasename'=>$metabasename)))) {
-      //metabase already exists
-      $tables = query('data', 'SHOW TABLES FROM `<metabasename>`', array('metabasename'=>$metabasename));
-      while ($table = mysql_fetch_assoc($tables)) {
-        $tablename = $table["Tables_in_$metabasename"];
-        query('meta', 'DROP TABLE `<metabasename>`.`<tablename>`', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
-      }
-    }
-    else {
-      //metabase does not exist yet
-      query('meta', 'CREATE DATABASE `<metabasename>`', array('metabasename'=>$metabasename));
-    }
+    query('meta', 'DROP DATABASE IF EXISTS `<metabasename>`', array('metabasename'=>$metabasename));
+
+    query('meta', 'CREATE DATABASE IF NOT EXISTS `<metabasename>`', array('metabasename'=>$metabasename));
 
     query('meta',
       'CREATE TABLE `<metabasename>`.languages ('.

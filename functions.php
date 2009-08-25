@@ -163,13 +163,13 @@
     addtolist('logs',
       "query$metaordata",
       '['.
-      sprintf('%.2f sec', ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).
+      sprintf(_('%.2f sec'), ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).
       ', '.
       ($errno
       ? $errno.'='.mysql_error()
       : (!is_null($numresults)
-        ? $numresults.' results'
-        : mysql_affected_rows($connection).' affected'
+        ? sprintf(ngettext('%d result', '%d results', $numresults), $numresults)
+        : sprintf(_('%d affected'), mysql_affected_rows($connection))
         )
       ).
       '] '.
@@ -591,9 +591,6 @@
     $wanted_locales = array_keys($wanted_locales);
 
     $best_locale = setlocale(LC_ALL, $wanted_locales);
-
-//  if ($best_locale != $preferred_locale)
-//    addtolist('warnings', 'warning', sprintf(_('preferred locale %s not found on operating system level, falling back to %s'), $preferred_locale, $best_locale));
   }
 
   function get_locale() {

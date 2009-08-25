@@ -1,5 +1,5 @@
 * { margin: 0; border: 0; padding: 0; }
-body { margin: 0.5em; overflow-y: scroll; }
+body { margin: 0.5em; overflow-y: scroll; font-family: sans-serif !important; }
 .ajaxbusy { cursor: wait !important; }
 h2 { margin-bottom: 0.5em; }
 form { background-color: #ddf; padding: 0.5em; }
@@ -27,16 +27,16 @@ ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 .integer { width: 2em; text-align: right; }
 
 .referrer { font-size: 0.8em; }
-input, textarea, select, option { font-size: 1em; font-family: serif !important; }
+input, textarea, select, option { font-size: 1em; font-family: sans-serif !important; }
 input, textarea, select { background-color: #ffe; border: 0.1em solid #999; }
 input:focus, select:focus, textarea:focus { background-color: #ffc; }
-select { height: 1.5em; }
+select { height: 1.3em; }
 input.readonly, select.readonly { border-color: #ccc; color: #999; }
 input.button { border: 0.15em solid #fff; border-color: #fff #999 #999 #fff; color: #33f; padding: 0 0.2em; }
 input.mainsubmit, input.minorsubmit, .cancel, .done { margin-right: 1em; }
 input.mainsubmit:hover, input.minorsubmit:hover { background-color: #090 !important; color: #fff; }
 .cancel { padding: 0.1em 0.5em; }
-option { background-color: #fff; padding: 0 0.2em; }
+option { background-color: #fff; padding: 0 0 0 0.2em; }
 input.mainsubmit.delete:hover, .cancel:hover, .close:hover { background-color: #f00 !important; color: #fff !important; }
 input.mainsubmit.delete{ margin-left: 5em; }
 
