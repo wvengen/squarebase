@@ -14,19 +14,24 @@
   session_save_path('session');
   session_start();
 
+  $languagename = parameter('get', 'metabasename') && mysql_num_rows(query('meta', 'SHOW DATABASES LIKE "<metabasename>"', array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE "languages"', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;
+
   set_best_locale(
     preg_replace(
       array('@\.[a-z][a-z0-9\-]*@', '@_([a-z]+)@ie'       ),
       array(''                    , '"-".strtolower("$1")'),
       join_clean(',',
-        parameter('get', 'metabasename') && mysql_num_rows(query('meta', 'SHOW DATABASES LIKE "<metabasename>"', array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE "languages"', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))).';q=4.0' : null,
-        parameter('get', 'language')     ? parameter('get', 'language').';q=3.0' : null,
-        parameter('session', 'language') ? parameter('session', 'language').';q=2.0' : null,
+        preg_match('/^(.*?)\./', $languagename,                    $matches) ? $matches[1].';q=4.0' : null,
+        preg_match('/^(.*?)\./', parameter('get', 'language'),     $matches) ? $matches[1].';q=3.0' : null,
+        preg_match('/^(.*?)\./', parameter('session', 'language'), $matches) ? $matches[1].';q=2.0' : null,
         parameter('server', 'HTTP_ACCEPT_LANGUAGE'),
         'en;q=0.0'
       )
     ),
     join_clean(',',
+      preg_match('/\.(.*)$/',    $languagename,                    $matches) ? $matches[1].';q=4.0' : null,
+      preg_match('/\.(.*)$/',    parameter('get', 'language'),     $matches) ? $matches[1].';q=3.0' : null,
+      preg_match('/\.(.*)$/',    parameter('session', 'language'), $matches) ? $matches[1].';q=2.0' : null,
       parameter('server', 'HTTP_ACCEPT_CHARSET'),
       '*;q=0.0'
     )
