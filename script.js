@@ -153,7 +153,6 @@ jQuery.fn.ajaxify = function() {
   addClass('ajaxified').
   click(
     function() {
-      alert('hier');
       $(this).
       closest('.ajaxcontent').
       unload();
