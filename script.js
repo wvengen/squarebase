@@ -149,6 +149,19 @@ jQuery.fn.ajaxify = function() {
   css('display', 'none').
   end().
 
+  find('.cancel, .close').
+  addClass('ajaxified').
+  click(
+    function() {
+      alert('hier');
+      $(this).
+      closest('.ajaxcontent').
+      unload();
+      return false;
+    }
+  ).
+  end().
+
   find('a:not(.ajaxified)').
   addClass('ajaxified').
   click(
@@ -208,7 +221,6 @@ jQuery.fn.ajaxify = function() {
                 return true;
               }
             ).
-
             end().
 
             find('.minorsubmit').
@@ -216,18 +228,6 @@ jQuery.fn.ajaxify = function() {
             end().
 
             end(). //find('form')
-
-            find('.cancel, .close').
-            addClass('ajaxified').
-            click(
-              function() {
-                $(this).
-                closest('.ajaxcontent').
-                unload();
-                return false;
-              }
-            ).
-            end().
 
             ajaxify();
           }
