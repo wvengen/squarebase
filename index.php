@@ -29,9 +29,9 @@
       )
     ),
     join_clean(',',
-      preg_match('/\.(.*)$/',    $languagename,                    $matches) ? $matches[1].';q=4.0' : null,
-      preg_match('/\.(.*)$/',    parameter('get', 'language'),     $matches) ? $matches[1].';q=3.0' : null,
-      preg_match('/\.(.*)$/',    parameter('session', 'language'), $matches) ? $matches[1].';q=2.0' : null,
+      preg_match('/\.(.*?)$/', $languagename,                    $matches) ? $matches[1].';q=4.0' : null,
+      preg_match('/\.(.*?)$/', parameter('get', 'language'),     $matches) ? $matches[1].';q=3.0' : null,
+      preg_match('/\.(.*?)$/', parameter('session', 'language'), $matches) ? $matches[1].';q=2.0' : null,
       parameter('server', 'HTTP_ACCEPT_CHARSET'),
       '*;q=0.0'
     )
@@ -43,6 +43,8 @@
   $ajaxy = parameter('get', 'ajaxy');
   if (!is_null($ajaxy))
     $_SESSION['ajaxy'] = $ajaxy == 'on';
+  elseif (!$_SESSION)
+    $_SESSION['ajaxy'] = true;
 
   /********************************************************************************************/
 

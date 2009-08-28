@@ -73,8 +73,9 @@ div.error, .problem, .warning { font-weight: bold; color: #f00; }
 
 .trace { white-space: nowrap; }
 
-#footer { margin-top: 1em; }
-#logs { border: 0.1em solid #ccc; background-color: #eee; color: #999; white-space: nowrap; }
+#footer { margin-top: 0.5em; }
+#poweredby { float: right; }
+#logs { border: 0.1em solid #ccc; background-color: #eee; color: #999; white-space: nowrap; clear: both; }
 #logs .queryroot { padding-left: 2em; }
 #logs .querymeta { padding-left: 4em; }
 #logs .querydata { padding-left: 6em; }

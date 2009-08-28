@@ -260,6 +260,7 @@
             $content
           ).
           html('div', array('id'=>'footer'),
+            html('div', array('id'=>'poweredby'), externalreference('http://squarebase.org/', html('img', array('src'=>'powered_by_squarebase.png')))).
             html('ol', array('id'=>'logs'), join(getlist('logs')))
           )
         )
