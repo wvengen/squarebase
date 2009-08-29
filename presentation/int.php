@@ -20,7 +20,8 @@
   }
 
   function formvalue_int($field) {
-    return parameter('get', "field:$field[fieldname]");
+    $value = parameter('get', "field:$field[fieldname]");
+    return $value == "" ? null : $value;
   }
 
   function list_int($metabasename, $databasename, $field, $value) {
@@ -28,7 +29,6 @@
   }
   
   function css_int() {
-    $width = $field[''];
     return ".int { text-align: right; width: 3em; }\n";
   }
 ?>
