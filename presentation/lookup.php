@@ -57,7 +57,8 @@
   }
 
   function formvalue_lookup($field) {
-    return parameter('get', "field:$field[fieldname]");
+    $value = parameter('get', "field:$field[fieldname]");
+    return $value == "" ? null : $value;
   }
 
   function list_lookup($metabasename, $databasename, $field, $value) {

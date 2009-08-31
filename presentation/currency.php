@@ -31,7 +31,8 @@
   }
 
   function formvalue_currency($field) {
-    return parameter('get', "field:$field[fieldname]");
+    $value = parameter('get', "field:$field[fieldname]");
+    return $value == "" ? null : $value;
   }
 
   function list_currency($metabasename, $databasename, $field, $value) {

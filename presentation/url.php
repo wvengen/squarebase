@@ -25,7 +25,8 @@
   }
 
   function formvalue_url($field) {
-    return parameter('get', "field:$field[fieldname]");
+    $value = parameter('get', "field:$field[fieldname]");
+    return $value == "" ? null : $value;
   }
 
   function list_url($metabasename, $databasename, $field, $value) {

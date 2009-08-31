@@ -282,6 +282,10 @@
     return $databases;
   }
 
+  function alldatabases() {
+    return query('root', 'SHOW DATABASES WHERE `Database` != "information_schema" AND `Database` != "mysql"');
+  }
+
   function path($metabasename, $databasename = null, $tablename = null, $uniquefieldname = null, $uniquevalue = null) {
     if (!is_null($uniquevalue)) {
       if ($metabasename && $databasename && $tablename && $uniquefieldname) {

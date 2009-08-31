@@ -18,7 +18,8 @@
   }
 
   function formvalue_varchar($field) {
-    return parameter('get', "field:$field[fieldname]");
+    $value = parameter('get', "field:$field[fieldname]");
+    return $value == "" ? null : $value;
   }
 
   function list_varchar($metabasename, $databasename, $field, $value) {

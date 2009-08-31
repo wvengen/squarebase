@@ -16,7 +16,8 @@
   }
 
   function formvalue_datetime($field) {
-    return local2datetime(parameter('get', "field:$field[fieldname]"));
+    $value = parameter('get', "field:$field[fieldname]");
+    return $value == "" ? null : local2datetime($value);
   }
 
   function list_datetime($metabasename, $databasename, $field, $value) {

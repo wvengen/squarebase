@@ -91,7 +91,7 @@
   /********************************************************************************************/
 
   if ($action == 'index') {
-    $metabases = query('root', 'SHOW DATABASES WHERE `Database` != "information_schema"');
+    $metabases = alldatabases();
     $rows = array(html('th', array(), array(_('database'), _('metabase'), '')));
     $links = array();
     while ($metabase = mysql_fetch_assoc($metabases)) {
@@ -131,7 +131,7 @@
 
   if ($action == 'new_metabase_from_database') {
     $rows = array(html('th', array(), array(_('database'), _('tables'), '')));
-    $databases = query('root', 'SHOW DATABASES WHERE `Database` != "information_schema"');
+    $databases = alldatabases();
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['Database'];
       $dblist = array();
@@ -139,6 +139,7 @@
       if ($dbs) {
         foreach ($dbs as $db)
           $dblist[] = internalreference(array('action'=>'form_metabase_for_database', 'databasename'=>$db, 'metabasename'=>$databasename), $db);
+        $dblist[] = internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$databasename), _('(add database)'));
         $contents = html('ul', array('class'=>'compact'), html('li', array(), $dblist));
       }
       else {
@@ -244,7 +245,7 @@
 
     if (!$metabasename) {
       $mbnames = array();
-      $metabases = query('root', 'SHOW DATABASES WHERE `Database` != "information_schema"');
+      $metabases = alldatabases();
       while ($metabase = mysql_fetch_assoc($metabases)) {
         $mbname = $metabase['Database'];
         if ($mbname != 'mysql') {
@@ -629,39 +630,34 @@
 
   /********************************************************************************************/
 
-  if ($action == 'form_metabase_to_database') {
-    $rows = array();
-    $metabases = query('root', 'SHOW DATABASES WHERE `Database` != "information_schema"');
-    while ($metabase = mysql_fetch_assoc($metabases)) {
-      $metabasename = $metabase['Database'];
-      $databasenames = databasenames($metabasename);
-      if ($databasenames)
-        $rows[] = html('td', array(), internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$metabasename), $metabasename));
-    }
-    page($action, null,
-      html('table', array(), html('tr', array(), $rows))
-    );
-  }
-
-  /********************************************************************************************/
-
   if ($action == 'form_database_for_metabase') {
     $metabasename = parameter('get', 'metabasename');
-    $rows = array();
+    $rows = array(html('th', array(), 'database'));
     $databasenames = databasenames($metabasename);
-    if ($databasenames) {
-      foreach ($databasenames as $databasename)
-        $rows[] =
-          html('td', array(),
-            internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $databasename)
-          );
+
+    $databases = alldatabases();
+    while ($database = mysql_fetch_assoc($databases)) {
+      $databasename = $database['Database'];
       $rows[] =
-        html('td', array(),
-          html('input', array('type'=>'text', 'name'=>'databasename')).
-          html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
-          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_database_from_metabase', 'class'=>join_clean(' ', 'button', 'mainsubmit')))
+        html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
+          html('td', array(),
+            array(
+              internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $databasename),
+              internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename), in_array($databasename, $databasenames) ? 'update' : 'add')
+            )
+          )
         );
     }
+    $rows[] =
+      html('tr', array('class'=>count($rows) % 2 ? 'rowodd' : 'roweven'),
+        html('td', array(),
+          array(
+            html('input', array('type'=>'text', 'name'=>'databasename')),
+            html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
+            html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_database_from_metabase', 'class'=>join_clean(' ', 'button', 'mainsubmit')))
+          )
+        )
+      );
     page($action, path($metabasename),
       form(
         html('table', array(), html('tr', array(), $rows))

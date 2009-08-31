@@ -14,7 +14,8 @@
   }
 
   function formvalue_text($field) {
-    return parameter('get', "field:$field[fieldname]");
+    $value = parameter('get', "field:$field[fieldname]");
+    return $value == "" ? null : $value;
   }
 
   function list_text($metabasename, $databasename, $field, $value) {
