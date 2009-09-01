@@ -34,19 +34,22 @@
   
   function css_textwithpreview() {
     return
-      "textarea.textwithpreview { width: 20em; height: 10em; white-space: pre-wrap; }\n".
-      "textarea.textwithpreview.blur { color: #ffe; overflow: hidden; }\n".
-      ".preview { width: 20em; height: 10em; margin-top: -10.1em; overflow: auto; border: 0.1em solid #999; }\n".
+      ".wrapper { position: relative; margin-bottom: 0.2em; }\n".
+      "textarea.textwithpreview { width: 20em; min-height: 2em; white-space: pre-wrap; }\n".
+      "textarea.textwithpreview.blur { display: none; color: #ffe; visibility: hidden; }\n".
+      ".preview { width: 20em; min-height: 2em; position: absolute; top: 0; border: 0.1em solid #999; background-color: #ffe; }\n".
       ".preview.blur { visibility: hidden; }\n";
   }
 
   function jquery_enhance_form_textwithpreview() {
     return
       "find('.textwithpreview').\n".
+      "autogrow().\n".
+      "wrap('<div class=\"wrapper\"></div>').\n".
       "addClass('blur').\n".
-      "focus(function() { $(this).removeClass('blur').next().addClass('blur'); }).\n".
-      "blur( function() { $(this).addClass('blur').next().removeClass('blur').html(this.value); }).\n".
-      "after('<div id=\"preview_' + this.id + '\" class=\"preview\"></div>').\n".
+      "focus(function() { $(this).parent().css('height', 'auto'); $(this).removeClass('blur').next().addClass('blur'); }).\n".
+      "blur( function() { $(this).parent().css('height', $(this).addClass('blur').next().removeClass('blur').html(this.value).css('height')); }).\n".
+      "after('<div class=\"preview\"></div>').\n".
       "blur().\n". //to put the html in the preview box
       "next().\n".
       "click(function() { $(this).prev().focus(); }).\n".

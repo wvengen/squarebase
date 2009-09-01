@@ -10,7 +10,7 @@ table { border: 0.1em solid #999; width: 100%; border-collapse: collapse; }
 tr.rowodd { background-color: #eee; }
 tr.roweven { background-color: #ddd; }
 th, td { padding: 0.1em; vertical-align: top; }
-th { text-align: left; background: #ddd; }
+th { text-align: left; white-space: nowrap; background: #ddd; }
 td.description { width: 0.1em; height: 1.5em; white-space: nowrap; }
 td.number { text-align: right; }
 .center { text-align: center; }

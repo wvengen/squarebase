@@ -241,6 +241,7 @@
           html('link', array('href'=>internalurl(array('action'=>'style', 'metabasename'=>parameter('get', 'metabasename'))), 'type'=>'text/css', 'rel'=>'stylesheet')).
           ($_SESSION['ajaxy']
           ? html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
+            html('script', array('type'=>'text/javascript', 'src'=>'jquery.autogrow.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>internalurl(array('action'=>'script'))), '')
           : ''
           )
@@ -618,7 +619,7 @@
     return html('select', array('id'=>$name, 'name'=>$name), join($localeoptions));
   }
 
-  function has_grant($databasename, $privilege) {
+  function has_grant($privilege, $databasename, $tablename = '*') {
     //for privilege see http://dev.mysql.com/doc/refman/5.0/en/privileges-provided.html
     //$databasename == '*' means privilege on all databases
     //$databasename == '?' means privilege on at least one database
@@ -629,7 +630,8 @@
       if (
           preg_match("/^GRANT (.*?) ON (.*?) /", $grant["Grants for $_SESSION[username]@$_SESSION[host]"], $matches) &&
           preg_match("/(^ALL PRIVILEGES$|\b$privilege\b)/", $matches[1]) &&
-          preg_match("/^(".($databasename == '*' ? "\*" : ($databasename == '?' ? '' : "`$databasename`"))."|\*)/", $matches[2])
+          preg_match("/^(".($databasename == '*' ? "\*" : ($databasename == '?' ? '.+?' : "`$databasename`"))."|\*)\./", $matches[2]) &&
+          preg_match("/\.(".($tablename == '*' ? "\*" : ($tablename == '?' ? '.+?' : "`$tablename`"))."|\*)$/", $matches[2])
          )
         return TRUE;
     }

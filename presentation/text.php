@@ -23,6 +23,13 @@
   }
   
   function css_text() {
-    return ".text { width: 20em; height: 10em; white-space: pre-wrap; }\n";
+    return ".text { width: 20em; white-space: pre-wrap; margin-bottom: 0.2em; }\n";
+  }
+
+  function jquery_enhance_form_text() {
+    return
+      "find('.text').\n".
+      "autogrow().\n".
+      "end().\n";
   }
 ?>

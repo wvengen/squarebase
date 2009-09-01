@@ -107,22 +107,22 @@
             ).
             html('td', array('class'=>'small'),
               array(
-                has_grant($metabasename, 'DROP') ? internalreference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename) : null,
-                has_grant($databasename, 'DROP') ? internalreference(array('action'=>'drop_database', 'databasename'=>$metabasename), 'drop') : null
+                has_grant('DROP', $metabasename) ? internalreference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename) : null,
+                has_grant('DROP', $metabasename) ? internalreference(array('action'=>'drop_database', 'databasename'=>$metabasename), 'drop') : null
               )
             )
           );
       }
     }
 
-    if (count($links) == 0 && has_grant('?', 'CREATE'))
+    if (count($links) == 0 && has_grant('CREATE', '?'))
       internalredirect(array('action'=>'new_metabase_from_database'));
 
-    if (count($links) == 1 && !has_grant('?', 'CREATE'))
+    if (count($links) == 1 && !has_grant('CREATE', '?'))
       internalredirect($links[0]);
 
     page($action, null,
-      (has_grant('?', 'CREATE') ? internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')) : '').
+      (has_grant('CREATE', '?') ? internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')) : '').
       html('table', array(), join($rows))
     );
   }
@@ -344,7 +344,7 @@
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
         $fieldname = $field['Field'];
 
-        $originals = $metabasename ? query('meta', 'SELECT mt.intablelist, title, type, typelength, typeunsigned, typezerofill, presentationname, nullallowed, autoincrement, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
+        $originals = $metabasename ? query('meta', 'SELECT mt.singular, mt.plural, mt.intablelist, title, type, typelength, typeunsigned, typezerofill, presentationname, nullallowed, autoincrement, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
         if ($originals) {
           $original = mysql_fetch_assoc($originals);
           $title            = $original['title'];
@@ -360,6 +360,8 @@
           $indesc           = $original['indesc'];
           $inlist           = $original['inlist'];
           $inedit           = $original['inedit'];
+          $singular         = $original['singular'];
+          $plural           = $original['plural'];
 
           $typeinfo = '';
           $numeric = $type == 'int';
@@ -435,7 +437,7 @@
                 html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
               )
             ).
-            html('td', array(), $fieldname.($originals ? '*' : '')).
+            html('td', array(), $fieldname).
             html('td', array(), html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))).
             html('td', array(),
               html('select', array('name'=>"$tablename:$fieldname:type"),
@@ -489,7 +491,6 @@
           html('table', array(),
             join($totalstructure)
           ).
-          ($metabasename ? "* = from $metabasename" : '').
           html('p', array(),
             html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract_structure_from_database_to_metabase', 'class'=>'button'))
           )
@@ -671,7 +672,7 @@
     $metabasename = parameter('get', 'metabasename');
     $databasename = parameter('get', 'databasename');
 
-    if (has_grant($metabasename, 'ALL')) {
+    if (has_grant('ALL', $metabasename)) {
       query('meta', 'INSERT IGNORE INTO `<metabasename>`.databases SET databasename = "<databasename>"', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
 
       query('data', 'CREATE DATABASE IF NOT EXISTS `<databasename>`', array('databasename'=>$databasename));
