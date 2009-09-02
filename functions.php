@@ -426,16 +426,6 @@
     return array(preg_replace($pattern, '', $subject), $matches[1]);
   }
 
-  function totaltype($field) {
-    return
-      strtoupper($field['type']).
-      ($field['typelength']                         ? "($field[typelength])" : '').
-      ($field['typeunsigned']                       ? " UNSIGNED"            : '').
-      ($field['autoincrement']                      ? " AUTO_INCREMENT"      : '').
-      ($field['uniquefieldid'] == $field['fieldid'] ? " PRIMARY KEY"         : '').
-      (!$field['nullallowed']                       ? " NOT NULL"            : '');
-  }
-
   function mysql_data_reset($results) {
     if (mysql_num_rows($results) > 0)
       mysql_data_seek($results, 0);
@@ -443,7 +433,7 @@
 
   function fieldsforpurpose($metabasename, $tablename, $purpose) {
     return query('meta',
-      "SELECT mt.tablename, mt.singular, mt.plural, mt.tableid, mf.fieldid, mf.fieldname, mf.title, mr.presentationname, mf.autoincrement, mf.foreigntableid, mf.nullallowed, mf.indesc, mf.inlist, mf.inedit, mt2.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname ".
+      "SELECT mt.tablename, mt.singular, mt.plural, mt.tableid, mf.fieldid, mf.fieldname, mf.title, mr.presentationname, mf.foreigntableid, mf.nullallowed, mf.indesc, mf.inlist, mf.inedit, mt2.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname ".
       "FROM `<metabasename>`.tables mt ".
       "RIGHT JOIN `<metabasename>`.fields mf ON mf.tableid = mt.tableid ".
       "LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid ".

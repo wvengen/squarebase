@@ -9,9 +9,9 @@ p { margin: 0.5em 0; }
 table { border: 0.1em solid #999; width: 100%; border-collapse: collapse; }
 tr.rowodd { background-color: #eee; }
 tr.roweven { background-color: #ddd; }
-th, td { padding: 0.1em; vertical-align: top; }
-th { text-align: left; white-space: nowrap; background: #ddd; }
-td.description { width: 0.1em; height: 1.5em; white-space: nowrap; }
+th, td { padding: 0.1em; vertical-align: top; white-space: nowrap; }
+th { text-align: left; background: #ddd; }
+td.description { width: 0.1em; height: 1.5em; }
 td.number { text-align: right; }
 .center { text-align: center; }
 th.wide, td.wide { width: 99%; }
@@ -31,16 +31,16 @@ input, textarea, select, option { font-size: 1em; font-family: sans-serif !impor
 input, textarea, select { background-color: #ffe; border: 0.1em solid #999; }
 input:focus, select:focus, textarea:focus { background-color: #ffc; }
 select { height: 1.3em; }
-input.readonly, select.readonly { border-color: #ccc; color: #999; }
-input.button { border: 0.15em solid #fff; border-color: #fff #999 #999 #fff; color: #33f; padding: 0 0.2em; }
-input.mainsubmit, input.minorsubmit, .cancel, .done { margin-right: 1em; }
+option { background-color: #fff; padding: 0 0 0 0.2em; }
+input.readonly, select.readonly { border-color: #ccc; background-color: #eee; color: #999; }
+input.mainsubmit, input.minorsubmit { border: 0.15em solid #fff; border-color: #fff #999 #999 #fff; color: #33f; padding: 0 0.2em; }
+input.mainsubmit, input.minorsubmit, .cancel { margin-right: 1em; }
 input.mainsubmit:hover, input.minorsubmit:hover { background-color: #090 !important; color: #fff; }
 .cancel { padding: 0.1em 0.5em; }
-option { background-color: #fff; padding: 0 0 0 0.2em; }
-input.mainsubmit.delete:hover, .cancel:hover, .close:hover { background-color: #f00 !important; color: #fff !important; }
-input.mainsubmit.delete{ margin-left: 5em; }
+input.mainsubmit.delete:hover, .cancel:hover, .close:hover, .drop:hover { background-color: #f00 !important; color: #fff !important; }
+input.mainsubmit.delete { margin-left: 5em; }
 
-a.ajaxified, input.ajaxified { background-color: #cff; }
+/* a.ajaxified, input.ajaxified { color: #363; } */
 input.minorsubmit.ajaxified { display: none; }
 .ajaxcontainer { padding-left: 1em; }
 .ajaxproblem { border-color: #c00 !important; }

@@ -62,7 +62,7 @@
               html('td', array('class'=>'small'), html('label', array('for'=>'host'    ), _('host'    ))).html('td', array(), html('input', array('type'=>'text',     'id'=>'host',     'name'=>'host',     'value'=>$host))),
               html('td', array('class'=>'small'), html('label', array('for'=>'password'), _('password'))).html('td', array(), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password', 'value'=>$password))),
               html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale()),
-              html('td', array('class'=>'small'), '').                                                    html('td', array(), html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>join_clean(' ', 'button', 'mainsubmit'))))
+              html('td', array('class'=>'small'), '').                                                    html('td', array(), html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>'mainsubmit')))
             )
           )
         )
@@ -108,7 +108,7 @@
             html('td', array('class'=>'small'),
               array(
                 has_grant('DROP', $metabasename) ? internalreference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename) : null,
-                has_grant('DROP', $metabasename) ? internalreference(array('action'=>'drop_database', 'databasename'=>$metabasename), 'drop') : null
+                has_grant('DROP', $metabasename) ? internalreference(array('action'=>'drop_database', 'databasename'=>$metabasename), 'drop', array('class'=>'drop')) : null
               )
             )
           );
@@ -163,7 +163,7 @@
             array(
               internalreference(array('action'=>'language_for_database', 'databasename'=>$databasename), $databasename),
               $contents,
-              internalreference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop')
+              internalreference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop', array('class'=>'drop'))
             )
           )
         );
@@ -184,7 +184,7 @@
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>parameter('server', 'HTTP_REFERER'))).
         html('p', array(), sprintf(_('Drop database %s?'), html('strong', array(), $databasename))).
-        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'drop_database_really', 'class'=>'button')).
+        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'drop_database_really', 'class'=>'mainsubmit')).
         internalreference(parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel'))
       )
     );
@@ -227,7 +227,7 @@
           )
         ).
         html('p', array(),
-          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'form_metabase_for_database', 'class'=>'button'))
+          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'form_metabase_for_database', 'class'=>'mainsubmit'))
         )
       )
     );
@@ -287,7 +287,7 @@
       html('tr', array(),
         html('th', array(),
           array(
-            _('table'), _('list'), _('field'), _('title'), _('type'), _('len'), _('unsg'), _('fill'), _('null'), _('auto'), _('more'), _('presentation'), _('key'), _('desc'), _('list'), _('edit')
+            _('table'), _('list'), _('field'), _('title'), _('type'), _('null'), _('presentation'), _('key'), _('desc'), _('list'), _('edit')
           )
         )
       );
@@ -344,18 +344,13 @@
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
         $fieldname = $field['Field'];
 
-        $originals = $metabasename ? query('meta', 'SELECT mt.singular, mt.plural, mt.intablelist, title, type, typelength, typeunsigned, typezerofill, presentationname, nullallowed, autoincrement, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
+        $originals = $metabasename ? query('meta', 'SELECT mt.singular, mt.plural, mt.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
         if ($originals) {
           $original = mysql_fetch_assoc($originals);
           $title            = $original['title'];
-          $type             = $original['type'];
-          $typelength       = $original['typelength'];
-          $typeunsigned     = $original['typeunsigned'];
-          $typezerofill     = $original['typezerofill'];
           $intablelist      = $original['intablelist'];
           $presentationname = $original['presentationname'];
           $nullallowed      = $original['nullallowed'];
-          $autoincrement    = $original['autoincrement'];
           $linkedtable      = $original['foreigntablename'];
           $indesc           = $original['indesc'];
           $inlist           = $original['inlist'];
@@ -364,7 +359,6 @@
           $plural           = $original['plural'];
 
           $typeinfo = '';
-          $numeric = $type == 'int';
         }
         else {
           $title = preg_replace(
@@ -373,19 +367,8 @@
             $fieldname
           );
           $intablelist   = TRUE;
-          $typeinfo = $field['Type'];
-          list($typeinfo, $type          ) = preg_delete('@^(\w+) *@',         $typeinfo);
-          list($typeinfo, $typelength    ) = preg_delete('@^\((\d+)\) *@',     $typeinfo);
-          list($typeinfo, $typemd        ) = preg_delete('@^\((\d+,\d+)\) *@', $typeinfo); //ignored non-standard syntax: "(M,D)" means than values can be stored with up to M digits in total, of which D digits may be after the decimal point
-          list($typeinfo, $typeunsigned  ) = preg_delete('@(unsigned) *@',     $typeinfo);
-          list($typeinfo, $typezerofill  ) = preg_delete('@(zerofill) *@',     $typeinfo);
-
-          $numeric = $type == 'int';
 
           $nullallowed = $field['Null'] == 'YES';
-
-          $extrainfo = $field['Extra'];
-          list($extrainfo, $autoincrement) = preg_delete('@(auto_increment) *@', $extrainfo);
 
           $presentationname = $fieldextra[$fieldname]['presentationname'];
           $linkedtable = $fieldextra[$fieldname]['linkedtable'];
@@ -439,20 +422,8 @@
             ).
             html('td', array(), $fieldname).
             html('td', array(), html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))).
-            html('td', array(),
-              html('select', array('name'=>"$tablename:$fieldname:type"),
-                html('option', array('value'=>'int'     , 'selected'=>$type == 'int'      ? 'selected' : null), 'int'     ).
-                html('option', array('value'=>'varchar' , 'selected'=>$type == 'varchar'  ? 'selected' : null), 'varchar' ).
-                html('option', array('value'=>'datetime', 'selected'=>$type == 'datetime' ? 'selected' : null), 'datetime').
-                ($type != 'int' && $type != 'varchar' && $type != 'datetime' ? html('option', array('value'=>$type, 'selected'=>'selected'), $type) : '')
-              )
-            ).
-            html('td', array(), html('input', array('type'=>'text', 'class'=>'integer', 'name'=>"$tablename:$fieldname:typelength", 'value'=>$typelength))).
-            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:typeunsigned", 'checked'=>$typeunsigned ? 'checked' : null)) : '').
-            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:typezerofill", 'checked'=>$typezerofill ? 'checked' : null)) : '').
-            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:nullallowed", 'checked'=>$nullallowed ? 'checked' : null))).
-            html('td', array('class'=>'center'), $numeric ? html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:$fieldname:autoincrement", 'checked'=>$autoincrement ? 'checked' : null)) : '').
-            html('td', array(), join_clean(' ', $typeinfo, $extrainfo)).
+            html('td', array(), $field['Type']).
+            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'name'=>"$tablename:$fieldname:nullallowed_dummy", 'readonly'=>'readonly', 'disabled'=>'disabled', 'checked'=>$nullallowed ? 'checked' : null)).html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))).
             html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions)).
             html('td', array(),
               ($fieldname == $primarykeyfieldname[$tablename]
@@ -492,7 +463,7 @@
             join($totalstructure)
           ).
           html('p', array(),
-            html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract_structure_from_database_to_metabase', 'class'=>'button'))
+            html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract_structure_from_database_to_metabase', 'class'=>'mainsubmit'))
           )
         )
     );
@@ -548,11 +519,6 @@
         'tableid          INT UNSIGNED NOT NULL REFERENCES `tables` (tableid),'.
         'fieldname        VARCHAR(100) NOT NULL,'.
         'title            VARCHAR(100) NOT NULL,'.
-        'type             VARCHAR(100) NOT NULL,'.
-        'typelength       INT UNSIGNED         ,'.
-        'typeunsigned     BOOLEAN      NOT NULL,'.
-        'typezerofill     BOOLEAN      NOT NULL,'.
-        'autoincrement    BOOLEAN      NOT NULL,'.
         'nullallowed      BOOLEAN      NOT NULL,'.
         'presentationid   INT UNSIGNED NOT NULL REFERENCES `presentations` (presentationid),'.
         'indesc           BOOLEAN      NOT NULL,'.
@@ -607,7 +573,7 @@
         $inlist = parameter('get', "$tablename:$fieldname:inlist") ? 1 : 0;
         $inedit = parameter('get', "$tablename:$fieldname:inedit") ? 1 : 0;
 
-        $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'type'=>parameter('get', "$tablename:$fieldname:type"), 'typelength'=>parameter('get', "$tablename:$fieldname:typelength"), 'typeunsigned'=>parameter('get', "$tablename:$fieldname:typeunsigned") ? 1 : 0, 'typezerofill'=>parameter('get', "$tablename:$fieldname:typezerofill") ? 1 : 0, 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'autoincrement'=>parameter('get', "$tablename:$fieldname:autoincrement") ? 1 : 0, 'nullallowed'=>parameter('get', "$tablename:$fieldname:nullallowed") ? 1 : 0, 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
+        $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>parameter('get', "$tablename:$fieldname:nullallowed") ? 1 : 0, 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
 
         $indescs += $indesc;
         $inlists += $inlist;
@@ -655,7 +621,7 @@
           array(
             html('input', array('type'=>'text', 'name'=>'databasename')),
             html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
-            html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_database_from_metabase', 'class'=>join_clean(' ', 'button', 'mainsubmit')))
+            html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_database_from_metabase', 'class'=>'mainsubmit'))
           )
         )
       );
@@ -682,32 +648,15 @@
         if (!$table['fieldname'])
           error(sprintf(_('table %s has no single valued primary key'), $table['tablename']));
 
-        $totaltype = totaltype($table);
-        query('data', 'CREATE TABLE IF NOT EXISTS `<databasename>`.`<tablename>` (<fieldname> <totaltype>)', array('databasename'=>$databasename, 'tablename'=>$table['tablename'], 'fieldname'=>$table['fieldname'], 'totaltype'=>$totaltype));
-
-        $associatedoldfields = array();
-        $oldfields = query('data', 'SHOW COLUMNS FROM `<databasename>`.`<tablename>`', array('databasename'=>$databasename, 'tablename'=>$table['tablename']));
-        while ($oldfield = mysql_fetch_assoc($oldfields))
-          $associatedoldfields[$oldfield['Field']] = $oldfield;
-
         $associatedoldindices = array();
         $oldindices = query('data', 'SHOW INDEX FROM `<databasename>`.`<tablename>`', array('databasename'=>$databasename, 'tablename'=>$table['tablename']));
         while ($oldindex = mysql_fetch_assoc($oldindices))
           if ($oldindex['Seq_in_index'] == 1)
             $associatedoldindices[$oldindex['Column_name']] = $oldindex;
 
-        $fields = query('meta', 'SELECT mt.tablename, mf.fieldid, mf.fieldname, mf.foreigntableid, mt.uniquefieldid, mf.type, mf.typelength, mf.typeunsigned, mf.typezerofill, mf.nullallowed FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid WHERE mf.tableid = <tableid>', array('metabasename'=>$metabasename, 'tableid'=>$table['tableid']));
+        $fields = query('meta', 'SELECT mt.tablename, mf.fieldid, mf.fieldname, mf.foreigntableid, mt.uniquefieldid, mf.nullallowed FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid WHERE mf.tableid = <tableid>', array('metabasename'=>$metabasename, 'tableid'=>$table['tableid']));
         while ($field = mysql_fetch_assoc($fields)) {
           if ($field['uniquefieldid'] != $field['fieldid']) {
-            $oldfield = $associatedoldfields[$field['fieldname']];
-            $oldtype = $oldfield['Type'].($oldfield['Null'] == 'YES' ? '' : ' not null');
-            $newtype = totaltype($field);
-            if ($oldfield) {
-              if (strcasecmp($oldtype, $newtype))
-                query('data', 'ALTER TABLE `<databasename>`.`<tablename>` MODIFY COLUMN <fieldname> <newtype> #warning WAS <oldtype>', array('databasename'=>$databasename, 'tablename'=>$field['tablename'], 'fieldname'=>$field['fieldname'], 'newtype'=>$newtype, 'oldtype'=>$oldtype));
-            }
-            else
-              query('data', 'ALTER TABLE `<databasename>`.`<tablename>` ADD COLUMN (<fieldname> <newtype>) #warning WAS <oldtype>', array('databasename'=>$databasename, 'tablename'=>$field['tablename'], 'fieldname'=>$field['fieldname'], 'newtype'=>$newtype, 'oldtype'=>$oldtype));
             if ($field['foreigntableid'] && !$associatedoldindices[$field['fieldname']])
               query('data', 'ALTER TABLE `<databasename>`.`<tablename>` ADD INDEX (<fieldname>) #warning WAS non-existent', array('databasename'=>$databasename, 'tablename'=>$field['tablename'], 'fieldname'=>$field['fieldname']));
           }
@@ -792,10 +741,10 @@
     $lines[] =
       html('td', array('class'=>'description'), '&rarr;').
       html('td', array(),
-        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'show_record' ? 'delete_record' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>join_clean(' ', 'mainsubmit', 'button'))).
-        (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>join_clean(' ', 'minorsubmit', 'button'))) : '').
+        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'show_record' ? 'delete_record' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>'mainsubmit')).
+        (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
         internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel')).
-        ($action == 'edit_record' ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_clean(' ', 'mainsubmit', 'button', 'delete'))) : '')
+        ($action == 'edit_record' ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_clean(' ', 'mainsubmit', 'delete'))) : '')
       );
 
     if (!is_null($uniquevalue)) {
