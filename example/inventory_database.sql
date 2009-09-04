@@ -1,6 +1,10 @@
 # From http://www.itc.virginia.edu/desktop/web/database/mysql_instructions.html
 # Enhanced by Squarebase
 
+DROP DATABASE IF EXISTS inventory_metabase;
+
+DROP DATABASE IF EXISTS inventory;
+
 CREATE DATABASE IF NOT EXISTS inventory;
 
 USE inventory;
