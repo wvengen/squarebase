@@ -8,6 +8,9 @@ install:
 	chmod g+w session
 	chmod a+x $(PHPFILES)
 
+inventory:
+	mysql < example/inventory.sql
+
 locales: $(NLDIR)messages.mo
 
 $(NLDIR)messages.mo: $(NLDIR)messages.po
