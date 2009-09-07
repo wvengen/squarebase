@@ -240,20 +240,6 @@
       ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename')))
       : parameter('get', 'language');
 
-    if (!$metabasename) {
-      $mbnames = array();
-      $metabases = alldatabases();
-      while ($metabase = mysql_fetch_assoc($metabases)) {
-        $mbname = $metabase['Database'];
-        if ($mbname != 'mysql') {
-          $dbs = databasenames($mbname);
-          foreach ($dbs as $db)
-            if ($db == $databasename)
-              $mbnames[] = $mbname;
-        }
-      }
-    }
-
     $presentationnames = get_presentationnames();
 
     $fields = $alltables = $primarykeyfieldname = $tableswithoutsinglevaluedprimarykey = array();
@@ -441,6 +427,25 @@
       $totalstructure[] = $header.join($tablestructure);
     }
 
+    if ($metabasename)
+      $metabase_input = html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename, 'readonly'=>'readonly', 'class'=>'readonly'));
+    else {
+      $databases = array_diff(databases_with_grant('CREATE'), array($databasename));
+      if (count($databases) == 1) {
+        $database = array_shift($databases);
+        if ($database == '*')
+          $metabase_input = html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$databasename.'_metabase', 'class'=>'notempty'));
+        else
+          $metabase_input = html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$database, 'readonly'=>'readonly', 'class'=>'readonly'));
+      }
+      else {
+        $metabase_options = array();
+        foreach ($databases as $database)
+          $metabase_options[] = html('option', array(), $database);
+        $metabase_input = html('select', array('name'=>'metabasename'), join($metabase_options));
+      }
+    }
+
     page($action, path(null, $databasename),
       $tableswithoutsinglevaluedprimarykey
       ? html('p', array(),
@@ -450,7 +455,7 @@
           html('table', array(),
             html('tr', array(),
               array(
-                html('td', array('class'=>'small'), html('label', array('for'=>'metabasename'), _('metabasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'metabasename', 'value'=>$metabasename ? $metabasename : (count($mbnames) == 1 ? $mbnames[0] : "${databasename}_metabase"), 'class'=>'notempty'))),
+                html('td', array('class'=>'small'), html('label', array('for'=>'metabasename'), _('metabasename'))).html('td', array(), $metabase_input),
                 html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
                 html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'language', 'value'=>$language, 'readonly'=>'readonly', 'class'=>'readonly')))
               )
