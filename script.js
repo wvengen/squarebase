@@ -89,6 +89,27 @@ jQuery.fn.checkform = function() {
   return this;
 }
 
+jQuery.fn.hidelogs = function() {
+  $(this).
+
+  find('.logs').
+  before('<a href="" class="togglelogs" class="ajaxified">logs</a>').
+  end().
+
+  find('.togglelogs').
+  click(
+    function() {
+      $(this).
+      next().
+      toggle();
+      return false;
+    }
+  ).
+  click();
+
+  return this;
+};
+
 jQuery.fn.ajaxsubmit = function() {
   $(this).
   closest('form').
@@ -120,6 +141,7 @@ jQuery.fn.ajaxsubmit = function() {
 
         function() {
           $(this).
+          hidelogs().
           find('.ajax').
           ajaxify();
         }
@@ -206,6 +228,8 @@ jQuery.fn.ajaxify = function() {
 
           function() {
             $(this).
+            hidelogs().
+
             find('form').
             ajaxsubmit().
 
@@ -244,7 +268,9 @@ ready(
   function() {
     $('html').
     ajaxStart(function() { $(this).addClass('ajaxbusy'); }).
-    ajaxStop(function() { $(this).removeClass('ajaxbusy'); });
+    ajaxStop(function() { $(this).removeClass('ajaxbusy'); }).
+
+    hidelogs();
 
     $('body.editrecord, body.newrecord, body.showtable, body.showdatabase').
     find('.ajax').
@@ -252,19 +278,6 @@ ready(
 
     $('form:not(.enhancedform)').
     enhance_form();
-
-    $('#logs').
-    before('<a href="" id="togglelogs" class="ajaxified">logs</a>');
-
-    $('#togglelogs').
-    click(
-      function() {
-        $('#logs').
-        toggle();
-        return false;
-      }
-    ).
-    click();
 
     $('body.formmetabasefordatabase').
     find('.insome').

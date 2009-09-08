@@ -8,11 +8,11 @@
   if ($action == 'script')
     augment_file('script.js', 'text/javascript');
 
-  addtolist('logs', 'action', $action.' '.array_show(parameter('get')));
-
   session_set_cookie_params(7 * 24 * 60 * 60);
   session_save_path('session');
   session_start();
+
+  addtolist('logs', 'action', $action, html('ul', array(), html('li', array('class'=>'resultlist'), array_show(parameter('get')))));
 
   $languagename = parameter('get', 'metabasename') && mysql_num_rows(query('meta', 'SHOW DATABASES LIKE "<metabasename>"', array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE "languages"', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;
 
@@ -91,7 +91,7 @@
   /********************************************************************************************/
 
   if ($action == 'index') {
-    $metabases = alldatabases();
+    $metabases = all_databases();
     $rows = array(html('th', array(), array(_('database'), _('metabase'), '')));
     $links = array();
     while ($metabase = mysql_fetch_assoc($metabases)) {
@@ -131,7 +131,7 @@
 
   if ($action == 'new_metabase_from_database') {
     $rows = array(html('th', array(), array(_('database'), _('tables'), '')));
-    $databases = alldatabases();
+    $databases = all_databases();
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['Database'];
       $dblist = array();
@@ -163,7 +163,7 @@
             array(
               internalreference(array('action'=>'language_for_database', 'databasename'=>$databasename), $databasename),
               $contents,
-              internalreference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop', array('class'=>'drop'))
+              has_grant('DROP', $databasename) ? internalreference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop', array('class'=>'drop')) : null
             )
           )
         );
@@ -604,7 +604,7 @@
     $rows = array(html('th', array(), 'database'));
     $databasenames = databasenames($metabasename);
 
-    $databases = alldatabases();
+    $databases = all_databases();
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['Database'];
       $rows[] =
@@ -680,7 +680,7 @@
       $rows[] =
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array(),
-            internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$table['tablename'], 'uniquefieldname'=>$table['fieldname']), $table['tablename'])
+            internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$table['tablename'], 'tablenamesingular'=>$table['singular'], 'uniquefieldname'=>$table['fieldname']), $table['tablename'])
           )
         );
     }
@@ -694,28 +694,30 @@
   /********************************************************************************************/
 
   if ($action == 'show_table') {
-    $metabasename    = parameter('get', 'metabasename');
-    $databasename    = parameter('get', 'databasename');
-    $tablename       = parameter('get', 'tablename');
-    $uniquefieldname = parameter('get', 'uniquefieldname');
-    $offset          = parameter('get', 'offset', 0);
-    $orderfieldname  = parameter('get', 'orderfieldname');
-    $orderasc        = parameter('get', 'orderasc', 'on') == 'on';
+    $metabasename      = parameter('get', 'metabasename');
+    $databasename      = parameter('get', 'databasename');
+    $tablename         = parameter('get', 'tablename');
+    $tablenamesingular = parameter('get', 'tablenamesingular');
+    $uniquefieldname   = parameter('get', 'uniquefieldname');
+    $offset            = parameter('get', 'offset', 0);
+    $orderfieldname    = parameter('get', 'orderfieldname');
+    $orderasc          = parameter('get', 'orderasc', 'on') == 'on';
 
     page($action, path($metabasename, $databasename, $tablename, $uniquefieldname),
-      list_table($metabasename, $databasename, $tablename, 0, $offset, $uniquefieldname, $orderfieldname, $orderasc, null, null, null, TRUE)
+      list_table($metabasename, $databasename, $tablename, $tablenamesingular, 0, $offset, $uniquefieldname, $orderfieldname, $orderasc, null, null, null, TRUE)
     );
   }
 
   /********************************************************************************************/
 
   if ($action == 'new_record' || $action == 'edit_record' || $action == 'show_record') {
-    $metabasename    = parameter('get', 'metabasename');
-    $databasename    = parameter('get', 'databasename');
-    $tablename       = parameter('get', 'tablename');
-    $uniquefieldname = parameter('get', 'uniquefieldname');
-    $uniquevalue     = parameter('get', 'uniquevalue');
-    $back            = parameter('get', 'back');
+    $metabasename      = parameter('get', 'metabasename');
+    $databasename      = parameter('get', 'databasename');
+    $tablename         = parameter('get', 'tablename');
+    $tablenamesingular = parameter('get', 'tablenamesingular');
+    $uniquefieldname   = parameter('get', 'uniquefieldname');
+    $uniquevalue       = parameter('get', 'uniquevalue');
+    $back              = parameter('get', 'back');
 
     $fields = fieldsforpurpose($metabasename, $tablename, 'inedit');
 
@@ -726,7 +728,7 @@
     get_presentationnames();
 
     $lines = array(
-      html('td', array('class'=>'header', 'colspan'=>2), query1field('meta', 'SELECT singular FROM `<metabasename>`.tables WHERE tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename)))
+      html('td', array('class'=>'header', 'colspan'=>2), $tablenamesingular)
     );
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
       $field['uniquefieldname'] = $uniquefieldname;
@@ -750,11 +752,11 @@
       );
 
     if (!is_null($uniquevalue)) {
-      $referringfields = query('meta', 'SELECT mt.tablename, mf.fieldname AS fieldname, mf.title AS title, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mtf ON mtf.tableid = mf.foreigntableid LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.fields mfu ON mt.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
+      $referringfields = query('meta', 'SELECT mt.tablename, mt.singular, mf.fieldname AS fieldname, mf.title AS title, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mtf ON mtf.tableid = mf.foreigntableid LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.fields mfu ON mt.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
         $lines[] =
           html('td', array('class'=>'description'), $referringfield['tablename'].html('div', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['title']))).
-          html('td', array(), list_table($metabasename, $databasename, $referringfield['tablename'], 0, 0, $referringfield['uniquefieldname'], null, TRUE, $referringfield['fieldname'], $uniquevalue, $tablename, $action != 'show_record'));
+          html('td', array(), list_table($metabasename, $databasename, $referringfield['tablename'], $referringfield['singular'], 0, 0, $referringfield['uniquefieldname'], null, TRUE, $referringfield['fieldname'], $uniquevalue, $tablename, $action != 'show_record'));
       }
     }
 
@@ -763,6 +765,7 @@
         html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('input', array('type'=>'hidden', 'name'=>'tablename', 'value'=>$tablename)).
+        html('input', array('type'=>'hidden', 'name'=>'tablenamesingular', 'value'=>$tablenamesingular)).
         html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
         html('input', array('type'=>'hidden', 'name'=>'uniquevalue', 'value'=>$uniquevalue)).
         html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back ? $back : parameter('server', 'HTTP_REFERER'))).
@@ -788,12 +791,13 @@
   /********************************************************************************************/
 
   if ($action == 'update_record' || $action == 'add_record' || $action == 'add_record_and_edit') {
-    $metabasename    = parameter('get', 'metabasename');
-    $databasename    = parameter('get', 'databasename');
-    $tablename       = parameter('get', 'tablename');
-    $uniquefieldname = parameter('get', 'uniquefieldname');
-    $uniquevalue     = parameter('get', 'uniquevalue');
-    $back            = parameter('get', 'back');
+    $metabasename      = parameter('get', 'metabasename');
+    $databasename      = parameter('get', 'databasename');
+    $tablename         = parameter('get', 'tablename');
+    $tablenamesingular = parameter('get', 'tablenamesingular');
+    $uniquefieldname   = parameter('get', 'uniquefieldname');
+    $uniquevalue       = parameter('get', 'uniquevalue');
+    $back              = parameter('get', 'back');
 
     get_presentationnames();
 
@@ -805,7 +809,7 @@
 
     $uniquevalue = insertorupdate($databasename, $tablename, $fieldnamesandvalues, $uniquefieldname, $uniquevalue);
     if ($action == 'add_record_and_edit')
-      internalredirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
+      internalredirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
 
     back();
   }

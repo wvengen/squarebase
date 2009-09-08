@@ -75,10 +75,11 @@ div.error, .problem, .warning { font-weight: bold; color: #f00; }
 
 #footer { margin-top: 0.5em; }
 #poweredby { float: right; }
-#logs { border: 0.1em solid #ccc; background-color: #eee; color: #999; white-space: nowrap; clear: both; }
-#logs .queryroot { padding-left: 2em; }
-#logs .querymeta { padding-left: 4em; }
-#logs .querydata { padding-left: 6em; }
-#logs .resultlist li:hover { white-space: pre; }
+.logs { border: 0.1em solid #ccc; background-color: #eee; color: #999; white-space: nowrap; clear: both; overflow: hidden; }
+.logs .query:hover { white-space: normal; }
+.logs .queryroot { padding-left: 1em; }
+.logs .querymeta { padding-left: 2em; }
+.logs .querydata { padding-left: 3em; }
+.logs .resultlist:hover { white-space: pre; }
 
 //css_presentation goes here

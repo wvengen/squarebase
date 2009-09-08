@@ -83,13 +83,13 @@
     $ajax = parameter('get', 'ajax');
     if ($ajax) {
       parse_str($ajax, $parameters);
-      addtolist('logs', '', 'ajax_'.$parameters['function'].': '.array_show($parameters));
+      addtolist('logs', '', 'ajax_'.$parameters['function'], array_show($parameters));
       switch ($parameters['function']) {
         case 'list_table':
-          $output = list_table($parameters['metabasename'], $parameters['databasename'], $parameters['tablename'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['orderfieldname'], $parameters['orderasc'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
+          $output = list_table($parameters['metabasename'], $parameters['databasename'], $parameters['tablename'], $parameters['tablenamesingular'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['orderfieldname'], $parameters['orderasc'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
           break;
         case 'ajax_lookup':
-          $output = ajax_lookup($parameters['metabasename'], $parameters['databasename'], $parameters['fieldname'], query1field('data', 'SELECT MAX(<foreignuniquefieldname>) FROM `<databasename>`.<foreigntablename>', array('foreigntablename'=>$parameters['foreigntablename'], 'foreignuniquefieldname'=>$parameters['foreignuniquefieldname'], 'databasename'=>$parameters['databasename'])), $parameters['presentationname'], $parameters['foreigntablename'], $parameters['foreignuniquefieldname'], $parameters['nullallowed'], $parameters['readonly']);
+          $output = ajax_lookup($parameters['metabasename'], $parameters['databasename'], $parameters['fieldname'], query1field('data', 'SELECT MAX(<foreignuniquefieldname>) FROM `<databasename>`.<foreigntablename>', array('foreigntablename'=>$parameters['foreigntablename'], 'foreignuniquefieldname'=>$parameters['foreignuniquefieldname'], 'databasename'=>$parameters['databasename'])), $parameters['presentationname'], $parameters['foreigntablename'], $parameters['foreigntablenamesingular'], $parameters['foreignuniquefieldname'], $parameters['nullallowed'], $parameters['readonly']);
           break;
       }
       page($parameters['function'], null, $output);
@@ -119,7 +119,7 @@
   function addtolist($list, $class, $text, $rest = null) {
     if (!$_SESSION[$list])
       $_SESSION[$list] = array();
-    $_SESSION[$list][] = html('li', array('class'=>$class), htmlspecialchars(preg_replace("@\r@", '\\n', $text)).$rest);
+    $_SESSION[$list][] = html('li', array('class'=>$class), preg_replace("@\r@", '\\n', $text).$rest);
   }
 
   function getlist($list) {
@@ -156,31 +156,30 @@
           $resultlist[] = html('li', array(), "&hellip; $numresults.");
           break;
         }
-        $resultlist[] = html('li', array(), array_show($resultrow));
+        $resultlist[] = html('li', array('class'=>'resultlist'), array_show($resultrow));
       }
       mysql_data_reset($result);
     }
     addtolist('logs',
       "query$metaordata",
-      '['.
-      sprintf(_('%.2f sec'), ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).
-      ', '.
-      ($errno
-      ? $errno.'='.mysql_error()
-      : (!is_null($numresults)
-        ? sprintf(ngettext('%d result', '%d results', $numresults), $numresults)
-        : sprintf(_('%d affected'), mysql_affected_rows($connection))
+      html('span', array('class'=>'query'),
+        preg_replace(
+          array('@<@' , '@>@' , '@& @'  ),
+          array('&lt;', '&gt;', '&amp; '),
+          $fullquery
         )
       ).
-      '] '.
-      preg_replace(
-        array('@<@' , '@>@' , '@& @'  ),
-        array('&lt;', '&gt;', '&amp; '),
-        $fullquery
-      ),
-      $resultlist
-      ? html('ol', array('class'=>'resultlist'), join($resultlist))
-      : null
+      ' ['.sprintf(_('%.2f sec'), ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).']',
+      ($errno
+      ? html('ul', array(), html('li', array(), $errno.'='.mysql_error()))
+      : (!is_null($numresults)
+        ? ($resultlist
+          ? html('ol', array(), join($resultlist))
+          : null
+          )
+        : html('ul', array(), html('li', array(), sprintf(_('%d affected'), mysql_affected_rows($connection))))
+        )
+      )
     );
     if (preg_match('@#warning @', $fullquery))
       addtolist('warnings', 'warning', $fullquery);
@@ -258,11 +257,11 @@
           ).
           html('div', array('id'=>'content'),
             html('ol', array('id'=>'warnings'), join(getlist('warnings'))).
-            $content
+            $content.
+            html('ol', array('class'=>'logs'), join(getlist('logs')))
           ).
           html('div', array('id'=>'footer'),
-            html('div', array('id'=>'poweredby'), externalreference('http://squarebase.org/', html('img', array('src'=>'powered_by_squarebase.png')))).
-            html('ol', array('id'=>'logs'), join(getlist('logs')))
+            html('div', array('id'=>'poweredby'), externalreference('http://squarebase.org/', html('img', array('src'=>'powered_by_squarebase.png'))))
           )
         )
       );
@@ -283,7 +282,7 @@
     return $databases;
   }
 
-  function alldatabases() {
+  function all_databases() {
     return query('root', 'SHOW DATABASES WHERE `Database` != "information_schema" AND `Database` != "mysql"');
   }
 
@@ -308,7 +307,7 @@
     );
   }
 
-  function list_table($metabasename, $databasename, $tablename, $limit, $offset, $uniquefieldname, $orderfieldname, $orderasc = TRUE, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = TRUE) {
+  function list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, $orderfieldname, $orderasc = TRUE, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = TRUE) {
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
     $header = array(html('th', array('class'=>'small'), ''));
@@ -371,7 +370,7 @@
       }
       $rows[] =
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
-          ($interactive ? html('td', array('class'=>'small'), internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), 'edit')) : '').
+          ($interactive ? html('td', array('class'=>'small'), internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), 'edit')) : '').
           join($columns)
         );
     }
@@ -386,10 +385,10 @@
     }
 
     return
-      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablename'=>$tablename, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'orderasc'=>$orderasc ? 'on' : '', 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
+      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'orderasc'=>$orderasc ? 'on' : '', 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
         ($interactive
         ? html('div', array(),
-            internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), query1field('meta', 'SELECT singular FROM `<metabasename>`.tables WHERE tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename)))).
+            internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $tablenamesingular)).
             (is_null($foreignvalue) ? '' : html('span', array('class'=>'changeslost'), _('(changes to form fields are lost)')))
           )
         : (is_null($foreignvalue) ? '' : $tablename)
@@ -433,7 +432,7 @@
 
   function fieldsforpurpose($metabasename, $tablename, $purpose) {
     return query('meta',
-      "SELECT mt.tablename, mt.singular, mt.plural, mt.tableid, mf.fieldid, mf.fieldname, mf.title, mr.presentationname, mf.foreigntableid, mf.nullallowed, mf.indesc, mf.inlist, mf.inedit, mt2.tablename AS foreigntablename, mf2.fieldname AS foreignuniquefieldname ".
+      "SELECT mt.tablename, mt.singular, mt.plural, mt.tableid, mf.fieldid, mf.fieldname, mf.title, mr.presentationname, mf.foreigntableid, mf.nullallowed, mf.indesc, mf.inlist, mf.inedit, mt2.tablename AS foreigntablename, mt2.singular AS foreigntablenamesingular, mf2.fieldname AS foreignuniquefieldname ".
       "FROM `<metabasename>`.tables mt ".
       "RIGHT JOIN `<metabasename>`.fields mf ON mf.tableid = mt.tableid ".
       "LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid ".
@@ -623,10 +622,10 @@
     $grants = all_grants();
     for (mysql_data_reset($grants); $grant = mysql_fetch_assoc($grants); ) {
       if (
-          preg_match("/^GRANT (.*?) ON (.*?) /", $grant["Grants for $_SESSION[username]@$_SESSION[host]"], $matches) &&
+          preg_match("/^GRANT (.*?) ON `?(.*?)`?\.`?(.*?)`? /", $grant["Grants for $_SESSION[username]@$_SESSION[host]"], $matches) &&
           preg_match("/(^ALL PRIVILEGES$|\b$privilege\b)/", $matches[1]) &&
-          preg_match("/^(".($databasename == '*' ? "\*" : ($databasename == '?' ? '.+?' : "`$databasename`"))."|\*)\./", $matches[2]) &&
-          preg_match("/\.(".($tablename == '*' ? "\*" : ($tablename == '?' ? '.+?' : "`$tablename`"))."|\*)$/", $matches[2])
+          ($databasename == '?' || $matches[2] == $databasename) &&
+          ($tablename == '?' || $matches[3] == $tablename)
          )
         return TRUE;
     }
@@ -639,7 +638,7 @@
     $grants = all_grants();
     for (mysql_data_reset($grants); $grant = mysql_fetch_assoc($grants); ) {
       if (
-          preg_match("/^GRANT (.*?) ON `(.*?)`\.\* /", $grant["Grants for $_SESSION[username]@$_SESSION[host]"], $matches) &&
+          preg_match("/^GRANT (.*?) ON `?(.*?)`?\.\* /", $grant["Grants for $_SESSION[username]@$_SESSION[host]"], $matches) &&
           preg_match("/(^ALL PRIVILEGES$|\b$privilege\b)/", $matches[1]) 
          )
         $databases[] = $matches[2];
