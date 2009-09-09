@@ -12,25 +12,28 @@
   session_save_path('session');
   session_start();
 
+  $_SESSION['ajaxy'] = !is_null(parameter('get', 'ajaxy')) ? parameter('get', 'ajaxy') == 'on' : (!$_SESSION ? TRUE : $_SESSION['ajaxy']);
+  $_SESSION['logsy'] = !is_null(parameter('get', 'logsy')) ? parameter('get', 'logsy') == 'on' : (!$_SESSION ? TRUE : $_SESSION['logsy']);
+
   addtolist('logs', 'action', $action, html('ul', array(), html('li', array('class'=>'resultlist'), array_show(parameter('get')))));
 
-  $languagename = parameter('get', 'metabasename') && mysql_num_rows(query('meta', 'SHOW DATABASES LIKE "<metabasename>"', array('metabasename'=>parameter('get', 'metabasename')))) && mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE "languages"', array('metabasename'=>parameter('get', 'metabasename')))) ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;
+  $languagename = !parameter('get', 'language') && parameter('get', 'metabasename') ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;
 
   set_best_locale(
     preg_replace(
       array('@\.[a-z][a-z0-9\-]*@', '@_([a-z]+)@ie'       ),
       array(''                    , '"-".strtolower("$1")'),
       join_clean(',',
-        preg_match('/^(.*?)\./', $languagename,                    $matches) ? $matches[1].';q=4.0' : null,
-        preg_match('/^(.*?)\./', parameter('get', 'language'),     $matches) ? $matches[1].';q=3.0' : null,
-        preg_match('/^(.*?)\./', parameter('session', 'language'), $matches) ? $matches[1].';q=2.0' : null,
+        preg_match('/^([^\.]+)/', parameter('get', 'language'),     $matches) ? $matches[1].';q=4.0' : null,
+        preg_match('/^([^\.]+)/', $languagename,                    $matches) ? $matches[1].';q=3.0' : null,
+        preg_match('/^([^\.]+)/', parameter('session', 'language'), $matches) ? $matches[1].';q=2.0' : null,
         parameter('server', 'HTTP_ACCEPT_LANGUAGE'),
         'en;q=0.0'
       )
     ),
     join_clean(',',
-      preg_match('/\.(.*?)$/', $languagename,                    $matches) ? $matches[1].';q=4.0' : null,
-      preg_match('/\.(.*?)$/', parameter('get', 'language'),     $matches) ? $matches[1].';q=3.0' : null,
+      preg_match('/\.(.*?)$/', parameter('get', 'language'),     $matches) ? $matches[1].';q=4.0' : null,
+      preg_match('/\.(.*?)$/', $languagename,                    $matches) ? $matches[1].';q=3.0' : null,
       preg_match('/\.(.*?)$/', parameter('session', 'language'), $matches) ? $matches[1].';q=2.0' : null,
       parameter('server', 'HTTP_ACCEPT_CHARSET'),
       '*;q=0.0'
@@ -39,12 +42,6 @@
 
   bindtextdomain('messages', './locale');
   textdomain('messages');
-
-  $ajaxy = parameter('get', 'ajaxy');
-  if (!is_null($ajaxy))
-    $_SESSION['ajaxy'] = $ajaxy == 'on';
-  elseif (!$_SESSION)
-    $_SESSION['ajaxy'] = true;
 
   /********************************************************************************************/
 
@@ -349,7 +346,7 @@
             array('strtolower(" $1")'    , ' id'   ,'"$1" && "$3" ? "$1 $3" : ("$1" || "$3" ? "$1$3" : "$0")', ''                , ' '      , ''           ),
             $fieldname
           );
-          $intablelist   = TRUE;
+          $intablelist = TRUE;
 
           $nullallowed = $field['Null'] == 'YES';
 
@@ -444,6 +441,8 @@
           $metabase_options[] = html('option', array(), $database);
         $metabase_input = html('select', array('name'=>'metabasename'), join($metabase_options));
       }
+      // prevent reading the language for a non-existent metabase in the next action
+      $metabase_input .= html('input', array('type'=>'hidden', 'name'=>'language', 'value'=>parameter('session', 'language')));
     }
 
     page($action, path(null, $databasename),

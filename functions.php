@@ -117,9 +117,11 @@
   }
 
   function addtolist($list, $class, $text, $rest = null) {
-    if (!$_SESSION[$list])
-      $_SESSION[$list] = array();
-    $_SESSION[$list][] = html('li', array('class'=>$class), preg_replace("@\r@", '\\n', $text).$rest);
+    if ($_SESSION['logsy']) {
+      if (!$_SESSION[$list])
+        $_SESSION[$list] = array();
+      $_SESSION[$list][] = html('li', array('class'=>$class), preg_replace("@\r@", '\\n', $text).$rest);
+    }
   }
 
   function getlist($list) {
@@ -148,7 +150,7 @@
 
     $errno = mysql_errno();
 
-    $numresults = preg_match('@^[^A-Z]*(EXPLAIN|SELECT|SHOW) @i', $fullquery) ? mysql_num_rows($result) : null;
+    $numresults = preg_match('@^[^A-Z]*(EXPLAIN|SELECT|SHOW) @i', $fullquery) && $result ? mysql_num_rows($result) : null;
     if (!is_null($numresults)) {
       $resultlist = array();
       while ($resultrow = mysql_fetch_assoc($result)) {
@@ -160,6 +162,14 @@
       }
       mysql_data_reset($result);
     }
+
+    $stack = debug_backtrace();
+    $traces = array();
+    foreach ($stack as $element) {
+      $filename = preg_match1('@\/(\w+)\.php$@', $element['file']);
+      $traces[] = "$filename#$element[line]&rarr;$element[function]";
+    }
+
     addtolist('logs',
       "query$metaordata",
       html('span', array('class'=>'query'),
@@ -167,9 +177,10 @@
           array('@<@' , '@>@' , '@& @'  ),
           array('&lt;', '&gt;', '&amp; '),
           $fullquery
-        )
-      ).
-      ' ['.sprintf(_('%.2f sec'), ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).']',
+        ).
+        ' ['.sprintf(_('%.2f sec'), ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).']'.
+        ' '.html('span', array('class'=>'traces'), join(' ', array_reverse($traces)))
+      ),
       ($errno
       ? html('ul', array(), html('li', array(), $errno.'='.mysql_error()))
       : (!is_null($numresults)
@@ -248,7 +259,18 @@
         html('body', array('class'=>preg_replace('@_@', '', $action)),
           html('div', array('id'=>'header'),
             html('h1', array('id'=>'title'), $title).
-            ($_SESSION['username'] ? html('div', array('id'=>'id'), join(' &ndash; ', array(get_locale(), "$_SESSION[username]@$_SESSION[host]", preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internalreference(parameter('server', 'REQUEST_URI').'&ajaxy='.($_SESSION['ajaxy'] ? 'off' : 'on'), 'ajax is '.($_SESSION['ajaxy'] ? 'on' : 'off')) : 'ajax is '.($_SESSION['ajaxy'] ? 'on' : 'off'), internalreference(array('action'=>'logout'), 'logout')))) : '').
+            ($_SESSION['username']
+            ? html('div', array('id'=>'id'),
+                join_clean(' &ndash; ',
+                  get_locale(),
+                  "$_SESSION[username]@$_SESSION[host]",
+                  preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internalreference(parameter('server', 'REQUEST_URI').'&ajaxy='.($_SESSION['ajaxy'] ? 'off' : 'on'), $_SESSION['ajaxy'] ? _('ajax is on') : _('ajax is off')) : ($_SESSION['ajaxy'] ? _('ajax is on') : _('ajax is off')),
+                  preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internalreference(parameter('server', 'REQUEST_URI').'&logsy='.($_SESSION['logsy'] ? 'off' : 'on'), $_SESSION['logsy'] ? _('logging is on') : _('logging is off')) : ($_SESSION['logsy'] ? _('logging is on') : _('logging is off')),
+                  internalreference(array('action'=>'logout'), 'logout')
+                )
+              )
+            : ''
+            ).
 
             html('div', array('id'=>'messages'),
               $error ? html('div', array('class'=>'error'), $error) : ''
@@ -258,7 +280,7 @@
           html('div', array('id'=>'content'),
             html('ol', array('id'=>'warnings'), join(getlist('warnings'))).
             $content.
-            html('ol', array('class'=>'logs'), join(getlist('logs')))
+            ($_SESSION['logsy'] ? html('ol', array('class'=>'logs'), join(getlist('logs'))) : '')
           ).
           html('div', array('id'=>'footer'),
             html('div', array('id'=>'poweredby'), externalreference('http://squarebase.org/', html('img', array('src'=>'powered_by_squarebase.png'))))
@@ -477,6 +499,7 @@
     $_SESSION['password'] = $password;
     $_SESSION['language'] = $language;
     $_SESSION['ajaxy']    = TRUE;
+    $_SESSION['logsy']    = FALSE;
   }
 
   function logout($error = null) {
