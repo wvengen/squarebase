@@ -12,8 +12,8 @@
   session_save_path('session');
   session_start();
 
-  $_SESSION['ajaxy'] = !is_null(parameter('get', 'ajaxy')) ? parameter('get', 'ajaxy') == 'on' : (!$_SESSION ? TRUE : $_SESSION['ajaxy']);
-  $_SESSION['logsy'] = !is_null(parameter('get', 'logsy')) ? parameter('get', 'logsy') == 'on' : (!$_SESSION ? TRUE : $_SESSION['logsy']);
+  $_SESSION['ajaxy'] = !is_null(parameter('get', 'ajaxy')) ? parameter('get', 'ajaxy') == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['ajaxy'] : TRUE);
+  $_SESSION['logsy'] = !is_null(parameter('get', 'logsy')) ? parameter('get', 'logsy') == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['logsy'] : FALSE);
 
   addtolist('logs', 'action', $action, html('ul', array(), html('li', array('class'=>'resultlist'), array_show(parameter('get')))));
 
@@ -46,8 +46,11 @@
   /********************************************************************************************/
 
   if ($action == 'login') {
-    $username = parameter('get', 'username', 'root');
-    $host     = parameter('get', 'host', 'localhost');
+    if ($_SESSION['timesconnected'])
+      internalredirect(array('action'=>'index'));
+
+    $username = parameter('get', 'username', array($_COOKIE['lastusername'], 'root'));
+    $host     = parameter('get', 'host', array($_COOKIE['lasthost'], 'localhost'));
     $password = parameter('get', 'password');
 
     page($action, null,
@@ -55,11 +58,11 @@
         html('table', array(),
           html('tr', array(),
             array(
-              html('td', array('class'=>'small'), html('label', array('for'=>'username'), _('username'))).html('td', array(), html('input', array('type'=>'text',     'id'=>'username', 'name'=>'username', 'value'=>$username))),
-              html('td', array('class'=>'small'), html('label', array('for'=>'host'    ), _('host'    ))).html('td', array(), html('input', array('type'=>'text',     'id'=>'host',     'name'=>'host',     'value'=>$host))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'username'), _('username'))).html('td', array(), html('input', array('type'=>'text', 'class'=>'skipfirstfocus', 'id'=>'username', 'name'=>'username', 'value'=>$username))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'host'    ), _('host'    ))).html('td', array(), html('input', array('type'=>'text', 'class'=>'skipfirstfocus', 'id'=>'host', 'name'=>'host', 'value'=>$host))),
               html('td', array('class'=>'small'), html('label', array('for'=>'password'), _('password'))).html('td', array(), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password', 'value'=>$password))),
               html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale()),
-              html('td', array('class'=>'small'), '').                                                    html('td', array(), html('input', array('type'=>'submit',                     'name'=>'action',   'value'=>'connect', 'class'=>'mainsubmit')))
+              html('td', array('class'=>'small'), '').                                                    html('td', array(), html('input', array('type'=>'submit', 'name'=>'action',   'value'=>'connect', 'class'=>'mainsubmit')))
             )
           )
         )

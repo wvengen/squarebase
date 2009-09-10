@@ -14,7 +14,7 @@
     if (!$name)
       return $array;
     $value = $array[$name];
-    return is_null($value) ? $default : str_replace("\\'", "'", $value);
+    return is_null($value) ? (is_array($default) ? array_shift(array_filter($default, 'is_not_null')) : $default) : str_replace("\\'", "'", $value);
   }
 
   function is_not_null($var) {
@@ -137,7 +137,8 @@
         logout(_('mysql module not found'));
       $connection = @mysql_connect($_SESSION['host'], $_SESSION['username'], $_SESSION['password']);
       if (mysql_errno())
-        logout(sprintf(_('problem connecting to the databasemanager: %s'), mysql_error()));
+        logout(sprintf(_('problem connecting to the databasemanager: %s').array_show(debug_backtrace()), mysql_error()));
+      $_SESSION['timesconnected'] += 1;
     }
 
     $fullquery = preg_replace(array("@'@", '@(["`])?<(\w+)>(["`])?@e'), array('"', '(is_null($arguments["$2"]) ? "NULL" : (is_numeric($arguments["$2"]) ? (int) $arguments["$2"] : "$1".mysql_escape_string($arguments["$2"])."$3"))'), $query);
@@ -498,8 +499,10 @@
     $_SESSION['host']     = $host;
     $_SESSION['password'] = $password;
     $_SESSION['language'] = $language;
-    $_SESSION['ajaxy']    = TRUE;
-    $_SESSION['logsy']    = FALSE;
+
+    $expire = time() + 365 * 24 * 60 * 60;
+    setcookie('lastusername', $username, $expire);
+    setcookie('lasthost', $host, $expire);
   }
 
   function logout($error = null) {
@@ -647,8 +650,8 @@
       if (
           preg_match("/^GRANT (.*?) ON `?(.*?)`?\.`?(.*?)`? /", $grant["Grants for $_SESSION[username]@$_SESSION[host]"], $matches) &&
           preg_match("/(^ALL PRIVILEGES$|\b$privilege\b)/", $matches[1]) &&
-          ($databasename == '?' || $matches[2] == $databasename) &&
-          ($tablename == '?' || $matches[3] == $tablename)
+          ($matches[2] == '*' || $databasename == '?' || $matches[2] == $databasename) &&
+          ($matches[3] == '*' || $tablename == '?' || $matches[3] == $tablename)
          )
         return TRUE;
     }

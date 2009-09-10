@@ -69,7 +69,7 @@ jQuery.fn.enhance_form = function() {
 
   //jquery_enhance_form_presentation goes here
 
-  find('input:enabled:not(.readonly), select:enabled:not(.readonly)').
+  find('input:enabled:not(.readonly):not(.skipfirstfocus), select:enabled:not(.readonly):not(.skipfirstfocus)').
   eq(0).
   focus();
 
