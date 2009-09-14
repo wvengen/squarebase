@@ -406,7 +406,7 @@
             html('td', array(), $fieldname).
             html('td', array(), html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))).
             html('td', array(), $field['Type']).
-            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'name'=>"$tablename:$fieldname:nullallowed_dummy", 'readonly'=>'readonly', 'disabled'=>'disabled', 'checked'=>$nullallowed ? 'checked' : null)).html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))).
+            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'name'=>"$tablename:$fieldname:_nullallowed", 'readonly'=>'readonly', 'checked'=>$nullallowed ? 'checked' : null)).html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))).
             html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions)).
             html('td', array(),
               ($fieldname == $primarykeyfieldname[$tablename]
@@ -721,11 +721,14 @@
     $uniquevalue       = parameter('get', 'uniquevalue');
     $back              = parameter('get', 'back');
 
-    $fields = fieldsforpurpose($metabasename, $tablename, 'inedit');
+    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inedit', $action == 'new_record' ? 'INSERT' : ($action == 'edit_record' ? 'UPDATE' : 'SELECT'));
 
-    $row = array();
-    if (!is_null($uniquevalue))
-      $row = query1('data', 'SELECT * FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+    if (!is_null($uniquevalue)) {
+      $fieldnames = array();
+      for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); )
+        $fieldnames[] = $field['fieldname'];
+      $row = query1('data', 'SELECT '.join(', ', $fieldnames).' FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+    }
 
     get_presentationnames();
 
@@ -733,22 +736,16 @@
       html('td', array('class'=>'header', 'colspan'=>2), $tablenamesingular)
     );
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
-      $field['uniquefieldname'] = $uniquefieldname;
-      $field['uniquevalue'] = $uniquevalue;
-      $fixedvalue = $value = parameter('get', "field:$field[fieldname]");
-      if (!$value && $row)
-        $value = $row[$field['fieldname']];
-      $cell = call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, $field, $value, $action == 'show_record' || $fixedvalue);
       $lines[] =
         html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
-        html('td', array(), $cell);
+        html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), is_null($uniquevalue) ? parameter('get', "field:$field[fieldname]") : $row[$field['fieldname']]));
     }
 
     $lines[] =
       html('td', array('class'=>'description'), '&rarr;').
       html('td', array(),
-        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'show_record' ? 'delete_record' : ($uniquevalue ? 'update_record' : 'add_record'), 'class'=>'mainsubmit')).
-        (!$uniquevalue ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
+        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'show_record' ? 'delete_record' : ($action == 'edit_record' ? 'update_record' : 'add_record'), 'class'=>'mainsubmit')).
+        (is_null($uniquevalue) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
         internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel')).
         ($action == 'edit_record' ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_clean(' ', 'mainsubmit', 'delete'))) : '')
       );
@@ -804,7 +801,7 @@
     get_presentationnames();
 
     $fieldnamesandvalues = array();
-    $fields = fieldsforpurpose($metabasename, $tablename, 'inedit');
+    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inedit', $action == 'update_record' ? 'UPDATE' : 'INSERT');
     while ($field = mysql_fetch_assoc($fields)) {
       $fieldnamesandvalues[$field['fieldname']] = call_user_func("formvalue_$field[presentationname]", $field);
     }

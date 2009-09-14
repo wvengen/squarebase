@@ -28,11 +28,11 @@ ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 
 .referrer { font-size: 0.8em; }
 input, textarea, select, option { font-size: 1em; font-family: sans-serif !important; }
-input, textarea, select { padding-left: 0.2em; }
+input, textarea, option { padding-left: 0.2em; }
 input, textarea, select { background-color: #ffe; border: 0.1em solid #999; }
 input:focus, select:focus, textarea:focus { background-color: #ffc; }
 select { height: 1.35em; }
-option { background-color: #fff; padding: 0 0 0 0.2em; }
+option { background-color: #fff; }
 input.readonly, select.readonly { border-color: #ccc; background-color: #eee; color: #999; }
 input.mainsubmit, input.minorsubmit { border: 0.15em solid #fff; border-color: #fff #999 #999 #fff; color: #33f; padding: 0 0.2em; }
 input.mainsubmit, input.minorsubmit, .cancel { margin-right: 1em; }
@@ -76,7 +76,7 @@ div.error, .problem, .warning { font-weight: bold; color: #f00; }
 
 #footer { margin-top: 0.5em; }
 #poweredby { float: right; }
-.logs { border: 0.1em solid #ccc; background-color: #eee; color: #999; white-space: nowrap; clear: both; overflow: hidden; }
+.logs { border: 0.1em solid #ccc; background-color: #eee; color: #999; white-space: normal; clear: both; }
 .logs .query:hover { white-space: normal; }
 .logs .queryroot { padding-left: 1em; }
 .logs .querymeta { padding-left: 2em; }

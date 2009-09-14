@@ -141,7 +141,7 @@
       $_SESSION['timesconnected'] += 1;
     }
 
-    $fullquery = preg_replace(array("@'@", '@(["`])?<(\w+)>(["`])?@e'), array('"', '(is_null($arguments["$2"]) ? "NULL" : (is_numeric($arguments["$2"]) ? (int) $arguments["$2"] : "$1".mysql_escape_string($arguments["$2"])."$3"))'), $query);
+    $fullquery = preg_replace('@(["`])?<(\w+)>(["`])?@e', '(is_null($arguments["$2"]) ? "NULL" : (is_numeric($arguments["$2"]) ? (int) $arguments["$2"] : "$1".mysql_escape_string($arguments["$2"])."$3"))', $query);
 
     $before = microtime();
     $result = mysql_query($fullquery);
@@ -334,7 +334,7 @@
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
     $header = array(html('th', array('class'=>'small'), ''));
-    $fields = fieldsforpurpose($metabasename, $tablename, 'inlist');
+    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inlist');
     while ($field = mysql_fetch_assoc($fields)) {
       $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
       if ($field['foreigntablename']) {
@@ -453,17 +453,21 @@
       mysql_data_seek($results, 0);
   }
 
-  function fieldsforpurpose($metabasename, $tablename, $purpose) {
+  function fieldsforpurpose($metabasename, $databasename, $tablename, $purpose, $privilege = 'SELECT') {
     return query('meta',
-      "SELECT mt.tablename, mt.singular, mt.plural, mt.tableid, mf.fieldid, mf.fieldname, mf.title, mr.presentationname, mf.foreigntableid, mf.nullallowed, mf.indesc, mf.inlist, mf.inedit, mt2.tablename AS foreigntablename, mt2.singular AS foreigntablenamesingular, mf2.fieldname AS foreignuniquefieldname ".
-      "FROM `<metabasename>`.tables mt ".
-      "RIGHT JOIN `<metabasename>`.fields mf ON mf.tableid = mt.tableid ".
-      "LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid ".
-      "LEFT JOIN `<metabasename>`.tables mt2 ON mt2.tableid = mf.foreigntableid ".
-      "LEFT JOIN `<metabasename>`.fields mf2 ON mf2.fieldid = mt2.uniquefieldid ".
-      "WHERE mt.tablename = '<tablename>' AND mf.<purpose> ".
-      "ORDER BY mf.fieldid",
-      array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'purpose'=>$purpose)
+      'SELECT mt.tablename, mt.singular, mt.plural, mt.tableid, mf.fieldid, mf.fieldname, mf.title, mr.presentationname, mf.foreigntableid, mf.nullallowed, mf.indesc, mf.inlist, mf.inedit, mt2.tablename AS foreigntablename, mt2.singular AS foreigntablenamesingular, mf2.fieldname AS foreignuniquefieldname '.
+      'FROM `<metabasename>`.tables mt '.
+      'RIGHT JOIN `<metabasename>`.fields mf ON mf.tableid = mt.tableid '.
+      'LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid '.
+      'LEFT JOIN `<metabasename>`.tables mt2 ON mt2.tableid = mf.foreigntableid '.
+      'LEFT JOIN `<metabasename>`.fields mf2 ON mf2.fieldid = mt2.uniquefieldid '.
+      'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.PRIVILEGE_TYPE = "<privilege>" AND up.GRANTEE = "\'<username>\'@\'<host>\'" '.
+      'LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp ON sp.PRIVILEGE_TYPE = "<privilege>" AND sp.GRANTEE = "\'<username>\'@\'<host>\'" AND sp.TABLE_SCHEMA = "<databasename>" '.
+      'LEFT JOIN INFORMATION_SCHEMA.TABLE_PRIVILEGES  tp ON tp.PRIVILEGE_TYPE = "<privilege>" AND tp.GRANTEE = "\'<username>\'@\'<host>\'" AND tp.TABLE_SCHEMA = "<databasename>" AND tp.TABLE_NAME = mt.tablename '.
+      'LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES cp ON cp.PRIVILEGE_TYPE = "<privilege>" AND cp.GRANTEE = "\'<username>\'@\'<host>\'" AND cp.TABLE_SCHEMA = "<databasename>" AND cp.TABLE_NAME = mt.tablename AND cp.COLUMN_NAME = mf.fieldname '.
+      'WHERE mt.tablename = "<tablename>" AND mf.<purpose> AND (up.PRIVILEGE_TYPE IS NOT NULL OR sp.PRIVILEGE_TYPE IS NOT NULL OR tp.PRIVILEGE_TYPE IS NOT NULL OR cp.PRIVILEGE_TYPE IS NOT NULL) '.
+      'ORDER BY mf.fieldid',
+      array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'purpose'=>$purpose, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'], 'privilege'=>$privilege)
     );
   }
 
@@ -471,7 +475,7 @@
     static $descriptors = array();
     if (!$descriptors[$tablename]) {
       $arguments = $joins = array();
-      $fields = fieldsforpurpose($metabasename, $tablename, 'indesc');
+      $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'indesc');
       while ($field = mysql_fetch_assoc($fields)) {
         $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
         if ($field['foreigntablename'] && !in_array($field['foreigntablename'], $stack)) {
