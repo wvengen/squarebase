@@ -461,10 +461,10 @@
       'LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid '.
       'LEFT JOIN `<metabasename>`.tables mt2 ON mt2.tableid = mf.foreigntableid '.
       'LEFT JOIN `<metabasename>`.fields mf2 ON mf2.fieldid = mt2.uniquefieldid '.
-      'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.PRIVILEGE_TYPE = "<privilege>" AND up.GRANTEE = "\'<username>\'@\'<host>\'" '.
-      'LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp ON sp.PRIVILEGE_TYPE = "<privilege>" AND sp.GRANTEE = "\'<username>\'@\'<host>\'" AND sp.TABLE_SCHEMA = "<databasename>" '.
-      'LEFT JOIN INFORMATION_SCHEMA.TABLE_PRIVILEGES  tp ON tp.PRIVILEGE_TYPE = "<privilege>" AND tp.GRANTEE = "\'<username>\'@\'<host>\'" AND tp.TABLE_SCHEMA = "<databasename>" AND tp.TABLE_NAME = mt.tablename '.
-      'LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES cp ON cp.PRIVILEGE_TYPE = "<privilege>" AND cp.GRANTEE = "\'<username>\'@\'<host>\'" AND cp.TABLE_SCHEMA = "<databasename>" AND cp.TABLE_NAME = mt.tablename AND cp.COLUMN_NAME = mf.fieldname '.
+      'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.PRIVILEGE_TYPE = "<privilege>" AND (up.GRANTEE = "\'<username>\'@\'<host>\'" OR up.GRANTEE = "\'<username>\'@\'%\'") '.
+      'LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp ON sp.PRIVILEGE_TYPE = "<privilege>" AND (sp.GRANTEE = "\'<username>\'@\'<host>\'" OR sp.GRANTEE = "\'<username>\'@\'%\'") AND sp.TABLE_SCHEMA = "<databasename>" '.
+      'LEFT JOIN INFORMATION_SCHEMA.TABLE_PRIVILEGES  tp ON tp.PRIVILEGE_TYPE = "<privilege>" AND (tp.GRANTEE = "\'<username>\'@\'<host>\'" OR tp.GRANTEE = "\'<username>\'@\'%\'") AND tp.TABLE_SCHEMA = "<databasename>" AND tp.TABLE_NAME = mt.tablename '.
+      'LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES cp ON cp.PRIVILEGE_TYPE = "<privilege>" AND (cp.GRANTEE = "\'<username>\'@\'<host>\'" OR cp.GRANTEE = "\'<username>\'@\'%\'") AND cp.TABLE_SCHEMA = "<databasename>" AND cp.TABLE_NAME = mt.tablename AND cp.COLUMN_NAME = mf.fieldname '.
       'WHERE mt.tablename = "<tablename>" AND mf.<purpose> AND (up.PRIVILEGE_TYPE IS NOT NULL OR sp.PRIVILEGE_TYPE IS NOT NULL OR tp.PRIVILEGE_TYPE IS NOT NULL OR cp.PRIVILEGE_TYPE IS NOT NULL) '.
       'ORDER BY mf.fieldid',
       array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'purpose'=>$purpose, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'], 'privilege'=>$privilege)
