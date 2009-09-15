@@ -1,12 +1,12 @@
 <?php
   function probability_url($field) {
-    if (!preg_match('@^(var)?char\b@', $field['Type']))
+    if (!preg_match('@^(var)?char\b@', $field['column_type']))
       return 0;
-    $texts = query('data', "SELECT $field[Field] FROM `$field[Database]`.$field[Table] WHERE $field[Field] IS NOT NULL LIMIT 10");
+    $texts = query('data', "SELECT $field[column_name] FROM `$field[table_schema]`.`$field[table_name]` WHERE $field[column_name] IS NOT NULL LIMIT 10");
     if (mysql_num_rows($texts) == 0)
       return 0;
     while ($text = mysql_fetch_assoc($texts)) {
-      if (!preg_match('@^https?://@', $text[$field['Field']]))
+      if (!preg_match('@^https?://@', $text[$field['column_name']]))
         return 0;
     }
     return 0.6;

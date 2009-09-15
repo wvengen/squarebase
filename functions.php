@@ -207,17 +207,20 @@
       $keynr = preg_match1('@for key (\d+)@', $error);
       $warning = "tablename=$tablename, keyvalues=$keyvalues, keynr=$keynr, $error: $fullquery";
       if ($tablename && $keynr) {
+        $databasename = preg_match1('@^INSERT INTO `(.*?)`@', $fullquery);
+        $tablename    = preg_match1('@^INSERT INTO `.*?`\.`(.*?)`@', $fullquery);
         $keyfields = array();
-        $keys = query($metaordata, 'SHOW INDEX FROM `<tablename>`', array('tablename'=>$tablename));
+        $keys = query($metaordata, 'SELECT seq_in_index, column_name FROM INFORMATION_SCHEMA.STATISTICS WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$databasename, 'tablename'=>$tablename));
         while ($key = mysql_fetch_assoc($keys)) {
-          if ($key['Seq_in_index'] == 1)
+          if ($key['seq_in_index'] == 1)
             $keynr--;
           if ($keynr < 0)
             break;
           if ($keynr == 0)
-            $keyfields[] = $key['Column_name'];
+            $keyfields[] = $key['column_name'];
         }
-        $warning = sprintf(_('%s with %s = %s already exists'), ucfirst(preg_match1('@\.(.*)@', $tablename)), join(', ', $keyfields), $keyvalues);
+
+        $warning = sprintf(_('%s with %s = %s already exists'), ucfirst($tablename), join(', ', $keyfields), $keyvalues);
       }
       addtolist('warnings', 'warning', $warning);
       return null;
@@ -296,7 +299,7 @@
   }
 
   function databasenames($metabasename) {
-    if (mysql_num_rows(query('meta', 'SHOW TABLES FROM `<metabasename>` LIKE \'databases\'', array('metabasename'=>$metabasename))) == 0)
+    if (mysql_num_rows(query('meta', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<metabasename>" AND table_name LIKE "databases"', array('metabasename'=>$metabasename))) == 0)
       return array();
     $databases = array();
     $results = query('meta', 'SELECT databasename FROM `<metabasename>`.`databases`', array('metabasename'=>$metabasename));
@@ -306,7 +309,7 @@
   }
 
   function all_databases() {
-    return query('root', 'SHOW DATABASES WHERE `Database` != "information_schema" AND `Database` != "mysql"');
+    return query('root', 'SELECT schema_name FROM INFORMATION_SCHEMA.SCHEMATA WHERE schema_name NOT IN ("information_schema", "mysql")');
   }
 
   function path($metabasename, $databasename = null, $tablename = null, $uniquefieldname = null, $uniquevalue = null) {
@@ -461,11 +464,11 @@
       'LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid '.
       'LEFT JOIN `<metabasename>`.tables mt2 ON mt2.tableid = mf.foreigntableid '.
       'LEFT JOIN `<metabasename>`.fields mf2 ON mf2.fieldid = mt2.uniquefieldid '.
-      'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.PRIVILEGE_TYPE = "<privilege>" AND (up.GRANTEE = "\'<username>\'@\'<host>\'" OR up.GRANTEE = "\'<username>\'@\'%\'") '.
-      'LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp ON sp.PRIVILEGE_TYPE = "<privilege>" AND (sp.GRANTEE = "\'<username>\'@\'<host>\'" OR sp.GRANTEE = "\'<username>\'@\'%\'") AND sp.TABLE_SCHEMA = "<databasename>" '.
-      'LEFT JOIN INFORMATION_SCHEMA.TABLE_PRIVILEGES  tp ON tp.PRIVILEGE_TYPE = "<privilege>" AND (tp.GRANTEE = "\'<username>\'@\'<host>\'" OR tp.GRANTEE = "\'<username>\'@\'%\'") AND tp.TABLE_SCHEMA = "<databasename>" AND tp.TABLE_NAME = mt.tablename '.
-      'LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES cp ON cp.PRIVILEGE_TYPE = "<privilege>" AND (cp.GRANTEE = "\'<username>\'@\'<host>\'" OR cp.GRANTEE = "\'<username>\'@\'%\'") AND cp.TABLE_SCHEMA = "<databasename>" AND cp.TABLE_NAME = mt.tablename AND cp.COLUMN_NAME = mf.fieldname '.
-      'WHERE mt.tablename = "<tablename>" AND mf.<purpose> AND (up.PRIVILEGE_TYPE IS NOT NULL OR sp.PRIVILEGE_TYPE IS NOT NULL OR tp.PRIVILEGE_TYPE IS NOT NULL OR cp.PRIVILEGE_TYPE IS NOT NULL) '.
+      'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
+      'LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp ON sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND sp.table_schema = "<databasename>" '.
+      'LEFT JOIN INFORMATION_SCHEMA.TABLE_PRIVILEGES  tp ON tp.privilege_type = "<privilege>" AND tp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND tp.table_schema = "<databasename>" AND tp.table_name = mt.tablename '.
+      'LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES cp ON cp.privilege_type = "<privilege>" AND cp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND cp.table_schema = "<databasename>" AND cp.table_name = mt.tablename AND cp.column_name = mf.fieldname '.
+      'WHERE mt.tablename = "<tablename>" AND mf.<purpose> AND (up.privilege_type IS NOT NULL OR sp.privilege_type IS NOT NULL OR tp.privilege_type IS NOT NULL OR cp.privilege_type IS NOT NULL) '.
       'ORDER BY mf.fieldid',
       array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'purpose'=>$purpose, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'], 'privilege'=>$privilege)
     );
@@ -638,40 +641,38 @@
     return html('select', array('id'=>$name, 'name'=>$name), join($localeoptions));
   }
 
-  function all_grants() {
-    static $grants = null;
-    if (is_null($grants))
-      $grants = query('top', 'SHOW GRANTS');
-    return $grants;
-  }
-
-  function has_grant($privilege, $databasename, $tablename = '*') {
+  function has_grant($privilege, $databasename, $tablename = '*', $fieldname = '*') {
     //for privilege see http://dev.mysql.com/doc/refman/5.0/en/privileges-provided.html
     //$databasename == '*' means privilege on all databases
     //$databasename == '?' means privilege on at least one database
-    $grants = all_grants();
-    for (mysql_data_reset($grants); $grant = mysql_fetch_assoc($grants); ) {
-      if (
-          preg_match("/^GRANT (.*?) ON `?(.*?)`?\.`?(.*?)`? /", $grant["Grants for $_SESSION[username]@$_SESSION[host]"], $matches) &&
-          preg_match("/(^ALL PRIVILEGES$|\b$privilege\b)/", $matches[1]) &&
-          ($matches[2] == '*' || $databasename == '?' || $matches[2] == $databasename) &&
-          ($matches[3] == '*' || $tablename == '?' || $matches[3] == $tablename)
-         )
-        return TRUE;
-    }
-    return FALSE;
+    return mysql_num_rows(
+      query('meta',
+        'SELECT 1 '.
+        'FROM INFORMATION_SCHEMA.SCHEMATA sc '.
+        'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
+        ($databasename == '*' ? '' : 'LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp ON sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.($databasename == '?' ? '' : 'AND sp.table_schema = "<databasename>" ')).
+        ($tablename    == '*' ? '' : 'LEFT JOIN INFORMATION_SCHEMA.TABLE_PRIVILEGES  tp ON tp.privilege_type = "<privilege>" AND tp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND tp.table_schema = "<databasename>" '.($tablename == '?' ? '' : 'AND tp.table_name = "<tablename>" ')).
+        ($fieldname    == '*' ? '' : 'LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES cp ON cp.privilege_type = "<privilege>" AND cp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND cp.table_schema = "<databasename>" AND cp.table_name = "<tablename>"'.($fieldname == '?' ? ' AND cp.column_name = "<fieldname>" ' : '')).
+        'WHERE '.($databasename == '?' || $databasename == '*' ? '' : 'sc.schema_name = "<databasename>" AND ').'(up.privilege_type IS NOT NULL OR sp.privilege_type IS NOT NULL '.($tablename == '*' ? '' : 'OR tp.privilege_type IS NOT NULL ').($fieldname == '*' ? '' : 'OR cp.privilege_type IS NOT NULL').')',
+        array('databasename'=>$databasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'], 'privilege'=>$privilege)
+      )
+    ) > 0;
   }
 
   function databases_with_grant($privilege) {
     //for privilege see http://dev.mysql.com/doc/refman/5.0/en/privileges-provided.html
+    $grants = query('meta',
+      'SELECT up.privilege_type, schema_name '.
+      'FROM INFORMATION_SCHEMA.SCHEMATA sc '.
+      'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
+      'LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp ON sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND sp.table_schema = sc.schema_name',
+      array('username'=>$_SESSION['username'], 'host'=>$_SESSION['host'], 'privilege'=>$privilege)
+    );
     $databases = array();
-    $grants = all_grants();
     for (mysql_data_reset($grants); $grant = mysql_fetch_assoc($grants); ) {
-      if (
-          preg_match("/^GRANT (.*?) ON `?(.*?)`?\.\* /", $grant["Grants for $_SESSION[username]@$_SESSION[host]"], $matches) &&
-          preg_match("/(^ALL PRIVILEGES$|\b$privilege\b)/", $matches[1]) 
-         )
-        $databases[] = $matches[2];
+      if ($grant['privilege_type'] == $privilege)
+        return array('*');
+      $databases[] = $grant['schema_name'];
     }
     return $databases;
   }

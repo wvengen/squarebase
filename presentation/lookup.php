@@ -22,11 +22,11 @@
   }
 
   function probability_lookup($field) {
-    return preg_match('@^(int|integer)\b@', $field['Type']) && linkedtable_lookup($field['Table'], $field['Field'], $field['Alltables'], $field['Primarykeyfieldname']) ? 0.6 : 0;
+    return preg_match('@^(int|integer)\b@', $field['column_type']) && linkedtable_lookup($field['table_name'], $field['column_name'], $field['alltables'], $field['primarykeyfieldname']) ? 0.6 : 0;
   }
 
-  function in_desc_lookup($field) { return $field['FieldNr'] < 5 ? 1 : 0.9; }
-  function in_list_lookup($field) { return $field['FieldNr'] < 5 ? 1 : 0.9; }
+  function in_desc_lookup($field) { return $field['fieldnr'] < 5 ? 1 : 0.9; }
+  function in_list_lookup($field) { return $field['fieldnr'] < 5 ? 1 : 0.9; }
   function in_edit_lookup($field) { return 1; }
 
   function is_sortable_lookup() { return true; }

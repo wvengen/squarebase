@@ -1,6 +1,6 @@
 <?php
   function probability_date($field) {
-    return preg_match('@^date\b@', $field['Type']) ? 0.5 : 0;
+    return preg_match('@^date\b@', $field['column_type']) ? 0.5 : 0;
   }
 
   function in_desc_date($field) { return 0; }

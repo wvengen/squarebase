@@ -95,7 +95,7 @@
     $rows = array(html('th', array(), array(_('database'), _('metabase'), '')));
     $links = array();
     while ($metabase = mysql_fetch_assoc($metabases)) {
-      $metabasename = $metabase['Database'];
+      $metabasename = $metabase['schema_name'];
       $databasenames = databasenames($metabasename);
       foreach ($databasenames as $databasename) {
         $link = array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename);
@@ -133,7 +133,7 @@
     $rows = array(html('th', array(), array(_('database'), _('tables'), '')));
     $databases = all_databases();
     while ($database = mysql_fetch_assoc($databases)) {
-      $databasename = $database['Database'];
+      $databasename = $database['schema_name'];
       $dblist = array();
       $dbs = databasenames($databasename);
       if ($dbs) {
@@ -143,11 +143,11 @@
         $contents = html('ul', array('class'=>'compact'), html('li', array(), $dblist));
       }
       else {
-        $tables = query('data', 'SHOW TABLES FROM `<databasename>`', array('databasename'=>$databasename));
+        $tables = query('data', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
         if ($tables) {
           $tablelist = array();
           while ($table = mysql_fetch_assoc($tables)) {
-            $tablelist[] = $table["Tables_in_$databasename"];
+            $tablelist[] = $table["table_name"];
           }
           $fulllist = null;
           if (count($tablelist) > 5) {
@@ -163,7 +163,7 @@
             array(
               internalreference(array('action'=>'language_for_database', 'databasename'=>$databasename), $databasename),
               $contents,
-              has_grant('DROP', $databasename) ? internalreference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop', array('class'=>'drop')) : null
+              has_grant('DROP', $databasename) ? internalreference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop', array('class'=>'drop')) : ''
             )
           )
         );
@@ -203,11 +203,11 @@
   if ($action == 'language_for_database') {
     $databasename = parameter('get', 'databasename');
 
-    $tables = query('data', 'SHOW TABLES FROM `<databasename>`', array('databasename'=>$databasename));
+    $tables = query('data', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
     if ($tables) {
       $tablelist = array();
       while ($table = mysql_fetch_assoc($tables)) {
-        $tablelist[] = $table["Tables_in_$databasename"];
+        $tablelist[] = $table["table_name"];
       }
       $tables = join(', ', $tablelist);
     }
@@ -243,22 +243,18 @@
     $presentationnames = get_presentationnames();
 
     $fields = $alltables = $primarykeyfieldname = $tableswithoutsinglevaluedprimarykey = array();
-    $tables = query('data', 'SHOW TABLES FROM `<databasename>`', array('databasename'=>$databasename));
+    $tables = query('data', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
     while ($table = mysql_fetch_assoc($tables)) {
-      $tablename = $table["Tables_in_$databasename"];
+      $tablename = $table["table_name"];
 
       $alltables[] = $tablename;
 
       $allprimarykeyfieldnames = array();
-      $fields[$tablename] = query('data', 'SHOW COLUMNS FROM `<databasename>`.`<tablename>`', array('databasename'=>$databasename, 'tablename'=>$tablename));
+      $fields[$tablename] = query('data', 'SELECT table_schema, table_name, column_name, column_key, column_type, is_nullable, extra FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$databasename, 'tablename'=>$tablename));
       while ($field = mysql_fetch_assoc($fields[$tablename])) {
-        $fieldname = $field['Field'];
-        if ($field['Key'] == 'PRI')
-          $allprimarykeyfieldnames[] = $field['Field'];
-
-        $typeinfo = $field['Type'];
-        list($typeinfo, $type          ) = preg_delete('@^(\w+) *@',     $typeinfo);
-        list($typeinfo, $typelength    ) = preg_delete('@^\((\d+)\) *@', $typeinfo);
+        $fieldname = $field['column_name'];
+        if ($field['column_key'] == 'PRI')
+          $allprimarykeyfieldnames[] = $field['column_name'];
       }
       if (count($allprimarykeyfieldnames) == 1)
         $primarykeyfieldname[$tablename] = $allprimarykeyfieldnames[0];
@@ -277,7 +273,7 @@
 
     $totalstructure = array();
     for (mysql_data_reset($tables); $table = mysql_fetch_assoc($tables); ) {
-      $tablename = $table["Tables_in_$databasename"];
+      $tablename = $table["table_name"];
       $plural = $tablename;
       $singular = singularize_noun($plural);
 
@@ -285,19 +281,17 @@
       $fieldextra = array();
       $fieldnr = 0;
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
-        $fieldname = $field['Field'];
+        $fieldname = $field['column_name'];
         $fieldextra[$fieldname] = array();
 
         $augmentedfield =
           array_merge(
             $field,
             array(
-              'Database'=>$databasename,
-              'Table'=>$tablename,
-              'Alltables'=>$alltables,
-              'Primarykeyfieldname'=>$primarykeyfieldname,
-              'FieldNr'=>$fieldnr++,
-              'NumFields'=>mysql_num_rows($fields[$tablename])
+              'alltables'=>$alltables,
+              'primarykeyfieldname'=>$primarykeyfieldname,
+              'fieldfr'=>$fieldnr++,
+              'numfields'=>mysql_num_rows($fields[$tablename])
             )
           );
         $bestpresentationname = null;
@@ -325,7 +319,7 @@
 
       $tablestructure = array();
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
-        $fieldname = $field['Field'];
+        $fieldname = $field['column_name'];
 
         $originals = $metabasename ? query('meta', 'SELECT mt.singular, mt.plural, mt.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
         if ($originals) {
@@ -340,8 +334,6 @@
           $inedit           = $original['inedit'];
           $singular         = $original['singular'];
           $plural           = $original['plural'];
-
-          $typeinfo = '';
         }
         else {
           $title = preg_replace(
@@ -351,7 +343,7 @@
           );
           $intablelist = TRUE;
 
-          $nullallowed = $field['Null'] == 'YES';
+          $nullallowed = $field['is_nullable'] == 'YES';
 
           $presentationname = $fieldextra[$fieldname]['presentationname'];
           $linkedtable = $fieldextra[$fieldname]['linkedtable'];
@@ -383,7 +375,6 @@
           $zerooptions[] = html('option', array('value'=>$onepresentationname, 'selected'=>$onepresentationname == $presentationname ? 'selected' : null), $onepresentationname);
         $presentationnameoptions = html('optgroup', array(), join($positiveoptions)).html('optgroup', array('label'=>'------------------------'), join($zerooptions));
 
-        $issimpletype = preg_match('@^(tinyint|smallint|mediumint|int|integer|bigint|char|varchar|date|datetime)$@', $type);
         $tablestructure[] =
           html('tr', array('class'=>'list'),
             ($tablestructure
@@ -405,13 +396,13 @@
             ).
             html('td', array(), $fieldname).
             html('td', array(), html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))).
-            html('td', array(), $field['Type']).
+            html('td', array(), $field['column_type']).
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'name'=>"$tablename:$fieldname:_nullallowed", 'readonly'=>'readonly', 'checked'=>$nullallowed ? 'checked' : null)).html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))).
             html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions)).
             html('td', array(),
               ($fieldname == $primarykeyfieldname[$tablename]
               ? _('primary').html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$fieldname))
-              : ($issimpletype
+              : (preg_match('@^(tinyint|smallint|mediumint|int|integer|bigint|char|varchar|date|datetime)\b@', $field['column_type'])
                 ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename", 'class'=>'foreigntablename'),
                     join($tableoptions)
                   )
@@ -554,22 +545,22 @@
     foreach ($presentationnames as $presentationname)
       $presentationids[$presentationname] = insertorupdate($metabasename, 'presentations', array('presentationname'=>$presentationname));
 
-    $tables = query('data', 'SHOW TABLES FROM `<databasename>`', array('databasename'=>$databasename));
+    $tables = query('data', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
     $tableids = array();
     while ($table = mysql_fetch_assoc($tables)) {
-      $tablename = $table["Tables_in_$databasename"];
+      $tablename = $table["table_name"];
       $tableids[$tablename] = insertorupdate($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>parameter('get', "$tablename:singular"), 'plural'=>parameter('get', "$tablename:plural"), 'intablelist'=>parameter('get', "$tablename:intablelist") == 'on'));
     }
 
     $errors = array();
     for (mysql_data_reset($tables); $table = mysql_fetch_assoc($tables); ) {
-      $tablename = $table["Tables_in_$databasename"];
+      $tablename = $table["table_name"];
       $tableid = $tableids[$tablename];
 
       $descs = $sorts = $lists = $edits = 0;
-      $fields = query('data', 'SHOW COLUMNS FROM `<databasename>`.`<tablename>`', array('databasename'=>$databasename, 'tablename'=>$tablename));
+      $fields = query('data', 'SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$databasename, 'tablename'=>$tablename));
       while ($field = mysql_fetch_assoc($fields)) {
-        $fieldname = $field['Field'];
+        $fieldname = $field['column_name'];
 
         $foreigntablename = parameter('get', "$tablename:$fieldname:foreigntablename");
 
@@ -608,7 +599,7 @@
 
     $databases = all_databases();
     while ($database = mysql_fetch_assoc($databases)) {
-      $databasename = $database['Database'];
+      $databasename = $database['schema_name'];
       $rows[] =
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array(),
@@ -653,10 +644,10 @@
           error(sprintf(_('table %s has no single valued primary key'), $table['tablename']));
 
         $associatedoldindices = array();
-        $oldindices = query('data', 'SHOW INDEX FROM `<databasename>`.`<tablename>`', array('databasename'=>$databasename, 'tablename'=>$table['tablename']));
+        $oldindices = query($metaordata, 'SELECT seq_in_index, column_name FROM INFORMATION_SCHEMA.STATISTICS WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$databasename, 'tablename'=>$table['tablename']));
         while ($oldindex = mysql_fetch_assoc($oldindices))
-          if ($oldindex['Seq_in_index'] == 1)
-            $associatedoldindices[$oldindex['Column_name']] = $oldindex;
+          if ($oldindex['seq_in_index'] == 1)
+            $associatedoldindices[$oldindex['column_name']] = $oldindex;
 
         $fields = query('meta', 'SELECT mt.tablename, mf.fieldid, mf.fieldname, mf.foreigntableid, mt.uniquefieldid, mf.nullallowed FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid WHERE mf.tableid = <tableid>', array('metabasename'=>$metabasename, 'tableid'=>$table['tableid']));
         while ($field = mysql_fetch_assoc($fields)) {

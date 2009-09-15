@@ -15,7 +15,7 @@
     global $currencies;
     if (!probability_int($field) && !probability_float($field))
       return 0;
-    if (preg_match('@('.join('|',array_keys($currencies)).')@', $field['Field']))
+    if (preg_match('@('.join('|',array_keys($currencies)).')@', $field['column_name']))
       return 0.5;
     return 0.2;
   }

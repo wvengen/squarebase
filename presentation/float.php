@@ -1,7 +1,7 @@
 <?php
   function probability_float($field) {
     // probability is lower than int to get it precedence with zero digits
-    return preg_match('@^(real|double|float|decimal|numeric)\b@', $field['Type']) ? 0.3 : 0;
+    return preg_match('@^(real|double|float|decimal|numeric)\b@', $field['column_type']) ? 0.3 : 0;
   }
 
   function in_desc_float($field) { return 0; }

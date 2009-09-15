@@ -1,6 +1,6 @@
 <?php
   function probability_text($field) {
-    return preg_match('@^(tiny||medium|long)text\b@', $field['Type']) ? 0.5 : 0;
+    return preg_match('@^(tiny||medium|long)text\b@', $field['column_type']) ? 0.5 : 0;
   }
 
   function in_desc_text($field) { return 0; }
