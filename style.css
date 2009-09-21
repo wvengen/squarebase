@@ -28,17 +28,21 @@ ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 
 .referrer { font-size: 0.8em; }
 input, textarea, select, option { font-size: 1em; font-family: sans-serif !important; }
-input, textarea, option { padding-left: 0.2em; }
+input, textarea, option { padding: 0 0.2em; }
 input, textarea, select { background-color: #ffe; border: 0.1em solid #999; }
 input:focus, select:focus, textarea:focus { background-color: #ffc; }
 select { height: 1.35em; }
-option { background-color: #fff; }
+optgroup { color: #666; background-color: #ddd; font-size: x-small; text-align: center; font-style: normal; }
+option { color: #000; background-color: #fff; font-size: medium; text-align: left; }
 input.readonly, select.readonly { border-color: #ccc; background-color: #eee; color: #999; }
+ul.minimal { margin: 0; padding: 0; }
+ul.minimal li { list-style-type: none; }
+ul.minimal li .radio { margin-right: 0.3em; }
 input.mainsubmit, input.minorsubmit { border: 0.15em solid #fff; border-color: #fff #999 #999 #fff; color: #33f; padding: 0 0.2em; }
 input.mainsubmit, input.minorsubmit, .cancel { margin-right: 1em; }
 input.mainsubmit:hover, input.minorsubmit:hover { background-color: #090 !important; color: #fff; }
-.cancel { padding: 0.1em 0.5em; }
-input.mainsubmit.delete:hover, .cancel:hover, .close:hover, .drop:hover { background-color: #f00 !important; color: #fff !important; }
+.cancel, .forget { padding: 0.1em 0.5em; }
+input.mainsubmit.delete:hover, .cancel:hover, .close:hover, .drop:hover, .forget:hover { background-color: #f00 !important; color: #fff !important; }
 input.mainsubmit.delete { margin-left: 5em; }
 
 /* a.ajaxified, input.ajaxified { color: #363; } */
@@ -76,11 +80,14 @@ div.error, .problem, .warning { font-weight: bold; color: #f00; }
 
 #footer { margin-top: 0.5em; }
 #poweredby { float: right; }
-.logs { border: 0.1em solid #ccc; background-color: #eee; color: #999; white-space: normal; clear: both; }
-.logs .query:hover { white-space: normal; }
+.logs { border: 0.1em solid #ccc; background-color: #eee; color: #999; clear: both; white-space: normal; }
+.logs>li { margin-bottom: 0.5em; }
+.logs ol { padding: 0; margin-left: 1em; }
 .logs .queryroot { padding-left: 1em; }
 .logs .querymeta { padding-left: 2em; }
 .logs .querydata { padding-left: 3em; }
-.logs .resultlist:hover { white-space: pre; }
+.logs .arrayshow { margin-left: 1em; }
+.logs .arrayshow:hover { white-space: pre; }
+.logs a { color: #99e; }
 
 //css_presentation goes here

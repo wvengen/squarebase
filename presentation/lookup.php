@@ -74,6 +74,6 @@
   
   function css_lookup() {
     return 
-      ".lookup { width: 20em; }\n";
+      ".lookup { width: 20.35em; }\n";
   }
 ?>

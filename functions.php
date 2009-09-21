@@ -180,6 +180,7 @@
           $fullquery
         ).
         ' ['.sprintf(_('%.2f sec'), ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).']'.
+        ' '.internalreference(array('action'=>'explain_query', 'query'=>$fullquery), _('explain')).
         ' '.html('span', array('class'=>'traces'), join(' ', array_reverse($traces)))
       ),
       ($errno
@@ -336,7 +337,8 @@
   function list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, $orderfieldname, $orderasc = TRUE, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = TRUE) {
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
-    $header = array(html('th', array('class'=>'small'), ''));
+    $is_editable = has_grant('UPDATE', $databasename, $tablename, '?');
+    $header = $is_editable ? array(html('th', array('class'=>'small'), '')) : array();
     $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inlist');
     while ($field = mysql_fetch_assoc($fields)) {
       $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
@@ -360,7 +362,7 @@
           !is_null($foreignvalue) || !call_user_func("is_sortable_$field[presentationname]")
           ? $field['title']
           : internalreference(
-              array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$field['fieldname'], 'orderasc'=>$field['fieldname'] == $orderfieldname ? ($orderasc ? '' : 'on') : 'on'),
+              array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$field['fieldname'], 'orderasc'=>$field['fieldname'] == $orderfieldname ? ($orderasc ? '' : 'on') : 'on'),
               $field['title'].($field['fieldname'] == $orderfieldname ? ' '.($orderasc ? '&#x25be;' : '&#x25b4;') : ''),
               array('class'=>'ajaxreload')
             )
@@ -396,7 +398,13 @@
       }
       $rows[] =
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
-          ($interactive ? html('td', array('class'=>'small'), internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), 'edit')) : '').
+          ($interactive
+          ? ($is_editable
+            ? html('td', array('class'=>'small'), internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), 'edit'))
+            : ''
+            )
+          : ''
+          ).
           join($columns)
         );
     }
@@ -406,7 +414,7 @@
       for ($otheroffset = 0; $otheroffset < $foundrecords['number']; $otheroffset += $limit) {
         $lastrecord = min($otheroffset + $limit, $foundrecords['number']);
         $text = ($otheroffset + 1).($otheroffset + 1 == $lastrecord ? '' : '-'.$lastrecord);
-        $offsets[] = $offset == $otheroffset ? $text : internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'offset'=>$otheroffset, 'orderfieldname'=>$originalorderfieldname, 'orderasc'=>$orderasc), $text);
+        $offsets[] = $offset == $otheroffset ? $text : internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'offset'=>$otheroffset, 'orderfieldname'=>$originalorderfieldname, 'orderasc'=>$orderasc), $text);
       }
     }
 
@@ -456,21 +464,53 @@
       mysql_data_seek($results, 0);
   }
 
-  function fieldsforpurpose($metabasename, $databasename, $tablename, $purpose, $privilege = 'SELECT') {
+  function fieldsforpurpose($metabasename, $databasename, $tablename, $purpose, $privilege = 'SELECT', $allprivileges = FALSE) {
+    foreach (array('SELECT', 'INSERT', 'UPDATE') as $oneprivilege) {
+      if ($allprivileges || $privilege == $oneprivilege) {
+        $letter = strtolower($oneprivilege{0});
+        $selectparts[] = "COALESCE(u$letter.privilege_type, s$letter.privilege_type, t$letter.privilege_type, c$letter.privilege_type) AS privilege_".strtolower($oneprivilege);
+        $joinparts[] = 
+          "LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   u$letter ON u$letter.privilege_type = \"$oneprivilege\" AND u$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") ".
+          "LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES s$letter ON s$letter.privilege_type = \"$oneprivilege\" AND s$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND s$letter.table_schema = \"<databasename>\" ".
+          "LEFT JOIN INFORMATION_SCHEMA.TABLE_PRIVILEGES  t$letter ON t$letter.privilege_type = \"$oneprivilege\" AND t$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND t$letter.table_schema = \"<databasename>\" AND t$letter.table_name = mt.tablename ".
+          "LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES c$letter ON c$letter.privilege_type = \"$oneprivilege\" AND c$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND c$letter.table_schema = \"<databasename>\" AND c$letter.table_name = mt.tablename AND c$letter.column_name = mf.fieldname ";
+        if ($privilege == $oneprivilege)
+          $wherepart = "COALESCE(u$letter.privilege_type, s$letter.privilege_type, t$letter.privilege_type, c$letter.privilege_type) IS NOT NULL ";
+      }
+    }
     return query('meta',
-      'SELECT mt.tablename, mt.singular, mt.plural, mt.tableid, mf.fieldid, mf.fieldname, mf.title, mr.presentationname, mf.foreigntableid, mf.nullallowed, mf.indesc, mf.inlist, mf.inedit, mt2.tablename AS foreigntablename, mt2.singular AS foreigntablenamesingular, mf2.fieldname AS foreignuniquefieldname '.
+      'SELECT '.
+        join_clean(', ',
+          'mt.tablename',
+          'mt.singular',
+          'mt.plural',
+          'mt.tableid',
+          'mf.fieldid',
+          'mf.fieldname',
+          'mf.title',
+          'mr.presentationname',
+          'mf.foreigntableid',
+          'mf.nullallowed',
+          'mf.indesc',
+          'mf.inlist',
+          'mf.inedit',
+          'mt2.tablename AS foreigntablename',
+          'mt2.singular AS foreigntablenamesingular',
+          'mf2.fieldname AS foreignuniquefieldname',
+          $selectparts
+        ).' '.
       'FROM `<metabasename>`.tables mt '.
       'RIGHT JOIN `<metabasename>`.fields mf ON mf.tableid = mt.tableid '.
       'LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid '.
       'LEFT JOIN `<metabasename>`.tables mt2 ON mt2.tableid = mf.foreigntableid '.
       'LEFT JOIN `<metabasename>`.fields mf2 ON mf2.fieldid = mt2.uniquefieldid '.
-      'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
-      'LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp ON sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND sp.table_schema = "<databasename>" '.
-      'LEFT JOIN INFORMATION_SCHEMA.TABLE_PRIVILEGES  tp ON tp.privilege_type = "<privilege>" AND tp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND tp.table_schema = "<databasename>" AND tp.table_name = mt.tablename '.
-      'LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES cp ON cp.privilege_type = "<privilege>" AND cp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND cp.table_schema = "<databasename>" AND cp.table_name = mt.tablename AND cp.column_name = mf.fieldname '.
-      'WHERE mt.tablename = "<tablename>" AND mf.<purpose> AND (up.privilege_type IS NOT NULL OR sp.privilege_type IS NOT NULL OR tp.privilege_type IS NOT NULL OR cp.privilege_type IS NOT NULL) '.
+      join($joinparts).
+      'WHERE '.
+        'mt.tablename = "<tablename>" AND '.
+        'mf.<purpose> AND '.
+        $wherepart.
       'ORDER BY mf.fieldid',
-      array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'purpose'=>$purpose, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'], 'privilege'=>$privilege)
+      array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'purpose'=>$purpose, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'])
     );
   }
 
@@ -501,6 +541,11 @@
     );
   }
 
+  function forget($usernameandhost) {
+    $expire = time() + 365 * 24 * 60 * 60;
+    setcookie('lastusernamesandhosts', join_clean(',', array_diff(explode(',', $_COOKIE['lastusernamesandhosts']), array($usernameandhost))), $expire);
+  }
+
   function login($username, $host, $password, $language) {
     $_SESSION['username'] = $username;
     $_SESSION['host']     = $host;
@@ -508,8 +553,7 @@
     $_SESSION['language'] = $language;
 
     $expire = time() + 365 * 24 * 60 * 60;
-    setcookie('lastusername', $username, $expire);
-    setcookie('lasthost', $host, $expire);
+    setcookie('lastusernamesandhosts', join_clean(',', array_diff(array_unique(array_merge(array("$username@$host"), array_diff(explode(',', $_COOKIE['lastusernamesandhosts']), array("$username@$host")))), array(''))), $expire);
   }
 
   function logout($error = null) {
@@ -652,7 +696,7 @@
         'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
         ($databasename == '*' ? '' : 'LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp ON sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.($databasename == '?' ? '' : 'AND sp.table_schema = "<databasename>" ')).
         ($tablename    == '*' ? '' : 'LEFT JOIN INFORMATION_SCHEMA.TABLE_PRIVILEGES  tp ON tp.privilege_type = "<privilege>" AND tp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND tp.table_schema = "<databasename>" '.($tablename == '?' ? '' : 'AND tp.table_name = "<tablename>" ')).
-        ($fieldname    == '*' ? '' : 'LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES cp ON cp.privilege_type = "<privilege>" AND cp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND cp.table_schema = "<databasename>" AND cp.table_name = "<tablename>"'.($fieldname == '?' ? ' AND cp.column_name = "<fieldname>" ' : '')).
+        ($fieldname    == '*' ? '' : 'LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES cp ON cp.privilege_type = "<privilege>" AND cp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND cp.table_schema = "<databasename>" AND cp.table_name = "<tablename>" '.($fieldname == '?' ? '' : 'AND cp.column_name = "<fieldname>" ')).
         'WHERE '.($databasename == '?' || $databasename == '*' ? '' : 'sc.schema_name = "<databasename>" AND ').'(up.privilege_type IS NOT NULL OR sp.privilege_type IS NOT NULL '.($tablename == '*' ? '' : 'OR tp.privilege_type IS NOT NULL ').($fieldname == '*' ? '' : 'OR cp.privilege_type IS NOT NULL').')',
         array('databasename'=>$databasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'], 'privilege'=>$privilege)
       )
@@ -662,14 +706,24 @@
   function databases_with_grant($privilege) {
     //for privilege see http://dev.mysql.com/doc/refman/5.0/en/privileges-provided.html
     $grants = query('meta',
-      'SELECT up.privilege_type, schema_name '.
-      'FROM INFORMATION_SCHEMA.SCHEMATA sc '.
-      'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
-      'LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp ON sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND sp.table_schema = sc.schema_name',
+      '( '.
+        'SELECT up.privilege_type, sc.schema_name '.
+        'FROM INFORMATION_SCHEMA.SCHEMATA sc '.
+        'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
+        'LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp ON sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND sp.table_schema = sc.schema_name '.
+        'WHERE sc.schema_name NOT IN ("mysql", "information_schema") '.
+      ') '.
+      'UNION '.
+      '( '.
+        'SELECT up.privilege_type, table_schema '.
+        'FROM INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp '.
+        'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
+        'WHERE table_schema NOT IN ("mysql", "information_schema") AND sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
+      ')',
       array('username'=>$_SESSION['username'], 'host'=>$_SESSION['host'], 'privilege'=>$privilege)
     );
     $databases = array();
-    for (mysql_data_reset($grants); $grant = mysql_fetch_assoc($grants); ) {
+    while ($grant = mysql_fetch_assoc($grants)) {
       if ($grant['privilege_type'] == $privilege)
         return array('*');
       $databases[] = $grant['schema_name'];

@@ -16,7 +16,7 @@
       $readonly
       ? list_image($metabasename, $databasename, $field, $value)
       : html('fieldset', array('class'=>join_clean(' ', $field['presentationname'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty')),
-          html('ul', array(),
+          html('ul', array('class'=>'minimal'),
             html('li', array(),
               array(
                 $value ? html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$field[fieldname]", 'id'=>"radio:original:$field[fieldname]", 'value'=>'original', 'checked'=>'checked'), html('input', array('type'=>'hidden', 'name'=>"original:$field[fieldname]", 'value'=>base64_encode($value))).html('label', array('for'=>"radio:original:$field[fieldname]"), list_image($metabasename, $databasename, $field, $value))) : null,
@@ -48,9 +48,6 @@
   
   function css_image() {
     return
-      ".image ul { margin: 0; padding: 0; }\n".
-      ".image li { list-style-type: none; }\n".
-      ".image .radio { margin-right: 0.3em; }\n".
       ".tableedit .image img { max-width: 3em; max-height: 3em; }\n".
       ".tableedit .image img:hover { max-width: none; max-height: none; }\n".
       ".tablelist .image img { max-height: 1em !important; }\n".

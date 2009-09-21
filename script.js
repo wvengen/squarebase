@@ -69,6 +69,24 @@ jQuery.fn.enhance_form = function() {
 
   //jquery_enhance_form_presentation goes here
 
+  find(':radio+:text').
+  focus(
+    function() {
+      $(this).
+      prev().
+      attr('checked', 'checked');
+    }
+  ).
+  blur(
+    function() {
+      if (!$(this).val())
+        $('[name=' + $(this).prev().attr('name') + ']').
+        eq(0).
+        attr('checked', 'checked');
+    }
+  ).
+  end().
+
   find('input:enabled:not(.readonly):not(.skipfirstfocus), select:enabled:not(.readonly):not(.skipfirstfocus)').
   eq(0).
   focus();

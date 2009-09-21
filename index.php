@@ -15,7 +15,8 @@
   $_SESSION['ajaxy'] = !is_null(parameter('get', 'ajaxy')) ? parameter('get', 'ajaxy') == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['ajaxy'] : TRUE);
   $_SESSION['logsy'] = !is_null(parameter('get', 'logsy')) ? parameter('get', 'logsy') == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['logsy'] : FALSE);
 
-  addtolist('logs', 'action', $action, html('ul', array(), html('li', array('class'=>'resultlist'), array_show(parameter('get')))));
+  addtolist('logs', 'get', '', 'get: '.html('div', array('class'=>'arrayshow'), array_show(parameter('get'))));
+  addtolist('logs', 'cookie', '', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
 
   $languagename = !parameter('get', 'language') && parameter('get', 'metabasename') ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;
 
@@ -49,17 +50,43 @@
     if ($_SESSION['timesconnected'])
       internalredirect(array('action'=>'index'));
 
-    $username = parameter('get', 'username', array($_COOKIE['lastusername'], 'root'));
-    $host     = parameter('get', 'host', array($_COOKIE['lasthost'], 'localhost'));
+    $usernameandhost = parameter('get', 'usernameandhost');
     $password = parameter('get', 'password');
+    if (!$usernameandhost) {
+      $radios = array();
+      $lastusernamesandhosts = $_COOKIE['lastusernamesandhosts'];
+      if ($lastusernamesandhosts) {
+        foreach (explode(',', $lastusernamesandhosts) as $thisusernameandhost)
+          $radios[] = html('input', array('type'=>'radio', 'class'=>join_clean(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'id'=>"lastusernameandhost:$thisusernameandhost", 'value'=>$thisusernameandhost, 'checked'=>$radios ? null : 'checked'), html('label', array('for'=>"lastusernameandhost:$thisusernameandhost"), $thisusernameandhost).internalreference(array('action'=>'forget_username_and_host', 'usernameandhost'=>$thisusernameandhost), 'forget', array('class'=>'forget')));
+      }
+      if (!$radios)
+        $usernameandhost = 'root@localhost';
+    }
+
+    $usernameandhost_input = html('input', array('type'=>'text', 'class'=>'skipfirstfocus', 'id'=>'usernameandhost', 'name'=>'usernameandhost', 'value'=>$usernameandhost));
+
+    if ($radios) {
+      $usernameandhost_input = 
+        html('ul', array('class'=>'minimal'),
+          html('li', array(),
+            array_merge(
+              $radios,
+              array(
+                html('input', array('type'=>'radio', 'class'=>join_clean(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'value'=>''),
+                  $usernameandhost_input
+                )
+              )
+            )
+          )
+        );
+    }
 
     page($action, null,
       form(
         html('table', array(),
           html('tr', array(),
             array(
-              html('td', array('class'=>'small'), html('label', array('for'=>'username'), _('username'))).html('td', array(), html('input', array('type'=>'text', 'class'=>'skipfirstfocus', 'id'=>'username', 'name'=>'username', 'value'=>$username))),
-              html('td', array('class'=>'small'), html('label', array('for'=>'host'    ), _('host'    ))).html('td', array(), html('input', array('type'=>'text', 'class'=>'skipfirstfocus', 'id'=>'host', 'name'=>'host', 'value'=>$host))),
+              html('td', array('class'=>'small'), html('label', array('for'=>'usernameandhost'), _('user').'@'._('host'))).html('td', array(), $usernameandhost_input),
               html('td', array('class'=>'small'), html('label', array('for'=>'password'), _('password'))).html('td', array(), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password', 'value'=>$password))),
               html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale()),
               html('td', array('class'=>'small'), '').                                                    html('td', array(), html('input', array('type'=>'submit', 'name'=>'action',   'value'=>'connect', 'class'=>'mainsubmit')))
@@ -72,9 +99,29 @@
 
   /********************************************************************************************/
 
+  if ($action == 'forget_username_and_host') {
+    $usernameandhost = parameter('get', 'usernameandhost');
+
+    forget($usernameandhost);
+    internalredirect(array('action'=>'login'));
+  }
+
+  /********************************************************************************************/
+
   if ($action == 'connect') {
-    $username = parameter('get', 'username');
-    $host     = parameter('get', 'host');
+    $usernameandhost = parameter('get', 'lastusernameandhost');
+    if (!$usernameandhost)
+      $usernameandhost = parameter('get', 'usernameandhost');
+    if (preg_match('@^(\w+)\@(\w+)$@', $usernameandhost, $match)) {
+      $username = $match[1];
+      $host     = $match[2];
+    }
+    elseif ($usernameandhost) {
+      $username = $usernameandhost;
+      $host     = 'localhost';
+    }
+    else
+      internalredirect(array('action'=>'login', 'error'=>_('no username@host given')));
     $password = parameter('get', 'password');
     $language = parameter('get', 'language');
 
@@ -240,8 +287,6 @@
       ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename')))
       : parameter('get', 'language');
 
-    $presentationnames = get_presentationnames();
-
     $fields = $alltables = $primarykeyfieldname = $tableswithoutsinglevaluedprimarykey = array();
     $tables = query('data', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
     while ($table = mysql_fetch_assoc($tables)) {
@@ -262,6 +307,8 @@
         $tableswithoutsinglevaluedprimarykey[] = $tablename;
     }
 
+    $presentationnames = get_presentationnames();
+
     $header =
       html('tr', array(),
         html('th', array(),
@@ -271,11 +318,10 @@
         )
       );
 
-    $totalstructure = array();
+    $rowstables = array();
+    $rowsfields = array();
     for (mysql_data_reset($tables); $table = mysql_fetch_assoc($tables); ) {
       $tablename = $table["table_name"];
-      $plural = $tablename;
-      $singular = singularize_noun($plural);
 
       $max_in_desc = $max_in_list = $max_in_edit = 0;
       $fieldextra = array();
@@ -290,7 +336,7 @@
             array(
               'alltables'=>$alltables,
               'primarykeyfieldname'=>$primarykeyfieldname,
-              'fieldfr'=>$fieldnr++,
+              'fieldnr'=>$fieldnr++,
               'numfields'=>mysql_num_rows($fields[$tablename])
             )
           );
@@ -304,9 +350,8 @@
           }
         }
 
-        $fieldextra[$fieldname]['presentationnames'] = array_keys($probabilities);
+        $fieldextra[$fieldname]['presentationprobabilities'] = $probabilities;
         $fieldextra[$fieldname]['presentationname'] = $bestpresentationname;
-        $fieldextra[$fieldname]['linkedtable'] = $bestpresentationname == 'lookup' ? linkedtable_lookup($tablename, $fieldname) : null;
 
         $fieldextra[$fieldname]['in_desc'] = call_user_func("in_desc_$bestpresentationname", $augmentedfield);
         $fieldextra[$fieldname]['in_list'] = call_user_func("in_list_$bestpresentationname", $augmentedfield);
@@ -317,67 +362,65 @@
         $max_in_edit = max($max_in_edit, $fieldextra[$fieldname]['in_edit']);
       }
 
-      $tablestructure = array();
+      $rowsfieldsthistable = array();
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
         $fieldname = $field['column_name'];
 
-        $originals = $metabasename ? query('meta', 'SELECT mt.singular, mt.plural, mt.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname)) : null;
-        if ($originals) {
-          $original = mysql_fetch_assoc($originals);
+        if ($metabasename) {
+          $original = query1('meta', 'SELECT mt.singular, mt.plural, mt.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname));
+          $plural           = $original['plural'];
+          $singular         = $original['singular'];
           $title            = $original['title'];
           $intablelist      = $original['intablelist'];
-          $presentationname = $original['presentationname'];
           $nullallowed      = $original['nullallowed'];
+          $presentationname = $original['presentationname'];
           $linkedtable      = $original['foreigntablename'];
           $indesc           = $original['indesc'];
           $inlist           = $original['inlist'];
           $inedit           = $original['inedit'];
-          $singular         = $original['singular'];
-          $plural           = $original['plural'];
         }
         else {
-          $title = preg_replace(
-            array('@(?<=[a-z])([A-Z]+)@e', '@id$@i', "@^(.*?)\b( *(?:$singular|$plural) *)\b(.*?)$@ie"       , '@(?<=[\w ])id$@i', '@ {2,}@', '@(^ +| +$)@'),
-            array('strtolower(" $1")'    , ' id'   ,'"$1" && "$3" ? "$1 $3" : ("$1" || "$3" ? "$1$3" : "$0")', ''                , ' '      , ''           ),
-            $fieldname
-          );
-          $intablelist = TRUE;
-
-          $nullallowed = $field['is_nullable'] == 'YES';
-
+          $plural           = $tablename;
+          $singular         = singularize_noun($plural);
+          $title            = preg_replace(
+                                array('@(?<=[a-z])([A-Z]+)@e', '@'._('id').'$@i', "@^(.*?)\b( *(?:$singular|$plural) *)\b(.*?)$@ie"       , '@(?<=[\w ])id$@i', '@ {2,}@', '@(^ +| +$)@'),
+                                array('strtolower(" $1")'    , ' '._('id')      ,'"$1" && "$3" ? "$1 $3" : ("$1" || "$3" ? "$1$3" : "$0")', ''                , ' '      , ''           ),
+                                $fieldname
+                              );
+          $intablelist      = TRUE;
+          $nullallowed      = $field['is_nullable'] == 'YES';
           $presentationname = $fieldextra[$fieldname]['presentationname'];
-          $linkedtable = $fieldextra[$fieldname]['linkedtable'];
-
-          $indesc = $fieldextra[$fieldname]['in_desc'] == $max_in_desc;
-          $inlist = $fieldextra[$fieldname]['in_list'] == $max_in_list;
-          $inedit = $fieldextra[$fieldname]['in_edit'] == $max_in_edit;
+          $linkedtable      = @call_user_func("linkedtable_$presentationname", $tablename, $fieldname);
+          $indesc           = $fieldextra[$fieldname]['in_desc'] == $max_in_desc;
+          $inlist           = $fieldextra[$fieldname]['in_list'] == $max_in_list;
+          $inedit           = $fieldextra[$fieldname]['in_edit'] == $max_in_edit;
         }
 
-        $tableoptions = array();
-        $tableoptions[] = html('option', array('value'=>'', 'selected'=>!$linkedtable ? 'selected' : null), '').$tableoptions;
+        $tableoptions = array(html('option', array('value'=>'', 'selected'=>!$linkedtable ? 'selected' : null), ''));
         foreach ($alltables as $onetable)
           $tableoptions[] = html('option', array('value'=>$onetable, 'selected'=>$onetable == $linkedtable ? 'selected' : null), $onetable);
 
-        $presentationnamespositive = $presentationnameszero = array();
-        foreach ($fieldextra[$fieldname]['presentationnames'] as $onepresentationname)
-          if ($probabilities[$onepresentationname])
-            $presentationnamespositive[$onepresentationname] = $probabilities[$onepresentationname];
+        $mostlikelyoption = null;
+        $moreorlesslikelyoptions = $unlikelyoptions = array();
+        foreach ($fieldextra[$fieldname]['presentationprobabilities'] as $onepresentationname=>$probability) {
+          $option = html('option', array('value'=>$onepresentationname, 'selected'=>$onepresentationname == $presentationname ? 'selected' : null), $onepresentationname);
+          if ($onepresentationname == $presentationname)
+            $mostlikelyoption = $option;
+          elseif ($probability)
+            $moreorlesslikelyoptions["$probability"] = $option;
           else
-            $presentationnameszero[] = $onepresentationname;
-        arsort($presentationnamespositive);
-        sort($presentationnameszero);
+            $unlikelyoptions[$onepresentationname] = $option;
+        }
+        krsort($moreorlesslikelyoptions);
+        ksort($unlikelyoptions);
+        $presentationnameoptions =
+          ($mostlikelyoption               ? html('optgroup', array('label'=>_('most likely')), $mostlikelyoption) : '').
+          (count($moreorlesslikelyoptions) ? html('optgroup', array('label'=>_('more or less likely')), join(array_values($moreorlesslikelyoptions), 1)) : '').
+          (count($unlikelyoptions)         ? html('optgroup', array('label'=>_('unlikely')), join(array_values($unlikelyoptions))) : '');
 
-        $positiveoptions = array();
-        foreach ($presentationnamespositive as $onepresentationname=>$probability)
-          $positiveoptions[] = html('option', array('value'=>$onepresentationname, 'selected'=>$onepresentationname == $presentationname ? 'selected' : null), $onepresentationname);
-        $zerooptions = array();
-        foreach ($presentationnameszero as $onepresentationname)
-          $zerooptions[] = html('option', array('value'=>$onepresentationname, 'selected'=>$onepresentationname == $presentationname ? 'selected' : null), $onepresentationname);
-        $presentationnameoptions = html('optgroup', array(), join($positiveoptions)).html('optgroup', array('label'=>'------------------------'), join($zerooptions));
-
-        $tablestructure[] =
+        $rowsfieldsthistable[] =
           html('tr', array('class'=>'list'),
-            ($tablestructure
+            ($rowsfieldsthistable
             ? ''
             : html('td', array('class'=>join_clean(' ', 'top', 'nolist'), 'rowspan'=>mysql_num_rows($fields[$tablename])),
                 $tablename.
@@ -415,7 +458,7 @@
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null)))
           );
       }
-      $totalstructure[] = $header.join($tablestructure);
+      $rowsfields[] = $header.join($rowsfieldsthistable);
     }
 
     if ($metabasename)
@@ -455,7 +498,7 @@
             )
           ).
           html('table', array(),
-            join($totalstructure)
+            join($rowsfields)
           ).
           html('p', array(),
             html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract_structure_from_database_to_metabase', 'class'=>'mainsubmit'))
@@ -712,11 +755,11 @@
     $uniquevalue       = parameter('get', 'uniquevalue');
     $back              = parameter('get', 'back');
 
-    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inedit', $action == 'new_record' ? 'INSERT' : ($action == 'edit_record' ? 'UPDATE' : 'SELECT'));
+    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inedit', $action == 'new_record' ? 'INSERT' : ($action == 'edit_record' ? 'UPDATE' : 'SELECT'), TRUE);
 
     if (!is_null($uniquevalue)) {
       $fieldnames = array();
-      for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); )
+      while ($field = mysql_fetch_assoc($fields))
         $fieldnames[] = $field['fieldname'];
       $row = query1('data', 'SELECT '.join(', ', $fieldnames).' FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
     }
@@ -729,7 +772,7 @@
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
       $lines[] =
         html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
-        html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), is_null($uniquevalue) ? parameter('get', "field:$field[fieldname]") : $row[$field['fieldname']]));
+        html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), is_null($uniquevalue) ? parameter('get', "field:$field[fieldname]") : $row[$field['fieldname']], $action == 'show_record' || ($action == 'new_record' && !$field['privilege_insert']) || ($action == 'edit_record' && !$field['privilege_update'])));
     }
 
     $lines[] =
@@ -738,7 +781,7 @@
         html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$action == 'show_record' ? 'delete_record' : ($action == 'edit_record' ? 'update_record' : 'add_record'), 'class'=>'mainsubmit')).
         (is_null($uniquevalue) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
         internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel')).
-        ($action == 'edit_record' ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_clean(' ', 'mainsubmit', 'delete'))) : '')
+        ($action == 'edit_record' && has_grant('DELETE', $databasename, $tablename) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_clean(' ', 'mainsubmit', 'delete'))) : '')
       );
 
     if (!is_null($uniquevalue)) {
@@ -823,6 +866,38 @@
 
     header('Content-type: image/jpeg');
     print $image;
+  }
+
+  /********************************************************************************************/
+
+  if ($action == 'explain_query') {
+    $query = parameter('get', 'query');
+
+    $explanations = query('top', 'EXPLAIN EXTENDED '.$query);
+    query('top', 'SHOW WARNINGS');
+
+    $headings = array();
+    for ($i = 0; $i < mysql_num_fields($explanations); $i++) {
+      $meta = mysql_fetch_field($explanations, $i);
+      $headings[] = $meta->name;
+    }
+
+    $rows = array(html('tr', array(), html('th', array(), $headings)));
+    while ($explanation = mysql_fetch_assoc($explanations)) {
+      $cells = array();
+      foreach (array_keys($explanation) as $key) {
+        $cells[] = is_null($explanation[$key]) ? '-' : $explanation[$key];
+      }
+      $rows[] = html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')), html('td', array(), $cells));
+    }
+
+    page($action, null,
+      html('p', array(), $query).
+      html('table', array(), 
+        join($rows)
+      ).
+      html('p', array(), externalreference('http://dev.mysql.com/doc/refman/5.0/en/using-explain.html', 'MySQL 5.0 Reference Manual :: 7.2.1 Optimizing Queries with EXPLAIN'))
+    );
   }
 
   /********************************************************************************************/
