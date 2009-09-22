@@ -153,23 +153,27 @@
               internalreference($link, $databasename)
             ).
             html('td', array('class'=>'small'),
-              array(
-                has_grant('DROP', $metabasename) ? internalreference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename) : null,
-                has_grant('DROP', $metabasename) ? internalreference(array('action'=>'drop_database', 'databasename'=>$metabasename), 'drop', array('class'=>'drop')) : null
-              )
+              has_grant('DROP', $metabasename)
+              ? array(
+                  internalreference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename),
+                  internalreference(array('action'=>'drop_database', 'databasename'=>$metabasename), 'drop', array('class'=>'drop'))
+                )
+              : array('', '')
             )
           );
       }
     }
 
-    if (count($links) == 0 && has_grant('CREATE', '?'))
+    $can_create = has_grant('CREATE', '?');
+
+    if (count($links) == 0 && $can_create)
       internalredirect(array('action'=>'new_metabase_from_database'));
 
-    if (count($links) == 1 && !has_grant('CREATE', '?'))
+    if (count($links) == 1 && !$can_create)
       internalredirect($links[0]);
 
     page($action, null,
-      (has_grant('CREATE', '?') ? internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')) : '').
+      ($can_create ? internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')) : '').
       html('table', array(), join($rows))
     );
   }

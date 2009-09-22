@@ -5,6 +5,7 @@ h2 { margin-bottom: 0.5em; }
 form { background-color: #ddf; padding: 0.5em; }
 fieldset { border: 0.1em solid #ccc; padding: 0.2em; }
 p { margin: 0.5em 0; }
+a:hover { background-color: #ff6 !important; }
 
 table { border: 0.1em solid #999; width: 100%; border-collapse: collapse; }
 tr.rowodd { background-color: #eee; }

@@ -337,8 +337,8 @@
   function list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, $orderfieldname, $orderasc = TRUE, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = TRUE) {
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
-    $is_editable = has_grant('UPDATE', $databasename, $tablename, '?');
-    $header = $is_editable ? array(html('th', array('class'=>'small'), '')) : array();
+    $can_update = has_grant('UPDATE', $databasename, $tablename, '?');
+    $header = $can_update ? array(html('th', array('class'=>'small'), '')) : array();
     $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inlist');
     while ($field = mysql_fetch_assoc($fields)) {
       $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
@@ -393,13 +393,13 @@
         $field['uniquevalue'] = $row[$uniquefieldname];
         $columns[] =
           html('td', array('class'=>join_clean(' ', 'column', $field['presentationname'], $field['thisrecord'] ? 'thisrecord' : null)),
-            call_user_func("list_$field[presentationname]", $metabasename, $databasename, $field, $row["${tablename}_$field[fieldname]"])
+            ''.call_user_func("list_$field[presentationname]", $metabasename, $databasename, $field, $row["${tablename}_$field[fieldname]"])
           );
       }
       $rows[] =
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           ($interactive
-          ? ($is_editable
+          ? ($can_update
             ? html('td', array('class'=>'small'), internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), 'edit'))
             : ''
             )
@@ -685,19 +685,20 @@
     return html('select', array('id'=>$name, 'name'=>$name), join($localeoptions));
   }
 
-  function has_grant($privilege, $databasename, $tablename = '*', $fieldname = '*') {
+  function has_grant($privilege, $databasename = '*', $tablename = '*', $fieldname = '*') {
     //for privilege see http://dev.mysql.com/doc/refman/5.0/en/privileges-provided.html
     //$databasename == '*' means privilege on all databases
     //$databasename == '?' means privilege on at least one database
     return mysql_num_rows(
       query('meta',
-        'SELECT 1 '.
+        'SELECT "<privilege>" '.
         'FROM INFORMATION_SCHEMA.SCHEMATA sc '.
         'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
         ($databasename == '*' ? '' : 'LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp ON sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.($databasename == '?' ? '' : 'AND sp.table_schema = "<databasename>" ')).
         ($tablename    == '*' ? '' : 'LEFT JOIN INFORMATION_SCHEMA.TABLE_PRIVILEGES  tp ON tp.privilege_type = "<privilege>" AND tp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND tp.table_schema = "<databasename>" '.($tablename == '?' ? '' : 'AND tp.table_name = "<tablename>" ')).
         ($fieldname    == '*' ? '' : 'LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES cp ON cp.privilege_type = "<privilege>" AND cp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND cp.table_schema = "<databasename>" AND cp.table_name = "<tablename>" '.($fieldname == '?' ? '' : 'AND cp.column_name = "<fieldname>" ')).
-        'WHERE '.($databasename == '?' || $databasename == '*' ? '' : 'sc.schema_name = "<databasename>" AND ').'(up.privilege_type IS NOT NULL OR sp.privilege_type IS NOT NULL '.($tablename == '*' ? '' : 'OR tp.privilege_type IS NOT NULL ').($fieldname == '*' ? '' : 'OR cp.privilege_type IS NOT NULL').')',
+        'WHERE '.($databasename == '?' || $databasename == '*' ? '' : 'sc.schema_name = "<databasename>" AND ').'(up.privilege_type IS NOT NULL OR sp.privilege_type IS NOT NULL '.($tablename == '*' ? '' : 'OR tp.privilege_type IS NOT NULL ').($fieldname == '*' ? '' : 'OR cp.privilege_type IS NOT NULL').') '.
+        'LIMIT 1',
         array('databasename'=>$databasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'], 'privilege'=>$privilege)
       )
     ) > 0;

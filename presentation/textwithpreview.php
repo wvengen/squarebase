@@ -34,10 +34,10 @@
   
   function css_textwithpreview() {
     return
-      ".wrapper { position: relative; margin-bottom: 0.2em; }\n".
-      "textarea.textwithpreview { width: 20em; min-height: 2em; white-space: pre-wrap; }\n".
+      ".wrapper { position: relative; margin-bottom: 0.6em; }\n".
+      "textarea.textwithpreview { width: 20em; padding: 0.2em; min-height: 2em; white-space: pre-wrap; }\n".
       "textarea.textwithpreview.blur { display: none; color: #ffe; visibility: hidden; }\n".
-      ".preview { width: 20em; min-height: 2em; position: absolute; top: 0; border: 0.1em solid #999; background-color: #ffe; }\n".
+      ".preview { width: 20em; min-height: 2em; white-space: normal; padding: 0.2em; position: absolute; top: 0; border: 0.1em solid #999; background-color: #ffe; }\n".
       ".preview.blur { visibility: hidden; }\n";
   }
 
