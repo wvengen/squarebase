@@ -20,6 +20,7 @@ $.fn.loading = function(on) {
     css('cursor', 'progress');
   else
     $('#loading').
+    attr('id', '').
     add('body').
     css('cursor', '');
   return this;

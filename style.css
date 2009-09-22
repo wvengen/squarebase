@@ -74,6 +74,7 @@ input.mainsubmit.delete { margin-left: 5em; }
 #warnings { padding: 0; }
 #warnings li { list-style-type: none; }
 div.error, .problem, .warning { font-weight: bold; color: #f00; }
+.problemtag { border: 0.3em solid red !important; }
 .help { color: #999; margin-left: 0.5em; }
 
 .trace { white-space: nowrap; }

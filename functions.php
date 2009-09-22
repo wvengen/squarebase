@@ -53,14 +53,18 @@
       $type = $types[$tag];
       if ($type === 1) {
         if (is_null($text))
-          addtolist('warnings', 'warning', sprintf(_('missing text for html tag %s'), $tag));
+          $warning = _('missing text for html tag %s');
       }
       elseif ($type === 0) {
         if (!is_null($text))
-          addtolist('warnings', 'warning', sprintf(_('text for html tag %s'), $tag));
+          $warning = _('text for html tag %s');
       }
       else
-        addtolist('warnings', 'warning', sprintf(_('unknown html tag %s'), $tag));
+        $warning = _('unknown html tag %s');
+      if ($warning) {
+        addtolist('warnings', 'warning', sprintf($warning, $tag));
+        $parameters['class'] .= ($parameters['class'] ? ' ' : '').'problemtag';
+      }
     }
     $parameterlist = array();
     foreach ($parameters as $parameter=>$value)
@@ -493,7 +497,10 @@
       $referringfields = query('meta', 'SELECT mt.tablename, mt.singular, mf.fieldname AS fieldname, mf.title AS title, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mtf ON mtf.tableid = mf.foreigntableid LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.fields mfu ON mt.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
         $lines[] =
-          html('td', array('class'=>'description'), $referringfield['tablename'].html('div', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['title']))).
+          html('td', array('class'=>'description'), 
+            $referringfield['tablename'].
+            ($referringfield['title'] == $tablenamesingular ? '' : html('div', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['title'])))
+          ).
           html('td', array(), list_table($metabasename, $databasename, $referringfield['tablename'], $referringfield['singular'], 0, 0, $referringfield['uniquefieldname'], null, null, TRUE, $referringfield['fieldname'], $uniquevalue, $tablename, $privilege != 'SELECT'));
       }
     }
