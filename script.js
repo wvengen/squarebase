@@ -12,6 +12,19 @@ $.extend(
   }
 );
 
+$.fn.loading = function(on) {
+  if (on)
+    $(this).
+    attr('id', 'loading').
+    add('body').
+    css('cursor', 'progress');
+  else
+    $('#loading').
+    add('body').
+    css('cursor', '');
+  return this;
+}
+
 //hash equivalent of serialize
 $.fn.formhash = function() {
   var hash = {};
@@ -173,7 +186,6 @@ jQuery.fn.ajaxsubmit = function() {
 jQuery.fn.unload = function() {
   $(this).
   remove();
-
   return this;
 };
 
@@ -249,6 +261,9 @@ jQuery.fn.ajaxify = function() {
       }
 
       if (ajaxcontent.length > 0) {
+      $(this).
+      loading(true);
+
         ajaxcontent.
         find('.ajaxcontainer:first').
         load(
@@ -259,8 +274,8 @@ jQuery.fn.ajaxify = function() {
           function() {
             $(this).
             hidelogs().
-
-            ajaxify();
+            ajaxify().
+            loading(false);
           }
         );
       }
@@ -275,9 +290,6 @@ $(document).
 ready(
   function() {
     $('html').
-    ajaxStart(function() { $(this).addClass('ajaxbusy'); }).
-    ajaxStop(function() { $(this).removeClass('ajaxbusy'); }).
-
     hidelogs();
 
     $('body.editrecord, body.newrecord, body.showtable, body.showdatabase').

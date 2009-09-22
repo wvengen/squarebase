@@ -180,7 +180,7 @@
           $resultlist[] = html('li', array(), "&hellip; $numresults.");
           break;
         }
-        $resultlist[] = html('li', array('class'=>'resultlist'), array_show($resultrow));
+        $resultlist[] = html('li', array('class'=>'arrayshow'), array_show($resultrow));
       }
       mysql_data_reset($result);
     }
@@ -313,7 +313,7 @@
             ($_SESSION['logsy'] ? html('ol', array('class'=>'logs'), join(getlist('logs'))) : '')
           ).
           html('div', array('id'=>'footer'),
-            html('div', array('id'=>'poweredby'), externalreference('http://squarebase.org/', html('img', array('src'=>'powered_by_squarebase.png'))))
+            html('div', array('id'=>'poweredby'), externalreference('http://squarebase.org/', html('img', array('src'=>'powered_by_squarebase.png', 'alt'=>'powered by squarebase'))))
           )
         )
       );
