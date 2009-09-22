@@ -48,7 +48,7 @@
     if ($_SESSION['logsy']) {
       static $types = array(
         'html'=>1, 'head'=>1, 'title'=>1, 'script'=>1, 'body'=>1, 'div'=>1, 'span'=>1, 'p'=>1, 'h1'=>1, 'h2'=>1, 'ol'=>1, 'ul'=>1, 'li'=>1, 'a'=>1, 'table'=>1, 'tr'=>1, 'th'=>1, 'td'=>1, 'form'=>1, 'optgroup'=>1, 'label'=>1, 'select'=>1, 'option'=>1, 'textarea'=>1,
-        'link'=>0, 'img'=>0, 'input'=>0
+        'link'=>0, 'img'=>0, 'input'=>0, 'br'=>0
       );
       $type = $types[$tag];
       if ($type === 1) {
@@ -100,10 +100,10 @@
     $ajax = parameter('get', 'ajax');
     if ($ajax) {
       parse_str($ajax, $parameters);
-      addtolist('logs', '', 'ajax_'.$parameters['function'], array_show($parameters));
+      addtolist('logs', 'ajax', 'ajax: '.html('div', array('class'=>'arrayshow'), array_show($parameters)));
       switch ($parameters['function']) {
         case 'list_table':
-          $output = list_table($parameters['metabasename'], $parameters['databasename'], $parameters['tablename'], $parameters['tablenamesingular'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['orderfieldname'], $parameters['orderasc'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
+          $output = list_table($parameters['metabasename'], $parameters['databasename'], $parameters['tablename'], $parameters['tablenamesingular'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['uniquevalue'], $parameters['orderfieldname'], $parameters['orderasc'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
           break;
         case 'ajax_lookup':
           $output = ajax_lookup($parameters['metabasename'], $parameters['databasename'], $parameters['fieldname'], query1field('data', 'SELECT MAX(<foreignuniquefieldname>) FROM `<databasename>`.<foreigntablename>', array('foreigntablename'=>$parameters['foreigntablename'], 'foreignuniquefieldname'=>$parameters['foreignuniquefieldname'], 'databasename'=>$parameters['databasename'])), $parameters['presentationname'], $parameters['foreigntablename'], $parameters['foreigntablenamesingular'], $parameters['foreignuniquefieldname'], $parameters['nullallowed'], $parameters['readonly']);
@@ -133,11 +133,11 @@
     exit;
   }
 
-  function addtolist($list, $class, $text, $rest = null) {
+  function addtolist($list, $class, $text) {
     if ($_SESSION['logsy']) {
       if (!$_SESSION[$list])
         $_SESSION[$list] = array();
-      $_SESSION[$list][] = html('li', array('class'=>$class), preg_replace("@\r@", '\\n', $text).$rest);
+      $_SESSION[$list][] = html('li', array('class'=>$class), $text);
     }
   }
 
@@ -158,6 +158,9 @@
       $_SESSION['timesconnected'] += 1;
     }
 
+    if (preg_match('@= *\'<\w+>\'@', $query))
+      addtolist('warnings', 'warning', sprintf(_('wrong single quotes around value in query: %s'), $query));
+
     $fullquery = preg_replace('@(["`])?<(\w+)>(["`])?@e', '(is_null($arguments["$2"]) ? "NULL" : (is_numeric($arguments["$2"]) ? (int) $arguments["$2"] : "$1".mysql_escape_string($arguments["$2"])."$3"))', $query);
 
     $before = microtime();
@@ -168,7 +171,8 @@
 
     $errno = mysql_errno();
 
-    $numresults = preg_match('@^[^A-Z]*(EXPLAIN|SELECT|SHOW) @i', $fullquery) && $result ? mysql_num_rows($result) : null;
+    $sqlcommand = preg_match1('@^[^A-Z]*([A-Z]+) @i', $fullquery);
+    $numresults = preg_match('@^(EXPLAIN|SELECT|SHOW)$@i', $sqlcommand) && $result ? mysql_num_rows($result) : null;
     if (!is_null($numresults)) {
       $resultlist = array();
       while ($resultrow = mysql_fetch_assoc($result)) {
@@ -190,7 +194,7 @@
 
     addtolist('logs',
       "query$metaordata",
-      html('span', array('class'=>'query'),
+      html('div', array('class'=>'query'),
         preg_replace(
           array('@<@' , '@>@' , '@& @'  ),
           array('&lt;', '&gt;', '&amp; '),
@@ -199,7 +203,7 @@
         ' ['.sprintf(_('%.2f sec'), ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).']'.
         ' '.internalreference(array('action'=>'explain_query', 'query'=>$fullquery), _('explain')).
         ' '.html('span', array('class'=>'traces'), join(' ', array_reverse($traces)))
-      ),
+      ).
       ($errno
       ? html('ul', array(), html('li', array(), $errno.'='.mysql_error()))
       : (!is_null($numresults)
@@ -207,7 +211,7 @@
           ? html('ol', array(), join($resultlist))
           : null
           )
-        : html('ul', array(), html('li', array(), sprintf(_('%d affected'), mysql_affected_rows($connection))))
+        : html('ul', array(), html('li', array(), sprintf($sqlcommand == 'INSERT' ? _('%d inserted') : ($sqlcommand == 'UPDATE' ? _('%d updated') : _('%d affected')), mysql_affected_rows($connection))))
         )
       )
     );
@@ -250,12 +254,16 @@
     $results = query($metaordata, $query, $arguments);
     if ($results && mysql_num_rows($results) == 1)
       return mysql_fetch_assoc($results);
-    error(sprintf(_('problem retrieving 1 result, because there are %s results'), $results ? mysql_num_rows($results) : 'no').html('p', array(), $query));
+    error(sprintf(_('problem retrieving 1 result, because there are %s results'), $results ? mysql_num_rows($results) : 'no').html('p', array(), htmlentities($query)));
   }
 
   function query1field($metaordata, $query, $arguments = array(), $field = null) {
     $result = query1($metaordata, $query, $arguments);
     return is_null($field) ? (count($result) == 1 ? array_shift(array_values($result)) : error(sprintf(_('problem retrieving 1 field, because there are %s fields'), count($result)))) : $result[$field];
+  }
+
+  function ajaxcontent($content) {
+    return html('div', array('class'=>'ajaxcontent'), html('div', array('class'=>'ajaxcontainer'), $content));
   }
 
   function page($action, $path, $content) {
@@ -351,7 +359,7 @@
     );
   }
 
-  function list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, $orderfieldname, $orderasc = TRUE, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = TRUE) {
+  function list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, $uniquevalue, $orderfieldname, $orderasc = TRUE, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = TRUE) {
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
     $can_update = has_grant('UPDATE', $databasename, $tablename, '?');
@@ -441,12 +449,65 @@
         ? html('div', array(),
             internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $tablenamesingular)).
             (is_null($foreignvalue) ? '' : html('span', array('class'=>'changeslost'), _('(changes to form fields are lost)')))
-          )
+          ).
+          (is_null($uniquevalue) ? '' : ajaxcontent(edit_record('UPDATE', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue)))
         : (is_null($foreignvalue) ? '' : $tablename)
         ).
         (count($rows) > 1 ? html('table', array('class'=>'tablelist'), join($rows)) : '').
         join(' ', $offsets).
         (is_null($foreignvalue) ? internalreference(parameter('server', 'HTTP_REFERER'), 'close', array('class'=>'close')) : '')
+      );
+  }
+
+  function edit_record($privilege, $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $back = null) {
+    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inedit', $privilege, TRUE);
+
+    if (!is_null($uniquevalue)) {
+      $fieldnames = array();
+      while ($field = mysql_fetch_assoc($fields))
+        $fieldnames[] = $field['fieldname'];
+      $row = query1('data', 'SELECT '.join(', ', $fieldnames).' FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+    }
+
+    get_presentationnames();
+
+    $lines = array(
+      html('td', array('class'=>'header', 'colspan'=>2), $tablenamesingular)
+    );
+    for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
+      $lines[] =
+        html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
+        html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), is_null($uniquevalue) ? parameter('get', "field:$field[fieldname]") : $row[$field['fieldname']], $privilege == 'SELECT' || ($privilege == 'INSERT' && !$field['privilege_insert']) || ($privilege == 'UPDATE' && !$field['privilege_update'])));
+    }
+
+    $lines[] =
+      html('td', array('class'=>'description'), '&rarr;').
+      html('td', array(),
+        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$privilege == 'SELECT' ? 'delete_record' : ($privilege == 'UPDATE' ? 'update_record' : 'add_record'), 'class'=>'mainsubmit')).
+        (is_null($uniquevalue) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
+        internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel')).
+        ($privilege == 'UPDATE' && has_grant('DELETE', $databasename, $tablename) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_clean(' ', 'mainsubmit', 'delete'))) : '')
+      );
+
+    if (!is_null($uniquevalue)) {
+      $referringfields = query('meta', 'SELECT mt.tablename, mt.singular, mf.fieldname AS fieldname, mf.title AS title, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mtf ON mtf.tableid = mf.foreigntableid LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.fields mfu ON mt.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
+      while ($referringfield = mysql_fetch_assoc($referringfields)) {
+        $lines[] =
+          html('td', array('class'=>'description'), $referringfield['tablename'].html('div', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['title']))).
+          html('td', array(), list_table($metabasename, $databasename, $referringfield['tablename'], $referringfield['singular'], 0, 0, $referringfield['uniquefieldname'], null, null, TRUE, $referringfield['fieldname'], $uniquevalue, $tablename, $privilege != 'SELECT'));
+      }
+    }
+
+    return
+      form(
+        html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
+        html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
+        html('input', array('type'=>'hidden', 'name'=>'tablename', 'value'=>$tablename)).
+        html('input', array('type'=>'hidden', 'name'=>'tablenamesingular', 'value'=>$tablenamesingular)).
+        html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
+        html('input', array('type'=>'hidden', 'name'=>'uniquevalue', 'value'=>$uniquevalue)).
+        html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back ? $back : parameter('server', 'HTTP_REFERER'))).
+        html('table', array('class'=>'tableedit'), html('tr', array(), $lines))
       );
   }
 
@@ -463,7 +524,7 @@
       : "INSERT INTO `<databasename>`.`<tablename>` SET ".join(', ', $sets),
       array_merge($arguments, array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue))
     );
-    return !is_null($uniquevalue) ? $uniquevalue : mysql_insert_id();
+    return $uniquefieldname && !is_null($uniquevalue) ? $uniquevalue : mysql_insert_id();
   }
 
   function preg_match1($pattern, $subject, $default = null) {

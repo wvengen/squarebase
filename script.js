@@ -130,8 +130,7 @@ jQuery.fn.hidelogs = function() {
 
 jQuery.fn.ajaxsubmit = function() {
   $(this).
-  closest('form').
-  filter(':not(.ajaxified)').
+  closest('form:not(.ajaxified)').
   addClass('ajaxified').
   submit(
     function() {
@@ -189,7 +188,20 @@ jQuery.fn.ajaxify = function() {
   css('display', 'none').
   end().
 
-  find('.cancel, .close').
+  find(':input[type=submit]:not(.ajaxified)').
+  addClass('ajaxified').
+  click(
+    function() {
+      // the following line is needed because the name=value of the submit button isn't included in form.serialize()/form.formhash()
+      // because there is no way to know which submit button is pressed
+      $(this).
+      append('<input type="hidden" name="action" value="' + $(this).val() + '"/>');
+      return true;
+    }
+  ).
+  end().
+
+  find('.cancel:not(.ajaxified), .close:not(.ajaxified)').
   addClass('ajaxified').
   click(
     function() {
@@ -247,28 +259,6 @@ jQuery.fn.ajaxify = function() {
           function() {
             $(this).
             hidelogs().
-
-            find('form').
-            ajaxsubmit().
-
-            find('.mainsubmit').
-            addClass('ajaxified').
-            click(
-              function() {
-                // the following line is needed because the name=value of the submit button isn't included in form.serialize()/form.formhash()
-                // because there is no way to know which submit button is pressed
-                $(this).
-                append('<input type="hidden" name="action" value="' + $(this).val() + '"/>');
-                return true;
-              }
-            ).
-            end().
-
-            find('.minorsubmit').
-            addClass('ajaxified').
-            end().
-
-            end(). //find('form')
 
             ajaxify();
           }

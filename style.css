@@ -47,7 +47,6 @@ input.mainsubmit.delete:hover, .cancel:hover, .close:hover, .drop:hover, .forget
 input.mainsubmit.delete { margin-left: 5em; }
 
 /* a.ajaxified, input.ajaxified { color: #363; } */
-input.minorsubmit.ajaxified { display: none; }
 .ajaxcontainer { padding-left: 1em; }
 .ajaxproblem { border-color: #c00 !important; }
 .ajaxincompatible { background-color: #f90 !important; }
