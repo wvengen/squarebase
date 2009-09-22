@@ -453,7 +453,7 @@
   function insertorupdate($databasename, $tablename, $fieldnamesandvalues, $uniquefieldname = null, $uniquevalue = null) {
     $sets = $arguments = array();
     foreach ($fieldnamesandvalues as $fieldname=>$fieldvalue) {
-      $sets[] = "<_name_$fieldname> = '<_value_$fieldname>'";
+      $sets[] = "<_name_$fieldname> = \"<_value_$fieldname>\"";
       $arguments["_name_$fieldname"] = $fieldname;
       $arguments["_value_$fieldname"] = $fieldvalue;
     }
