@@ -45,6 +45,23 @@
   }
 
   function html($tag, $parameters = array(), $text = null) {
+    if ($_SESSION['logsy']) {
+      static $types = array(
+        'html'=>1, 'head'=>1, 'title'=>1, 'script'=>1, 'body'=>1, 'div'=>1, 'span'=>1, 'p'=>1, 'h1'=>1, 'h2'=>1, 'ol'=>1, 'ul'=>1, 'li'=>1, 'a'=>1, 'table'=>1, 'tr'=>1, 'th'=>1, 'td'=>1, 'form'=>1, 'optgroup'=>1, 'label'=>1, 'select'=>1, 'option'=>1, 'textarea'=>1,
+        'link'=>0, 'img'=>0, 'input'=>0
+      );
+      $type = $types[$tag];
+      if ($type === 1) {
+        if (is_null($text))
+          addtolist('warnings', 'warning', sprintf(_('missing text for html tag %s'), $tag));
+      }
+      elseif ($type === 0) {
+        if (!is_null($text))
+          addtolist('warnings', 'warning', sprintf(_('text for html tag %s'), $tag));
+      }
+      else
+        addtolist('warnings', 'warning', sprintf(_('unknown html tag %s'), $tag));
+    }
     $parameterlist = array();
     foreach ($parameters as $parameter=>$value)
       if ($parameter && !is_null($value))
