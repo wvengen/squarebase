@@ -101,7 +101,8 @@ jQuery.fn.enhance_form = function() {
   ).
   end().
 
-  find('input:enabled:not(.readonly):not(.skipfirstfocus), select:enabled:not(.readonly):not(.skipfirstfocus)').
+  find('input, select').
+  filter(':enabled:not(:submit):not(.readonly):not(.skipfirstfocus):not(.list)').
   eq(0).
   focus();
 

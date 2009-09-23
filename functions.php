@@ -367,7 +367,7 @@
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
     $can_insert = $can_update = false;
-    $header = $footer = array();
+    $header = $quickadd = array();
     $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inlist', 'SELECT', true);
     while ($field = mysql_fetch_assoc($fields)) {
       $can_insert = $can_insert || $field['privilege_insert'];
@@ -398,12 +398,12 @@
               array('class'=>'ajaxreload')
             )
         );
-      $footer[] = html('td', array('class'=>!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? $foreignvalue : null, (!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname) || !$field['privilege_insert'], false));
+      $quickadd[] = html('td', array('class'=>!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? $foreignvalue : null, (!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname) || !$field['privilege_insert'], false));
     }
     if ($can_update)
       array_unshift($header, html('th', array('class'=>'small'), ''));
     if ($can_insert)
-      array_unshift($footer, html('td', array('class'=>'small'), ''));
+      array_unshift($quickadd, html('td', array('class'=>'small'), ''));
     if ($ordernames)
       $ordernames[0] = $ordernames[0].' '.($orderasc ? 'ASC' : 'DESC');
     $records = query('data',
@@ -445,13 +445,18 @@
         );
     }
     if ($interactive)
-      $rows[] = 
-        html('tr', array('class'=>count($rows) % 2 ? 'rowodd' : 'roweven'), join($footer)).
-        html('tr', array('class'=>count($rows) % 2 ? 'rowodd' : 'roweven'),
-          $footer[0].
-          html('td', array('colspan'=>count($footer) - 1),
-            html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'class'=>'mainsubmit')).
-            html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit'))
+      $rows[] =
+        html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven')), join($quickadd)).
+        html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven')),
+          $quickadd[0].
+          html('td', array('colspan'=>count($quickadd) - 1),
+            html('div', array(), 
+              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'class'=>'mainsubmit')).
+              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')).
+              internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('full record')).
+              (is_null($foreignvalue) ? '' : html('span', array('class'=>'changeslost'), _('(changes to form fields are lost)')))
+            ).
+            (is_null($uniquevalue) ? '' : ajaxcontent(edit_record('UPDATE', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue)))
           )
         );
 
@@ -466,14 +471,6 @@
 
     return
       html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'orderasc'=>$orderasc ? 'on' : '', 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
-        ($interactive
-        ? html('div', array(),
-            internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $tablenamesingular)).
-            (is_null($foreignvalue) ? '' : html('span', array('class'=>'changeslost'), _('(changes to form fields are lost)')))
-          ).
-          (is_null($uniquevalue) ? '' : ajaxcontent(edit_record('UPDATE', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue)))
-        : (is_null($foreignvalue) ? '' : $tablename)
-        ).
         (count($rows) > 1
         ? form(
             html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
