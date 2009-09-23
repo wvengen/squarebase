@@ -2,7 +2,7 @@
 body { margin: 0.5em; overflow-y: scroll; font-family: sans-serif !important; }
 .ajaxbusy { cursor: wait !important; }
 h2 { margin-bottom: 0.5em; }
-form { background-color: #ddf; padding: 0.5em; }
+form { background-color: #ddf; margin: 0.2em 0.5em 0.5em 0; }
 fieldset { border: 0.1em solid #ccc; padding: 0.2em; }
 p { margin: 0.5em 0; }
 a:hover { background-color: #ff6 !important; }
@@ -34,7 +34,7 @@ input, textarea, select { background-color: #ffe; border: 0.1em solid #999; }
 input:focus, select:focus, textarea:focus { background-color: #ffc; }
 select { height: 1.35em; }
 optgroup { color: #666; background-color: #ddd; font-size: x-small; text-align: center; font-style: normal; }
-option { color: #000; background-color: #fff; font-size: medium; text-align: left; }
+option { color: #000; background-color: #fff; font-size: medium; text-align: left; height: 1.2em; }
 input.readonly, select.readonly { border-color: #ccc; background-color: #eee; color: #999; }
 ul.minimal { margin: 0; padding: 0; }
 ul.minimal li { list-style-type: none; }
@@ -47,7 +47,7 @@ input.mainsubmit.delete:hover, .cancel:hover, .close:hover, .drop:hover, .forget
 input.mainsubmit.delete { margin-left: 5em; }
 
 /* a.ajaxified, input.ajaxified { color: #363; } */
-.ajaxcontainer { padding-left: 1em; }
+.ajaxcontainer { margin-left: 0.5em; }
 .ajaxproblem { border-color: #c00 !important; }
 .ajaxincompatible { background-color: #f90 !important; }
 .ajaxwarning { display: none; color: #c00; }
@@ -74,7 +74,7 @@ input.mainsubmit.delete { margin-left: 5em; }
 #warnings { padding: 0; }
 #warnings li { list-style-type: none; }
 div.error, .problem, .warning { font-weight: bold; color: #f00; }
-.problemtag { border: 0.3em solid red !important; }
+.tagwarning { border: 0.3em solid red !important; }
 .help { color: #999; margin-left: 0.5em; }
 
 .trace { white-space: nowrap; }

@@ -10,8 +10,8 @@
 
   function is_sortable_float() { return true; }
 
-  function formfield_float($metabasename, $databasename, $field, $value, $readonly) {
-    return html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null));
+  function formfield_float($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
+    return html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null));
   }
 
   function formvalue_float($field) {
@@ -25,7 +25,6 @@
   
   function css_float() {
     return
-      ".float { text-align: right; }\n".
-      ".float .decimals { text-align: left; width: 4em; }";
+      ".float { text-align: right; }\n";
   }
 ?>

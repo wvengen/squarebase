@@ -20,8 +20,8 @@
 
   function is_sortable_textwithpreview() { return true; }
 
-  function formfield_textwithpreview($metabasename, $databasename, $field, $value, $readonly) {
-    return formfield_text($metabasename, $databasename, $field, $value, $readonly);
+  function formfield_textwithpreview($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
+    return formfield_text($metabasename, $databasename, $field, $value, $readonly, $extra);
   }
 
   function formvalue_textwithpreview($field) {
@@ -43,7 +43,7 @@
 
   function jquery_enhance_form_textwithpreview() {
     return
-      "find('.textwithpreview').\n".
+      "find('.textwithpreview.edit').\n".
       "autogrow().\n".
       "wrap('<div class=\"wrapper\"></div>').\n".
       "addClass('blur').\n".

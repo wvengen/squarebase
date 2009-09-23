@@ -12,8 +12,8 @@
   session_save_path('session');
   session_start();
 
-  $_SESSION['ajaxy'] = !is_null(parameter('get', 'ajaxy')) ? parameter('get', 'ajaxy') == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['ajaxy'] : TRUE);
-  $_SESSION['logsy'] = !is_null(parameter('get', 'logsy')) ? parameter('get', 'logsy') == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['logsy'] : FALSE);
+  $_SESSION['ajaxy'] = !is_null(parameter('get', 'ajaxy')) ? parameter('get', 'ajaxy') == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['ajaxy'] : true);
+  $_SESSION['logsy'] = !is_null(parameter('get', 'logsy')) ? parameter('get', 'logsy') == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['logsy'] : false);
 
   addtolist('logs', 'get', 'get: '.html('div', array('class'=>'arrayshow'), array_show(parameter('get'))));
   addtolist('logs', 'cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
@@ -391,7 +391,7 @@
                                 array('strtolower(" $1")'    , ' '._('id')      ,'"$1" && "$3" ? "$1 $3" : ("$1" || "$3" ? "$1$3" : "$0")', ''                , ' '      , ''           ),
                                 $fieldname
                               );
-          $intablelist      = TRUE;
+          $intablelist      = true;
           $nullallowed      = $field['is_nullable'] == 'YES';
           $presentationname = $fieldextra[$fieldname]['presentationname'];
           $linkedtable      = @call_user_func("linkedtable_$presentationname", $tablename, $fieldname);
@@ -714,7 +714,7 @@
   if ($action == 'show_database') {
     $metabasename = parameter('get', 'metabasename');
     $databasename = parameter('get', 'databasename');
-    $tables = query('meta', 'SELECT * FROM `<metabasename>`.tables LEFT JOIN `<metabasename>`.fields ON tables.uniquefieldid = fields.fieldid WHERE intablelist = TRUE ORDER BY tablename', array('metabasename'=>$metabasename));
+    $tables = query('meta', 'SELECT * FROM `<metabasename>`.tables LEFT JOIN `<metabasename>`.fields ON tables.uniquefieldid = fields.fieldid WHERE intablelist = true ORDER BY tablename', array('metabasename'=>$metabasename));
     $rows = array(html('th', array(), 'table'));
     while ($table = mysql_fetch_assoc($tables)) {
       $rows[] =
@@ -744,7 +744,7 @@
     $orderasc          = parameter('get', 'orderasc', 'on') == 'on';
 
     page($action, path($metabasename, $databasename, $tablename, $uniquefieldname),
-      list_table($metabasename, $databasename, $tablename, $tablenamesingular, 0, $offset, $uniquefieldname, null, $orderfieldname, $orderasc, null, null, null, TRUE)
+      list_table($metabasename, $databasename, $tablename, $tablenamesingular, 0, $offset, $uniquefieldname, null, $orderfieldname, $orderasc, null, null, null, true)
     );
   }
 

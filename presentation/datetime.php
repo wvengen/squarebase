@@ -9,10 +9,10 @@
 
   function is_sortable_datetime() { return true; }
 
-  function formfield_datetime($metabasename, $databasename, $field, $value, $readonly) {
+  function formfield_datetime($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return 
-      html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>datetime2local($value), 'readonly'=>$readonly ? 'readonly' : null)).
-      html('span', array('class'=>'help'), find_datetime_format('%X'));
+      html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>datetime2local($value), 'readonly'=>$readonly ? 'readonly' : null)).
+      ($extra ? html('span', array('class'=>'help'), find_datetime_format('%X')) : '');
   }
 
   function formvalue_datetime($field) {
@@ -33,6 +33,8 @@
   }
   
   function css_datetime() {
-    return '';
+    return
+      ".datetime.edit { width: 20em; }\n".
+      ".datetime.list { width: 6em; }\n";
   }
 ?>

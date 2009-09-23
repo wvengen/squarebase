@@ -9,8 +9,8 @@
 
   function is_sortable_autoincrement() { return false; }
 
-  function formfield_autoincrement($metabasename, $databasename, $field, $value, $readonly) {
-    return html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], 'readonly'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>'readonly'));
+  function formfield_autoincrement($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
+    return html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', 'readonly'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>'readonly'));
   }
 
   function formvalue_autoincrement($field) {
@@ -23,6 +23,6 @@
   }
   
   function css_autoincrement() {
-    return ".autoincrement { width: 20em; }\n";
+    return ".autoincrement.edit { width: 20em; }\n";
   }
 ?>

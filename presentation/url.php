@@ -18,10 +18,10 @@
 
   function is_sortable_url() { return false; }
 
-  function formfield_url($metabasename, $databasename, $field, $value, $readonly) {
+  function formfield_url($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return
-      html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null)).
-      ($value ? externalreference($value, 'link') : '');
+      html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null)).
+      ($extra && $value ? externalreference($value, 'link') : '');
   }
 
   function formvalue_url($field) {
@@ -34,6 +34,6 @@
   }
   
   function css_url() {
-    return ".url { width: 20em; }\n";
+    return ".url.edit { width: 20em; }\n";
   }
 ?>

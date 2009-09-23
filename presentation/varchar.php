@@ -13,8 +13,8 @@
 
   function is_sortable_varchar() { return true; }
 
-  function formfield_varchar($metabasename, $databasename, $field, $value, $readonly) {
-    return html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null));
+  function formfield_varchar($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
+    return html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null));
   }
 
   function formvalue_varchar($field) {
@@ -27,6 +27,6 @@
   }
   
   function css_varchar() {
-    return ".varchar { width: 20em; }\n";
+    return ".varchar.edit { width: 20em; }\n";
   }
 ?>

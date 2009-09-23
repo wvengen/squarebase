@@ -25,7 +25,7 @@
     $args = func_get_args();
     switch (count($args)) {
       case 0:
-        return FALSE;
+        return false;
       case 1:
         $glue = '';
         break;
@@ -41,7 +41,7 @@
   }
 
   function array_show($array) {
-    return preg_replace(array('@^Array\s*\(\s*(.*?)\s*\)\s*$@s', '@ *\n *@s'), array('$1', "\n"), print_r($array, TRUE));
+    return preg_replace(array('@^Array\s*\(\s*(.*?)\s*\)\s*$@s', '@ *\n *@s'), array('$1', "\n"), print_r($array, true));
   }
 
   function html($tag, $parameters = array(), $text = null) {
@@ -63,7 +63,7 @@
         $warning = _('unknown html tag %s');
       if ($warning) {
         addtolist('warnings', 'warning', sprintf($warning, $tag));
-        $parameters['class'] .= ($parameters['class'] ? ' ' : '').'problemtag';
+        $parameters['class'] = join(' ', array_merge(explode(' ', $parameters['class']), array('tagwarning')));
       }
     }
     $parameterlist = array();
@@ -363,13 +363,15 @@
     );
   }
 
-  function list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, $uniquevalue, $orderfieldname, $orderasc = TRUE, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = TRUE) {
+  function list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, $uniquevalue, $orderfieldname, $orderasc = true, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = true) {
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
-    $can_update = has_grant('UPDATE', $databasename, $tablename, '?');
-    $header = $can_update ? array(html('th', array('class'=>'small'), '')) : array();
-    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inlist');
+    $can_insert = $can_update = false;
+    $header = $footer = array();
+    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inlist', 'SELECT', true);
     while ($field = mysql_fetch_assoc($fields)) {
+      $can_insert = $can_insert || $field['privilege_insert'];
+      $can_update = $can_update || $field['privilege_update'];
       $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
       if ($field['foreigntablename']) {
         $joins[] = " LEFT JOIN `$databasename`.$field[foreigntablename] AS $field[foreigntablename]_$field[fieldname] ON $field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = $tablename.$field[fieldname]";
@@ -396,7 +398,12 @@
               array('class'=>'ajaxreload')
             )
         );
+      $footer[] = html('td', array('class'=>!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? $foreignvalue : null, (!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname) || !$field['privilege_insert'], false));
     }
+    if ($can_update)
+      array_unshift($header, html('th', array('class'=>'small'), ''));
+    if ($can_insert)
+      array_unshift($footer, html('td', array('class'=>'small'), ''));
     if ($ordernames)
       $ordernames[0] = $ordernames[0].' '.($orderasc ? 'ASC' : 'DESC');
     $records = query('data',
@@ -410,7 +417,7 @@
       ($ordernames ? " ORDER BY ".join(', ', $ordernames) : '').
       ($limit ? " LIMIT $limit".($offset ? " OFFSET $offset" : '') : '')
     );
-    $foundrecords = $limit ? query1('data', 'SELECT FOUND_ROWS() AS number') : null;
+    $foundrecords = $limit ? query1field('data', 'SELECT FOUND_ROWS()') : null;
 
     $rows = array(html('tr', array(), join($header)));
     while ($row = mysql_fetch_assoc($records)) {
@@ -437,11 +444,21 @@
           join($columns)
         );
     }
+    if ($interactive)
+      $rows[] = 
+        html('tr', array('class'=>count($rows) % 2 ? 'rowodd' : 'roweven'), join($footer)).
+        html('tr', array('class'=>count($rows) % 2 ? 'rowodd' : 'roweven'),
+          $footer[0].
+          html('td', array('colspan'=>count($footer) - 1),
+            html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'class'=>'mainsubmit')).
+            html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit'))
+          )
+        );
 
     $offsets = array();
-    if ($limit > 0 && $foundrecords['number'] > $limit) {
-      for ($otheroffset = 0; $otheroffset < $foundrecords['number']; $otheroffset += $limit) {
-        $lastrecord = min($otheroffset + $limit, $foundrecords['number']);
+    if ($limit > 0 && $foundrecords > $limit) {
+      for ($otheroffset = 0; $otheroffset < $foundrecords; $otheroffset += $limit) {
+        $lastrecord = min($otheroffset + $limit, $foundrecords);
         $text = ($otheroffset + 1).($otheroffset + 1 == $lastrecord ? '' : '-'.$lastrecord);
         $offsets[] = $offset == $otheroffset ? $text : internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'offset'=>$otheroffset, 'orderfieldname'=>$originalorderfieldname, 'orderasc'=>$orderasc), $text);
       }
@@ -457,14 +474,25 @@
           (is_null($uniquevalue) ? '' : ajaxcontent(edit_record('UPDATE', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue)))
         : (is_null($foreignvalue) ? '' : $tablename)
         ).
-        (count($rows) > 1 ? html('table', array('class'=>'tablelist'), join($rows)) : '').
+        (count($rows) > 1
+        ? form(
+            html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
+            html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
+            html('input', array('type'=>'hidden', 'name'=>'tablename', 'value'=>$tablename)).
+            html('input', array('type'=>'hidden', 'name'=>'tablenamesingular', 'value'=>$tablenamesingular)).
+            html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
+            html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back ? $back : parameter('server', 'HTTP_REFERER'))).
+            html('table', array('class'=>'tablelist'), join($rows)) 
+          )
+        : ''
+        ).
         join(' ', $offsets).
         (is_null($foreignvalue) ? internalreference(parameter('server', 'HTTP_REFERER'), 'close', array('class'=>'close')) : '')
       );
   }
 
   function edit_record($privilege, $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $back = null) {
-    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inedit', $privilege, TRUE);
+    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inedit', $privilege, true);
 
     if (!is_null($uniquevalue)) {
       $fieldnames = array();
@@ -481,11 +509,11 @@
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
       $lines[] =
         html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
-        html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), is_null($uniquevalue) ? parameter('get', "field:$field[fieldname]") : $row[$field['fieldname']], $privilege == 'SELECT' || ($privilege == 'INSERT' && !$field['privilege_insert']) || ($privilege == 'UPDATE' && !$field['privilege_update'])));
+        html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), is_null($uniquevalue) ? parameter('get', "field:$field[fieldname]") : $row[$field['fieldname']], $privilege == 'SELECT' || ($privilege == 'INSERT' && !$field['privilege_insert']) || ($privilege == 'UPDATE' && !$field['privilege_update']), true));
     }
 
     $lines[] =
-      html('td', array('class'=>'description'), '&rarr;').
+      html('td', array('class'=>'description'), '').
       html('td', array(),
         html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$privilege == 'SELECT' ? 'delete_record' : ($privilege == 'UPDATE' ? 'update_record' : 'add_record'), 'class'=>'mainsubmit')).
         (is_null($uniquevalue) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
@@ -494,14 +522,15 @@
       );
 
     if (!is_null($uniquevalue)) {
+      $linesreferrers = array();
       $referringfields = query('meta', 'SELECT mt.tablename, mt.singular, mf.fieldname AS fieldname, mf.title AS title, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mtf ON mtf.tableid = mf.foreigntableid LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.fields mfu ON mt.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
-        $lines[] =
+        $linesreferrers[] =
           html('td', array('class'=>'description'), 
             $referringfield['tablename'].
             ($referringfield['title'] == $tablenamesingular ? '' : html('div', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['title'])))
           ).
-          html('td', array(), list_table($metabasename, $databasename, $referringfield['tablename'], $referringfield['singular'], 0, 0, $referringfield['uniquefieldname'], null, null, TRUE, $referringfield['fieldname'], $uniquevalue, $tablename, $privilege != 'SELECT'));
+          html('td', array(), list_table($metabasename, $databasename, $referringfield['tablename'], $referringfield['singular'], 0, 0, $referringfield['uniquefieldname'], null, null, true, $referringfield['fieldname'], $uniquevalue, $tablename, $privilege != 'SELECT'));
       }
     }
 
@@ -515,7 +544,8 @@
         html('input', array('type'=>'hidden', 'name'=>'uniquevalue', 'value'=>$uniquevalue)).
         html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back ? $back : parameter('server', 'HTTP_REFERER'))).
         html('table', array('class'=>'tableedit'), html('tr', array(), $lines))
-      );
+      ).
+      ($linesreferrers ? html('table', array('class'=>'tablereferrers'), html('tr', array(), $linesreferrers)) : '');
   }
 
   function insertorupdate($databasename, $tablename, $fieldnamesandvalues, $uniquefieldname = null, $uniquevalue = null) {
@@ -527,7 +557,7 @@
     }
     query('data',
       $uniquefieldname && !is_null($uniquevalue)
-      ? "UPDATE `<databasename>`.`<tablename>` SET ".join(', ', $sets)." WHERE <uniquefieldname> = '<uniquevalue>'"
+      ? "UPDATE `<databasename>`.`<tablename>` SET ".join(', ', $sets)." WHERE <uniquefieldname> = \"<uniquevalue>\""
       : "INSERT INTO `<databasename>`.`<tablename>` SET ".join(', ', $sets),
       array_merge($arguments, array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue))
     );
@@ -549,7 +579,8 @@
       mysql_data_seek($results, 0);
   }
 
-  function fieldsforpurpose($metabasename, $databasename, $tablename, $purpose, $privilege = 'SELECT', $allprivileges = FALSE) {
+  function fieldsforpurpose($metabasename, $databasename, $tablename, $purpose, $privilege = 'SELECT', $allprivileges = false) {
+    $selectparts = $joinparts = array();
     foreach (array('SELECT', 'INSERT', 'UPDATE') as $oneprivilege) {
       if ($allprivileges || $privilege == $oneprivilege) {
         $letter = strtolower($oneprivilege{0});
@@ -665,7 +696,7 @@
 
   function read_file($filename, $flags = null) {
     $content = @file($filename, $flags);
-    return $content === FALSE ? array() : $content;
+    return $content === false ? array() : $content;
   }
 
   function augment_file($filename, $content_type) {

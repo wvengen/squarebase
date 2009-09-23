@@ -11,11 +11,11 @@
 
   function is_sortable_image() { return false; }
 
-  function formfield_image($metabasename, $databasename, $field, $value, $readonly) {
+  function formfield_image($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return
       $readonly
       ? list_image($metabasename, $databasename, $field, $value)
-      : html('fieldset', array('class'=>join_clean(' ', $field['presentationname'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty')),
+      : html('fieldset', array('class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty')),
           html('ul', array('class'=>'minimal'),
             html('li', array(),
               array(
@@ -48,10 +48,10 @@
   
   function css_image() {
     return
-      ".tableedit .image img { max-width: 3em; max-height: 3em; }\n".
-      ".tableedit .image img:hover { max-width: none; max-height: none; }\n".
-      ".tablelist .image img { max-height: 1em !important; }\n".
-      ".tablelist .image img:hover { max-height: 4em !important; }\n";
+      ".image.edit img { max-width: 3em; max-height: 3em; }\n".
+      ".image.edit img:hover { max-width: none; max-height: none; }\n".
+      ".image.list img { max-height: 1em !important; }\n".
+      ".image.list img:hover { max-height: 4em !important; }\n";
   }
 
   function jquery_enhance_form_image() {

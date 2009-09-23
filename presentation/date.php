@@ -9,10 +9,10 @@
 
   function is_sortable_date() { return true; }
 
-  function formfield_date($metabasename, $databasename, $field, $value, $readonly) {
+  function formfield_date($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return 
-      html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'value'=>date2local($value), 'readonly'=>$readonly ? 'readonly' : null)).
-      html('span', array('class'=>'help'), find_datetime_format('%x'));
+      html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'value'=>date2local($value), 'readonly'=>$readonly ? 'readonly' : null)).
+      ($extra ? html('span', array('class'=>'help'), find_datetime_format('%x')) : '');
   }
 
   function formvalue_date($field) {
@@ -33,6 +33,8 @@
   }
   
   function css_date() {
-    return ".date { width: 20em; }\n";
+    return
+      ".date.edit { width: 20em; }\n".
+      ".date.list { width: 6em; }\n";
   }
 ?>

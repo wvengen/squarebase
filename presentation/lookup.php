@@ -9,7 +9,7 @@
         $likeness[$onetable] =
           ($fieldname_lower == singularize_noun($onetable_lower) ? 10 : 0) +
           (substr($fieldname_lower, -strlen($primarykeyfieldname[$onetable])) == $primarykeyfieldname[$onetable] ? 5 : 0) +
-          (strpos($fieldname_lower, singularize_noun($onetable_lower)) !== FALSE ? 5 : 0) -
+          (strpos($fieldname_lower, singularize_noun($onetable_lower)) !== false ? 5 : 0) -
           levenshtein($fieldname_lower, $onetable_lower);
       }
       arsort($likeness);
@@ -31,7 +31,7 @@
 
   function is_sortable_lookup() { return true; }
 
-  function ajax_lookup($metabasename, $databasename, $fieldname, $value, $presentationname, $foreigntablename, $foreigntablenamesingular, $foreignuniquefieldname, $nullallowed, $readonly) {
+  function ajax_lookup($metabasename, $databasename, $fieldname, $value, $presentationname, $foreigntablename, $foreigntablenamesingular, $foreignuniquefieldname, $nullallowed, $readonly, $extra = true) {
     if (!$foreigntablename)
       error(sprintf(_('no foreigntablename for %s'), $fieldname));
     $descriptor = descriptor($metabasename, $databasename, $foreigntablename, $foreigntablename);
@@ -46,14 +46,14 @@
     return
       html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'ajax_lookup', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'fieldname'=>$fieldname, 'value'=>$value, 'presentationname'=>$presentationname, 'foreigntablename'=>$foreigntablename, 'foreigntablenamesingular'=>$foreigntablenamesingular, 'foreignuniquefieldname'=>$foreignuniquefieldname, 'nullallowed'=>$nullallowed, 'readonly'=>$readonly))),
         html('div', array(),
-          html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>join_clean(' ', $presentationname, $readonly ? 'readonly' : null, $nullallowed ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options)).
-          ($readonly ? '' : ' '.internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablenamesingular)).html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)')))
+          html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>join_clean(' ', $presentationname, $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $nullallowed ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options)).
+          ($extra ? ' '.internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablenamesingular)).html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)')) : '')
         )
       );
   }
 
-  function formfield_lookup($metabasename, $databasename, $field, $value, $readonly) {
-    return ajax_lookup($metabasename, $databasename, $field['fieldname'], $value, $field['presentationname'], $field['foreigntablename'], $field['foreigntablenamesingular'], $field['foreignuniquefieldname'], $field['nullallowed'], $readonly);
+  function formfield_lookup($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
+    return ajax_lookup($metabasename, $databasename, $field['fieldname'], $value, $field['presentationname'], $field['foreigntablename'], $field['foreigntablenamesingular'], $field['foreignuniquefieldname'], $field['nullallowed'], $readonly, $extra);
   }
 
   function formvalue_lookup($field) {
@@ -74,6 +74,7 @@
   
   function css_lookup() {
     return 
-      ".lookup { width: 20.35em; }\n";
+      ".lookup.edit { width: 20.45em; }\n".
+      ".lookup.list { width: auto; }\n";
   }
 ?>
