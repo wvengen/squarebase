@@ -165,7 +165,7 @@
     if (preg_match('@= *\'<\w+>\'@', $query))
       addtolist('warnings', 'warning', sprintf(_('wrong single quotes around value in query: %s'), $query));
 
-    $fullquery = preg_replace('@(["`])?<(\w+)>(["`])?@e', '(is_null($arguments["$2"]) ? "NULL" : (is_numeric($arguments["$2"]) ? (int) $arguments["$2"] : "$1".mysql_escape_string($arguments["$2"])."$3"))', $query);
+    $fullquery = preg_replace('@(["`])?<(\w+)>(["`])?@e', '(is_null($arguments["$2"]) ? "NULL" : (is_bool($arguments["$2"]) ? ($arguments["$2"] ? "TRUE" : "FALSE") : (is_numeric($arguments["$2"]) ? (int) $arguments["$2"] : "$1".mysql_escape_string($arguments["$2"])."$3")))', $query);
 
     $before = microtime();
     $result = mysql_query($fullquery);
@@ -398,11 +398,12 @@
               array('class'=>'ajaxreload')
             )
         );
-      $quickadd[] = html('td', array('class'=>!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? $foreignvalue : null, (!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname) || !$field['privilege_insert'], false));
+      if ($field['quickadd'])
+        $quickadd[] = html('td', array('class'=>!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? $foreignvalue : null, (!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname) || !$field['privilege_insert'], false));
     }
     if ($can_update)
       array_unshift($header, html('th', array('class'=>'small'), ''));
-    if ($can_insert)
+    if ($can_insert && $quickadd)
       array_unshift($quickadd, html('td', array('class'=>'small'), ''));
     if ($ordernames)
       $ordernames[0] = $ordernames[0].' '.($orderasc ? 'ASC' : 'DESC');
@@ -444,7 +445,7 @@
           join($columns)
         );
     }
-    if ($interactive)
+    if ($interactive && $quickadd)
       $rows[] =
         html('tr', array(), join($quickadd)).
         html('tr', array(),
@@ -598,6 +599,7 @@
           'mt.singular',
           'mt.plural',
           'mt.tableid',
+          'mt.quickadd',
           'mf.fieldid',
           'mf.fieldname',
           'mf.title',
