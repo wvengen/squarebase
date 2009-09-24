@@ -35,12 +35,12 @@
     if (!$foreigntablename)
       error(sprintf(_('no foreigntablename for %s'), $fieldname));
     $descriptor = descriptor($metabasename, $databasename, $foreigntablename, $foreigntablename);
-    $references = query('data', "SELECT $foreignuniquefieldname, $descriptor[select] AS _descriptor FROM `$databasename`.$foreigntablename$descriptor[joins] ORDER BY _descriptor");
+    $references = query('data', "SELECT $foreigntablename.$foreignuniquefieldname AS _id, $descriptor[select] AS _descriptor FROM `$databasename`.$foreigntablename$descriptor[joins] ORDER BY _descriptor");
     $options = array();
     while ($reference = mysql_fetch_assoc($references)) {
-      $selected = $value == $reference[$foreignuniquefieldname];
+      $selected = $value == $reference['_id'];
       $oneselected = $oneselected || $selected;
-      $options[] = html('option', array_merge(array('value'=>$reference[$foreignuniquefieldname]), $selected ? array('selected'=>'selected') : array()), $reference['_descriptor']);
+      $options[] = html('option', array_merge(array('value'=>$reference['_id']), $selected ? array('selected'=>'selected') : array()), $reference['_descriptor']);
     }
     array_unshift($options, html('option', array_merge(array('value'=>''), $oneselected ? array() : array('selected'=>'selected')), ''));
     return
