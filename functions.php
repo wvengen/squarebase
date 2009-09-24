@@ -446,8 +446,8 @@
     }
     if ($interactive)
       $rows[] =
-        html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven')), join($quickadd)).
-        html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven')),
+        html('tr', array(), join($quickadd)).
+        html('tr', array(),
           $quickadd[0].
           html('td', array('colspan'=>count($quickadd) - 1),
             html('div', array(), 
@@ -501,7 +501,7 @@
     get_presentationnames();
 
     $lines = array(
-      html('td', array('class'=>'header', 'colspan'=>2), $tablenamesingular)
+      html('th', array('colspan'=>2), $tablenamesingular)
     );
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
       $lines[] =

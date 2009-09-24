@@ -299,7 +299,13 @@
       $alltables[] = $tablename;
 
       $allprimarykeyfieldnames = array();
-      $fields[$tablename] = query('data', 'SELECT table_schema, table_name, column_name, column_key, column_type, is_nullable, column_key FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$databasename, 'tablename'=>$tablename));
+      $fields[$tablename] = query('data',
+        'SELECT c.table_schema, c.table_name, c.column_name, column_key, column_type, is_nullable, referenced_table_name '.
+        'FROM INFORMATION_SCHEMA.COLUMNS c '.
+        'LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu ON kcu.table_schema = c.table_schema AND kcu.table_name = c.table_name AND kcu.column_name = c.column_name AND referenced_table_schema = c.table_schema '.
+        'WHERE c.table_schema = "<databasename>" AND c.table_name = "<tablename>"',
+        array('databasename'=>$databasename, 'tablename'=>$tablename)
+      );
       while ($field = mysql_fetch_assoc($fields[$tablename])) {
         $fieldname = $field['column_name'];
         if ($field['column_key'] == 'PRI')
@@ -313,16 +319,6 @@
 
     $presentationnames = get_presentationnames();
 
-    $header =
-      html('tr', array(),
-        html('th', array(),
-          array(
-            _('table'), _('list'), _('field'), _('title'), _('type'), _('null'), _('presentation'), _('key'), _('desc'), _('list'), _('edit')
-          )
-        )
-      );
-
-    $rowstables = array();
     $rowsfields = array();
     for (mysql_data_reset($tables); $table = mysql_fetch_assoc($tables); ) {
       $tablename = $table["table_name"];
@@ -366,7 +362,16 @@
         $max_in_edit = max($max_in_edit, $fieldextra[$fieldname]['in_edit']);
       }
 
-      $rowsfieldsthistable = array();
+      $rowsfields[] =
+        html('tr', array(),
+          html('th', array(),
+            array(
+              _('table'), _('list'), _('field'), _('title'), _('type'), _('null'), _('presentation'), _('key'), _('desc'), _('list'), _('edit')
+            )
+          )
+        );
+
+      $fieldnr = 0;
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
         $fieldname = $field['column_name'];
 
@@ -394,7 +399,7 @@
           $intablelist      = true;
           $nullallowed      = $field['is_nullable'] == 'YES';
           $presentationname = $fieldextra[$fieldname]['presentationname'];
-          $linkedtable      = @call_user_func("linkedtable_$presentationname", $tablename, $fieldname);
+          $linkedtable      = $field['referenced_table_name'] ? $field['referenced_table_name'] : @call_user_func("linkedtable_$presentationname", $tablename, $fieldname);
           $indesc           = $fieldextra[$fieldname]['in_desc'] == $max_in_desc;
           $inlist           = $fieldextra[$fieldname]['in_list'] == $max_in_list;
           $inedit           = $fieldextra[$fieldname]['in_edit'] == $max_in_edit;
@@ -407,7 +412,7 @@
         $mostlikelyoption = null;
         $moreorlesslikelyoptions = $unlikelyoptions = array();
         foreach ($fieldextra[$fieldname]['presentationprobabilities'] as $onepresentationname=>$probability) {
-          $option = html('option', array('value'=>$onepresentationname, 'selected'=>$onepresentationname == $presentationname ? 'selected' : null), $onepresentationname.' '.$probability);
+          $option = html('option', array('value'=>$onepresentationname, 'selected'=>$onepresentationname == $presentationname ? 'selected' : null), $onepresentationname);
           if ($onepresentationname == $presentationname)
             $mostlikelyoption = $option;
           elseif ($probability)
@@ -422,11 +427,10 @@
           (count($moreorlesslikelyoptions) ? html('optgroup', array('label'=>_('more or less likely')), join(array_values($moreorlesslikelyoptions), 1)) : '').
           (count($unlikelyoptions)         ? html('optgroup', array('label'=>_('unlikely')), join(array_values($unlikelyoptions))) : '');
 
-        $rowsfieldsthistable[] =
-          html('tr', array('class'=>'list'),
-            ($rowsfieldsthistable
-            ? ''
-            : html('td', array('class'=>join_clean(' ', 'top', 'nolist'), 'rowspan'=>mysql_num_rows($fields[$tablename])),
+        $rowsfields[] =
+          html('tr', array('class'=>join_clean(' ', ($fieldnr + 1) % 2 ? 'rowodd' : 'roweven', 'list')),
+            ($fieldnr == 0
+            ? html('td', array('class'=>'top', 'rowspan'=>mysql_num_rows($fields[$tablename])),
                 $tablename.
                 html('ol', array('class'=>'pluralsingular'),
                   html('li', array(),
@@ -437,9 +441,10 @@
                   )
                 )
               ).
-              html('td', array('class'=>join_clean(' ', 'top', 'nolist'), 'rowspan'=>mysql_num_rows($fields[$tablename])),
+              html('td', array('class'=>'top', 'rowspan'=>mysql_num_rows($fields[$tablename])),
                 html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
               )
+            : ''
             ).
             html('td', array(), $fieldname).
             html('td', array(), html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))).
@@ -461,8 +466,8 @@
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))).
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null)))
           );
+        $fieldnr++;
       }
-      $rowsfields[] = $header.join($rowsfieldsthistable);
     }
 
     if ($metabasename)
@@ -720,7 +725,7 @@
       $rows[] =
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array(),
-            internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$table['tablename'], 'tablenamesingular'=>$table['singular'], 'uniquefieldname'=>$table['fieldname']), $table['tablename'])
+            internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$table['tablename'], 'tablenamesingular'=>$table['singular'], 'uniquefieldname'=>$table['fieldname']), $table['plural'])
           )
         );
     }

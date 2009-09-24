@@ -22,7 +22,7 @@
   }
 
   function probability_lookup($field) {
-    return preg_match('@^(int|integer)\b@', $field['column_type']) && linkedtable_lookup($field['table_name'], $field['column_name'], $field['alltables'], $field['primarykeyfieldname']) ? 0.6 : 0;
+    return $field['referenced_table_name'] ? 1.0 : (preg_match('@^(int|integer)\b@', $field['column_type']) && linkedtable_lookup($field['table_name'], $field['column_name'], $field['alltables'], $field['primarykeyfieldname']) ? 0.6 : 0);
   }
 
   function in_desc_lookup($field) { return $field['fieldnr'] < 5 ? 1 : 0.9; }
