@@ -299,7 +299,7 @@
       $alltables[] = $tablename;
 
       $allprimarykeyfieldnames = array();
-      $fields[$tablename] = query('data', 'SELECT table_schema, table_name, column_name, column_key, column_type, is_nullable, extra FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$databasename, 'tablename'=>$tablename));
+      $fields[$tablename] = query('data', 'SELECT table_schema, table_name, column_name, column_key, column_type, is_nullable, column_key FROM INFORMATION_SCHEMA.COLUMNS WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$databasename, 'tablename'=>$tablename));
       while ($field = mysql_fetch_assoc($fields[$tablename])) {
         $fieldname = $field['column_name'];
         if ($field['column_key'] == 'PRI')
@@ -407,7 +407,7 @@
         $mostlikelyoption = null;
         $moreorlesslikelyoptions = $unlikelyoptions = array();
         foreach ($fieldextra[$fieldname]['presentationprobabilities'] as $onepresentationname=>$probability) {
-          $option = html('option', array('value'=>$onepresentationname, 'selected'=>$onepresentationname == $presentationname ? 'selected' : null), $onepresentationname);
+          $option = html('option', array('value'=>$onepresentationname, 'selected'=>$onepresentationname == $presentationname ? 'selected' : null), $onepresentationname.' '.$probability);
           if ($onepresentationname == $presentationname)
             $mostlikelyoption = $option;
           elseif ($probability)
