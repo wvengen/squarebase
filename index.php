@@ -568,6 +568,7 @@
         'fieldname        VARCHAR(100) NOT NULL,'.
         'title            VARCHAR(100) NOT NULL,'.
         'nullallowed      BOOLEAN      NOT NULL,'.
+        'hasdefaultvalue  BOOLEAN      NOT NULL,'.
         'presentationid   INT UNSIGNED NOT NULL REFERENCES `presentations` (presentationid),'.
         'indesc           BOOLEAN      NOT NULL,'.
         'inlist           BOOLEAN      NOT NULL,'.
@@ -624,14 +625,14 @@
 
         $foreigntablename = parameter('get', "$tablename:$fieldname:foreigntablename");
 
-        $indesc = parameter('get', "$tablename:$fieldname:indesc") ? 1 : 0;
-        $inlist = parameter('get', "$tablename:$fieldname:inlist") ? 1 : 0;
-        $inedit = parameter('get', "$tablename:$fieldname:inedit") ? 1 : 0;
+        $indesc = parameter('get', "$tablename:$fieldname:indesc") ? true : false;
+        $inlist = parameter('get', "$tablename:$fieldname:inlist") ? true : false;
+        $inedit = parameter('get', "$tablename:$fieldname:inedit") ? true : false;
 
         if ($field['column_key'] != 'PRI' && $field['is_nullable'] == 'NO' && !$field['column_default'] && !$inlist)
           $quickadd = false;
 
-        $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>parameter('get', "$tablename:$fieldname:nullallowed") ? 1 : 0, 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
+        $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'hasdefaultvalue'=>is_null($field['column_default']) ? false : true, 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
 
         $indescs += $indesc;
         $inlists += $inlist;

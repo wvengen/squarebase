@@ -10,7 +10,7 @@
   function is_sortable_text() { return true; }
 
   function formfield_text($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
-    return html('textarea', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), preg_replace('@<(.*?)>@', '&lt;$1&gt;', $value));
+    return html('textarea', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['hasdefaultvalue'] ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), preg_replace('@<(.*?)>@', '&lt;$1&gt;', $value));
   }
 
   function formvalue_text($field) {
