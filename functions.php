@@ -445,9 +445,9 @@
           join($columns)
         );
     }
-    if ($interactive && $quickadd)
-      $rows[] =
-        html('tr', array(), join($quickadd)).
+    if ($interactive) {
+      $rows[] = $quickadd
+      ? html('tr', array(), join($quickadd)).
         html('tr', array(),
           $quickadd[0].
           html('td', array('colspan'=>count($quickadd) - 1),
@@ -459,7 +459,15 @@
             ).
             (is_null($uniquevalue) ? '' : ajaxcontent(edit_record('UPDATE', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue)))
           )
+        )
+      : html('tr', array(),
+          html('td', array('colspan'=>count($header)),
+            html('div', array(), 
+              internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('add record'))
+            )
+          )
         );
+    }
 
     $offsets = array();
     if ($limit > 0 && $foundrecords > $limit) {

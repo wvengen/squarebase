@@ -399,9 +399,9 @@
           $intablelist      = true;
           $nullallowed      = $field['is_nullable'] == 'YES';
           $presentationname = $fieldextra[$fieldname]['presentationname'];
-          $linkedtable      = $field['referenced_table_name'] ? $field['referenced_table_name'] : @call_user_func("linkedtable_$presentationname", $tablename, $fieldname);
+          $linkedtable      = @call_user_func("linkedtable_$presentationname", $tablename, $fieldname);
           $indesc           = $fieldextra[$fieldname]['in_desc'] == $max_in_desc;
-          $inlist           = $fieldextra[$fieldname]['in_list'] == $max_in_list || (!$field['is_nullable'] && !$field['column_default']);
+          $inlist           = $fieldextra[$fieldname]['in_list'] == $max_in_list || ($field['column_key'] != 'PRI' && $field['is_nullable'] == 'NO' && !$field['column_default']);
           $inedit           = $fieldextra[$fieldname]['in_edit'] == $max_in_edit;
         }
 

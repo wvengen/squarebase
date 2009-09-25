@@ -1,28 +1,39 @@
 <?php
-  function linkedtable_lookup($tablename, $fieldname, $alltables = null, $primarykeyfieldname = null) {
+  function linkedtable_lookup($tablename, $fieldname, $foreigntablename = null, $alltables = null, $primarykeyfieldname = null) {
     static $linkedtables = array();
     if (is_null($linkedtables["$tablename:$fieldname"])) {
-      $likeness = array();
-      $fieldname_lower = strtolower($fieldname);
-      foreach ($alltables as $onetable) {
-        $onetable_lower = strtolower($onetable);
-        $likeness[$onetable] =
-          ($fieldname_lower == singularize_noun($onetable_lower) ? 10 : 0) +
-          (substr($fieldname_lower, -strlen($primarykeyfieldname[$onetable])) == $primarykeyfieldname[$onetable] ? 5 : 0) +
-          (strpos($fieldname_lower, singularize_noun($onetable_lower)) !== false ? 5 : 0) -
-          levenshtein($fieldname_lower, $onetable_lower);
+      if (is_null($foreigntablename)) {
+        $likeness = array();
+        $fieldname_lower = strtolower($fieldname);
+        foreach ($alltables as $onetable) {
+          $onetable_lower = strtolower($onetable);
+          $likeness[$onetable] =
+            ($fieldname_lower == singularize_noun($onetable_lower) ? 10 : 0) +
+            (substr($fieldname_lower, -strlen($primarykeyfieldname[$onetable])) == $primarykeyfieldname[$onetable] ? 5 : 0) +
+            (strpos($fieldname_lower, singularize_noun($onetable_lower)) !== false ? 5 : 0) -
+            levenshtein($fieldname_lower, $onetable_lower);
+        }
+        arsort($likeness);
+        reset($likeness);
+        list($table1, $likeness1) = each($likeness);
+        list($table2, $likeness2) = each($likeness);
+        $linkedtables["$tablename:$fieldname"] = $likeness1 < 0 || $likeness1 == $likeness2 ? '' : $table1;
       }
-      arsort($likeness);
-      reset($likeness);
-      list($table1, $likeness1) = each($likeness);
-      list($table2, $likeness2) = each($likeness);
-      $linkedtables["$tablename:$fieldname"] = $likeness1 < 0 || $likeness1 == $likeness2 ? '' : $table1;
+      else
+        $linkedtables["$tablename:$fieldname"] = $foreigntablename;
     }
     return $linkedtables["$tablename:$fieldname"] ? $linkedtables["$tablename:$fieldname"] : null;
   }
 
   function probability_lookup($field) {
-    return $field['referenced_table_name'] ? 1.0 : (preg_match('@^(int|integer)\b@', $field['column_type']) && linkedtable_lookup($field['table_name'], $field['column_name'], $field['alltables'], $field['primarykeyfieldname']) ? 0.6 : 0);
+    return 
+      ($field['referenced_table_name'] && linkedtable_lookup($field['table_name'], $field['column_name'], $field['referenced_table_name'])
+      ? 1.0
+      : (preg_match('@^(int|integer)\b@', $field['column_type']) && linkedtable_lookup($field['table_name'], $field['column_name'], null, $field['alltables'], $field['primarykeyfieldname'])
+        ? 0.6
+        : 0
+        )
+      );
   }
 
   function in_desc_lookup($field) { return $field['fieldnr'] < 5 ? 1 : 0.9; }
