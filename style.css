@@ -36,7 +36,7 @@ input.readonly, select.readonly { border-color: #ccc; background-color: #eee; co
 ul.minimal { margin: 0; padding: 0; }
 ul.minimal li { list-style-type: none; }
 ul.minimal li .radio { margin-right: 0.3em; }
-input.mainsubmit, input.minorsubmit { border: 0.15em solid #ccc; border-color: #ccc #666 #666 #ccc; background-color: #eee; color: #33f; padding: 0 0.2em; }
+input.mainsubmit, input.minorsubmit { border: 0.15em solid #ccc; border-color: #ccc #666 #666 #ccc; color: #33f; padding: 0 0.2em; }
 input.mainsubmit, input.minorsubmit, .cancel { margin-right: 1em; }
 input.mainsubmit:hover, input.minorsubmit:hover { background-color: #cfc; }
 .cancel, .forget { padding: 0.1em 0.5em; }

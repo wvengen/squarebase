@@ -46,16 +46,6 @@ jQuery.fn.formvalue = function() {
   return type == 'checkbox' ? ($(this).attr('checked') ? 'on' : '') : (type == 'radio' ? $(this).closest('form').find('input[name=' + $(this).attr('name') + ']:checked').val() : $(this).val());
 }
 
-jQuery.fn.setid = function(id) {
-  $('#' + id).
-  attr('id', null);
-
-  $(this).
-  attr('id', id);
-
-  return this;
-};
-
 jQuery.fn.enhance_form = function() {
   $(this).
   filter(':not(.enhancedform)').
@@ -65,7 +55,7 @@ jQuery.fn.enhance_form = function() {
   keyup(
     function() {
       $(this).
-      checkform();
+      check_form();
     }
   ).
   end().
@@ -74,12 +64,12 @@ jQuery.fn.enhance_form = function() {
   change(
     function() {
       $(this).
-      checkform();
+      check_form();
     }
   ).
   end().
 
-  checkform().
+  check_form().
 
   //jquery_enhance_form_presentation goes here
 
@@ -109,7 +99,7 @@ jQuery.fn.enhance_form = function() {
   return this;
 }
 
-jQuery.fn.checkform = function() {
+jQuery.fn.check_form = function() {
   $(this).
   closest('form').
   find('.ajaxproblem').
@@ -149,7 +139,7 @@ jQuery.fn.ajaxsubmit = function() {
   addClass('ajaxified').
   submit(
     function() {
-      if ($(this).checkform().find('.ajaxproblem:first').focus().length > 0)
+      if ($(this).check_form().find('.ajaxproblem:first').focus().length > 0)
         return false;
 
       $(this).
@@ -298,7 +288,7 @@ ready(
     find('.ajax').
     ajaxify();
 
-    $('form:not(.enhancedform)').
+    $('form').
     enhance_form();
 
     $('body.formmetabasefordatabase').
@@ -317,7 +307,6 @@ ready(
         );
       }
     ).
-    change().
     end().
 
     find('.presentationname').
