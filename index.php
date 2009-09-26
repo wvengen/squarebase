@@ -366,7 +366,7 @@
         html('tr', array(),
           html('th', array(),
             array(
-              _('table'), _('list'), _('field'), _('title'), _('type'), _('null'), _('presentation'), _('key'), _('desc'), _('list'), _('edit')
+              _('table'), _('top'), _('field'), _('title'), _('type'), _('null'), _('presentation'), _('key'), _('desc'), _('list'), _('edit')
             )
           )
         );
@@ -375,6 +375,7 @@
       for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
         $fieldname = $field['column_name'];
 
+        $inlistforquickadd = $field['column_key'] != 'PRI' && $field['is_nullable'] == 'NO' && !$field['column_default'];
         if ($metabasename) {
           $original = query1('meta', 'SELECT mt.singular, mt.plural, mt.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname));
           $plural           = $original['plural'];
@@ -401,7 +402,7 @@
           $presentationname = $fieldextra[$fieldname]['presentationname'];
           $linkedtable      = @call_user_func("linkedtable_$presentationname", $tablename, $fieldname);
           $indesc           = $fieldextra[$fieldname]['in_desc'] == $max_in_desc;
-          $inlist           = $fieldextra[$fieldname]['in_list'] == $max_in_list || ($field['column_key'] != 'PRI' && $field['is_nullable'] == 'NO' && !$field['column_default']);
+          $inlist           = $fieldextra[$fieldname]['in_list'] == $max_in_list || $inlistforquickadd;
           $inedit           = $fieldextra[$fieldname]['in_edit'] == $max_in_edit;
         }
 
@@ -424,7 +425,7 @@
         ksort($unlikelyoptions);
         $presentationnameoptions =
           ($mostlikelyoption               ? html('optgroup', array('label'=>_('most likely')), $mostlikelyoption) : '').
-          (count($moreorlesslikelyoptions) ? html('optgroup', array('label'=>_('more or less likely')), join(array_values($moreorlesslikelyoptions), 1)) : '').
+          (count($moreorlesslikelyoptions) ? html('optgroup', array('label'=>_('more or less likely')), join(array_values($moreorlesslikelyoptions))) : '').
           (count($unlikelyoptions)         ? html('optgroup', array('label'=>_('unlikely')), join(array_values($unlikelyoptions))) : '');
 
         $rowsfields[] =
@@ -463,7 +464,7 @@
               )
             ).
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null))).
-            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))).
+            html('td', array('class'=>join_clean(' ', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))).
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null)))
           );
         $fieldnr++;

@@ -42,6 +42,7 @@ input.mainsubmit:hover, input.minorsubmit:hover { background-color: #cfc; }
 .cancel, .forget { padding: 0.1em 0.5em; }
 input.mainsubmit.delete:hover, .cancel:hover, .close:hover, .drop:hover, .forget:hover { background-color: #f99; }
 input.mainsubmit.delete { margin-left: 5em; }
+.inlistforquickadd { background-color: #fda; }
 
 /* a.ajaxified, input.ajaxified { color: #363; } */
 .ajaxcontainer { margin: 0 0.5em; }
