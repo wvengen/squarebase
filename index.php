@@ -198,7 +198,7 @@
         if ($tables) {
           $tablelist = array();
           while ($table = mysql_fetch_assoc($tables)) {
-            $tablelist[] = $table["table_name"];
+            $tablelist[] = $table['table_name'];
           }
           $fulllist = null;
           if (count($tablelist) > 5) {
@@ -258,7 +258,7 @@
     if ($tables) {
       $tablelist = array();
       while ($table = mysql_fetch_assoc($tables)) {
-        $tablelist[] = $table["table_name"];
+        $tablelist[] = $table['table_name'];
       }
       $tables = join(', ', $tablelist);
     }
@@ -291,53 +291,55 @@
       ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename')))
       : parameter('get', 'language');
 
-    $fields = $alltables = $primarykeyfieldname = $tableswithoutsinglevaluedprimarykey = array();
+    // loop 1: store query results and find the primary key field name
+    $infos = $alltablenames = $tableswithoutsinglevaluedprimarykey = array();
     $tables = query('data', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
     while ($table = mysql_fetch_assoc($tables)) {
-      $tablename = $table["table_name"];
-
-      $alltables[] = $tablename;
+      $tablename = $table['table_name'];
+      $alltablenames[] = $tablename;
+      $tableinfo = array('table_name'=>$tablename, 'fields'=>array());
 
       $allprimarykeyfieldnames = array();
-      $fields[$tablename] = query('data',
+      $fields = query('data',
         'SELECT c.table_schema, c.table_name, c.column_name, column_key, column_type, is_nullable, column_default, referenced_table_name '.
         'FROM INFORMATION_SCHEMA.COLUMNS c '.
         'LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu ON kcu.table_schema = c.table_schema AND kcu.table_name = c.table_name AND kcu.column_name = c.column_name AND referenced_table_schema = c.table_schema '.
         'WHERE c.table_schema = "<databasename>" AND c.table_name = "<tablename>"',
         array('databasename'=>$databasename, 'tablename'=>$tablename)
       );
-      while ($field = mysql_fetch_assoc($fields[$tablename])) {
+      $fieldnr = 0;
+      while ($field = mysql_fetch_assoc($fields)) {
         $fieldname = $field['column_name'];
+        $field['fieldnr'] = $fieldnr++;
+        $tableinfo['fields'][] = $field;
         if ($field['column_key'] == 'PRI')
           $allprimarykeyfieldnames[] = $field['column_name'];
       }
       if (count($allprimarykeyfieldnames) == 1)
-        $primarykeyfieldname[$tablename] = $allprimarykeyfieldnames[0];
+        $tableinfo['primarykeyfieldname'] = $allprimarykeyfieldnames[0];
       else
         $tableswithoutsinglevaluedprimarykey[] = $tablename;
+      $infos[] = $tableinfo;
     }
 
+    // loop 2: find presentation and in_desc, in_list and in_edit
     $presentationnames = get_presentationnames();
-
-    $rowsfields = array();
-    for (mysql_data_reset($tables); $table = mysql_fetch_assoc($tables); ) {
-      $tablename = $table["table_name"];
+    $referencesin = $referencesout = array();
+    foreach ($infos as &$table) {
+      $tablename = $table['table_name'];
 
       $max_in_desc = $max_in_list = $max_in_edit = 0;
-      $fieldextra = array();
-      $fieldnr = 0;
-      for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
+      foreach ($table['fields'] as &$field) {
         $fieldname = $field['column_name'];
-        $fieldextra[$fieldname] = array();
 
         $augmentedfield =
           array_merge(
             $field,
             array(
-              'alltables'=>$alltables,
+              'alltablenames'=>$alltablenames,
               'primarykeyfieldname'=>$primarykeyfieldname,
-              'fieldnr'=>$fieldnr++,
-              'numfields'=>mysql_num_rows($fields[$tablename])
+              'fieldnr'=>$field['fieldnr'],
+              'numfields'=>count($table['fields'])
             )
           );
         $bestpresentationname = null;
@@ -350,17 +352,34 @@
           }
         }
 
-        $fieldextra[$fieldname]['presentationprobabilities'] = $probabilities;
-        $fieldextra[$fieldname]['presentationname'] = $bestpresentationname;
+        $field['presentationprobabilities'] = $probabilities;
+        $field['presentationname'] = $bestpresentationname;
 
-        $fieldextra[$fieldname]['in_desc'] = call_user_func("in_desc_$bestpresentationname", $augmentedfield);
-        $fieldextra[$fieldname]['in_list'] = call_user_func("in_list_$bestpresentationname", $augmentedfield);
-        $fieldextra[$fieldname]['in_edit'] = call_user_func("in_edit_$bestpresentationname", $augmentedfield);
+        $field['in_desc'] = call_user_func("in_desc_$bestpresentationname", $augmentedfield);
+        $field['in_list'] = call_user_func("in_list_$bestpresentationname", $augmentedfield);
+        $field['in_edit'] = call_user_func("in_edit_$bestpresentationname", $augmentedfield);
 
-        $max_in_desc = max($max_in_desc, $fieldextra[$fieldname]['in_desc']);
-        $max_in_list = max($max_in_list, $fieldextra[$fieldname]['in_list']);
-        $max_in_edit = max($max_in_edit, $fieldextra[$fieldname]['in_edit']);
+        $max_in_desc = max($max_in_desc, $field['in_desc']);
+        $max_in_list = max($max_in_list, $field['in_list']);
+        $max_in_edit = max($max_in_edit, $field['in_edit']);
+
+        if ($metabasename) {
+          $field['original'] = query1('meta', 'SELECT mt.singular, mt.plural, mt.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname));
+          $field['linkedtable'] = $field['original']['foreigntablename'];
+        }
+        else
+          $field['linkedtable'] = @call_user_func("linkedtable_$bestpresentationname", $tablename, $fieldname);
+        if ($field['linkedtable']) {
+          $referencesout[$tablename]++;
+          $referencesin[$field['linkedtable']]++;
+        }
       }
+    }
+
+    // loop 3: produce output for tables and fields
+    $rowsfields = array();
+    foreach ($infos as &$table) {
+      $tablename = $table['table_name'];
 
       $rowsfields[] =
         html('tr', array(),
@@ -371,23 +390,20 @@
           )
         );
 
-      $fieldnr = 0;
-      for (mysql_data_reset($fields[$tablename]); $field = mysql_fetch_assoc($fields[$tablename]); ) {
+      foreach ($table['fields'] as &$field) {
         $fieldname = $field['column_name'];
 
         $inlistforquickadd = $field['column_key'] != 'PRI' && $field['is_nullable'] == 'NO' && !$field['column_default'];
-        if ($metabasename) {
-          $original = query1('meta', 'SELECT mt.singular, mt.plural, mt.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname));
-          $plural           = $original['plural'];
-          $singular         = $original['singular'];
-          $title            = $original['title'];
-          $intablelist      = $original['intablelist'];
-          $nullallowed      = $original['nullallowed'];
-          $presentationname = $original['presentationname'];
-          $linkedtable      = $original['foreigntablename'];
-          $indesc           = $original['indesc'];
-          $inlist           = $original['inlist'];
-          $inedit           = $original['inedit'];
+        if ($field['original']) {
+          $plural           = $field['original']['plural'];
+          $singular         = $field['original']['singular'];
+          $title            = $field['original']['title'];
+          $intablelist      = $field['original']['intablelist'];
+          $nullallowed      = $field['original']['nullallowed'];
+          $presentationname = $field['original']['presentationname'];
+          $indesc           = $field['original']['indesc'];
+          $inlist           = $field['original']['inlist'];
+          $inedit           = $field['original']['inedit'];
         }
         else {
           $plural           = $tablename;
@@ -399,20 +415,19 @@
                               );
           $intablelist      = true;
           $nullallowed      = $field['is_nullable'] == 'YES';
-          $presentationname = $fieldextra[$fieldname]['presentationname'];
-          $linkedtable      = @call_user_func("linkedtable_$presentationname", $tablename, $fieldname);
-          $indesc           = $fieldextra[$fieldname]['in_desc'] == $max_in_desc;
-          $inlist           = $fieldextra[$fieldname]['in_list'] == $max_in_list || $inlistforquickadd;
-          $inedit           = $fieldextra[$fieldname]['in_edit'] == $max_in_edit;
+          $presentationname = $field['presentationname'];
+          $indesc           = $field['in_desc'] == $max_in_desc;
+          $inlist           = $field['in_list'] == $max_in_list || $inlistforquickadd;
+          $inedit           = $field['in_edit'] == $max_in_edit;
         }
 
-        $tableoptions = array(html('option', array('value'=>'', 'selected'=>!$linkedtable ? 'selected' : null), ''));
-        foreach ($alltables as $onetable)
-          $tableoptions[] = html('option', array('value'=>$onetable, 'selected'=>$onetable == $linkedtable ? 'selected' : null), $onetable);
+        $tableoptions = array(html('option', array('value'=>'', 'selected'=>!$field['linkedtable'] ? 'selected' : null), ''));
+        foreach ($alltablenames as $onetablename)
+          $tableoptions[] = html('option', array('value'=>$onetablename, 'selected'=>$onetablename == $field['linkedtable'] ? 'selected' : null), $onetablename);
 
         $mostlikelyoption = null;
         $moreorlesslikelyoptions = $unlikelyoptions = array();
-        foreach ($fieldextra[$fieldname]['presentationprobabilities'] as $onepresentationname=>$probability) {
+        foreach ($field['presentationprobabilities'] as $onepresentationname=>$probability) {
           $option = html('option', array('value'=>$onepresentationname, 'selected'=>$onepresentationname == $presentationname ? 'selected' : null), $onepresentationname);
           if ($onepresentationname == $presentationname)
             $mostlikelyoption = $option;
@@ -429,9 +444,9 @@
           (count($unlikelyoptions)         ? html('optgroup', array('label'=>_('unlikely')), join(array_values($unlikelyoptions))) : '');
 
         $rowsfields[] =
-          html('tr', array('class'=>join_clean(' ', ($fieldnr + 1) % 2 ? 'rowodd' : 'roweven', 'list')),
-            ($fieldnr == 0
-            ? html('td', array('class'=>'top', 'rowspan'=>mysql_num_rows($fields[$tablename])),
+          html('tr', array('class'=>join_clean(' ', ($field['fieldnr'] + 1) % 2 ? 'rowodd' : 'roweven', 'list')),
+            ($field['fieldnr'] == 0
+            ? html('td', array('class'=>'top', 'rowspan'=>count($table['fields'])),
                 $tablename.
                 html('ol', array('class'=>'pluralsingular'),
                   html('li', array(),
@@ -442,8 +457,12 @@
                   )
                 )
               ).
-              html('td', array('class'=>'top', 'rowspan'=>mysql_num_rows($fields[$tablename])),
-                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
+              html('td', array('class'=>join_clean(' ', 'top', 'center'), 'rowspan'=>count($table['fields'])),
+                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null)).
+                html('div', array('class'=>'countreferences'),
+                  html('div', array(), sprintf(_('%d in'), $referencesin[$tablename])).
+                  html('div', array(), sprintf(_('%d out'), $referencesout[$tablename]))
+                )
               )
             : ''
             ).
@@ -453,7 +472,7 @@
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'name'=>"$tablename:$fieldname:_nullallowed", 'readonly'=>'readonly', 'checked'=>$nullallowed ? 'checked' : null)).html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))).
             html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions)).
             html('td', array(),
-              ($fieldname == $primarykeyfieldname[$tablename]
+              ($fieldname == $infos['primarykeyfieldname']
               ? _('primary').html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$fieldname))
               : (preg_match('@^(tinyint|smallint|mediumint|int|integer|bigint|char|varchar|date|datetime)\b@', $field['column_type'])
                 ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename", 'class'=>'foreigntablename'),
@@ -467,7 +486,6 @@
             html('td', array('class'=>join_clean(' ', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))).
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null)))
           );
-        $fieldnr++;
       }
     }
 
@@ -603,13 +621,13 @@
     $tables = query('data', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
     $tableids = array();
     while ($table = mysql_fetch_assoc($tables)) {
-      $tablename = $table["table_name"];
+      $tablename = $table['table_name'];
       $tableids[$tablename] = insertorupdate($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>parameter('get', "$tablename:singular"), 'plural'=>parameter('get', "$tablename:plural"), 'intablelist'=>parameter('get', "$tablename:intablelist") == 'on', 'quickadd'=>true));
     }
 
     $errors = array();
     for (mysql_data_reset($tables); $table = mysql_fetch_assoc($tables); ) {
-      $tablename = $table["table_name"];
+      $tablename = $table['table_name'];
       $tableid = $tableids[$tablename];
 
       $descs = $sorts = $lists = $edits = 0;

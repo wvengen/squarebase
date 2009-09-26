@@ -1,17 +1,17 @@
 <?php
-  function linkedtable_lookup($tablename, $fieldname, $foreigntablename = null, $alltables = null, $primarykeyfieldname = null) {
+  function linkedtable_lookup($tablename, $fieldname, $foreigntablename = null, $alltablenames = null, $primarykeyfieldname = null) {
     static $linkedtables = array();
     if (is_null($linkedtables["$tablename:$fieldname"])) {
       if (is_null($foreigntablename)) {
         $likeness = array();
         $fieldname_lower = strtolower($fieldname);
-        foreach ($alltables as $onetable) {
-          $onetable_lower = strtolower($onetable);
-          $likeness[$onetable] =
-            ($fieldname_lower == singularize_noun($onetable_lower) ? 10 : 0) +
-            (substr($fieldname_lower, -strlen($primarykeyfieldname[$onetable])) == $primarykeyfieldname[$onetable] ? 5 : 0) +
-            (strpos($fieldname_lower, singularize_noun($onetable_lower)) !== false ? 5 : 0) -
-            levenshtein($fieldname_lower, $onetable_lower);
+        foreach ($alltablenames as $onetablename) {
+          $onetablename_lower = strtolower($onetablename);
+          $likeness[$onetablename] =
+            ($fieldname_lower == singularize_noun($onetablename_lower) ? 10 : 0) +
+            (substr($fieldname_lower, -strlen($primarykeyfieldname[$onetablename])) == $primarykeyfieldname[$onetablename] ? 5 : 0) +
+            (strpos($fieldname_lower, singularize_noun($onetablename_lower)) !== false ? 5 : 0) -
+            levenshtein($fieldname_lower, $onetablename_lower);
         }
         arsort($likeness);
         reset($likeness);
@@ -29,7 +29,7 @@
     return 
       ($field['referenced_table_name'] && linkedtable_lookup($field['table_name'], $field['column_name'], $field['referenced_table_name'])
       ? 1.0
-      : (preg_match('@^(int|integer)\b@', $field['column_type']) && linkedtable_lookup($field['table_name'], $field['column_name'], null, $field['alltables'], $field['primarykeyfieldname'])
+      : (preg_match('@^(int|integer)\b@', $field['column_type']) && linkedtable_lookup($field['table_name'], $field['column_name'], null, $field['alltablenames'], $field['primarykeyfieldname'])
         ? 0.6
         : 0
         )

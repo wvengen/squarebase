@@ -24,6 +24,7 @@ ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 
 .integer { width: 2em; text-align: right; }
 
+.countreferences { font-size: 0.6em; }
 .referrer { font-size: 0.8em; }
 input, textarea, select, option { font-size: 1em; font-family: sans-serif !important; }
 input, textarea, option { padding: 0 0.2em; }
