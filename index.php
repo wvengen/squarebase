@@ -291,7 +291,7 @@
       ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename')))
       : parameter('get', 'language');
 
-    // loop 1: store query results and find the primary key field name
+    // pass 1: store query results and find the primary key field name
     $infos = $alltablenames = $tableswithoutsinglevaluedprimarykey = array();
     $tables = query('data', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
     while ($table = mysql_fetch_assoc($tables)) {
@@ -322,7 +322,7 @@
       $infos[] = $tableinfo;
     }
 
-    // loop 2: find presentation and in_desc, in_list and in_edit
+    // pass 2: find presentation and in_desc, in_list and in_edit (needs $alltablenames and $infos)
     $presentationnames = get_presentationnames();
     $referencesin = $referencesout = array();
     foreach ($infos as &$table) {
@@ -363,12 +363,9 @@
         $max_in_list = max($max_in_list, $field['in_list']);
         $max_in_edit = max($max_in_edit, $field['in_edit']);
 
-        if ($metabasename) {
-          $field['original'] = query1('meta', 'SELECT mt.singular, mt.plural, mt.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname));
-          $field['linkedtable'] = $field['original']['foreigntablename'];
-        }
-        else
-          $field['linkedtable'] = @call_user_func("linkedtable_$bestpresentationname", $tablename, $fieldname);
+        if ($metabasename)
+          $field['original'] = query01('meta', 'SELECT mt.singular, mt.plural, mt.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname));
+        $field['linkedtable'] = $field['original'] ? $field['original']['foreigntablename'] : @call_user_func("linkedtable_$bestpresentationname", $tablename, $fieldname);
         if ($field['linkedtable']) {
           $referencesout[$tablename]++;
           $referencesin[$field['linkedtable']]++;
@@ -376,7 +373,7 @@
       }
     }
 
-    // loop 3: produce output for tables and fields
+    // pass 3: produce output for tables and fields (needs $max_in_**** and $referencesin/-out)
     $rowsfields = array();
     foreach ($infos as &$table) {
       $tablename = $table['table_name'];
@@ -472,7 +469,7 @@
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'name'=>"$tablename:$fieldname:_nullallowed", 'readonly'=>'readonly', 'checked'=>$nullallowed ? 'checked' : null)).html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))).
             html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions)).
             html('td', array(),
-              ($fieldname == $infos['primarykeyfieldname']
+              ($fieldname == $table['primarykeyfieldname']
               ? _('primary').html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$fieldname))
               : (preg_match('@^(tinyint|smallint|mediumint|int|integer|bigint|char|varchar|date|datetime)\b@', $field['column_type'])
                 ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename", 'class'=>'foreigntablename'),
@@ -872,7 +869,7 @@
   /********************************************************************************************/
 
   if ($action == 'explain_query') {
-    $query = parameter('get', 'query');
+    $query = preg_replace('@\\\"@', '"', parameter('get', 'query'));
 
     $explanations = query('top', 'EXPLAIN EXTENDED '.$query);
     query('top', 'SHOW WARNINGS');

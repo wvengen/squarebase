@@ -254,11 +254,20 @@
     error(_('problem while querying the databasemanager').html('p', array('class'=>'error'), "$errno: ".mysql_error()).$fullquery);
   }
 
+  function query01($metaordata, $query, $arguments = array()) {
+    $results = query($metaordata, $query, $arguments);
+    if (!$results || mysql_num_rows($results) == 0)
+      return null;
+    if (mysql_num_rows($results) == 1)
+      return mysql_fetch_assoc($results);
+    error(sprintf(_('problem because there are %s results'), mysql_num_rows($results)).html('p', array(), htmlentities($query)));
+  }
+
   function query1($metaordata, $query, $arguments = array()) {
     $results = query($metaordata, $query, $arguments);
     if ($results && mysql_num_rows($results) == 1)
       return mysql_fetch_assoc($results);
-    error(sprintf(_('problem retrieving 1 result, because there are %s results'), $results ? mysql_num_rows($results) : 'no').html('p', array(), htmlentities($query)));
+    error(sprintf(_('problem because there are %s results'), $results ? mysql_num_rows($results) : 'no').html('p', array(), htmlentities($query)));
   }
 
   function query1field($metaordata, $query, $arguments = array(), $field = null) {
