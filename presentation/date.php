@@ -15,6 +15,10 @@
       ($extra ? html('span', array('class'=>'help'), find_datetime_format('%x')) : '');
   }
 
+  function formattedsql_date($fieldname) {
+    return 'DATE_FORMAT('.$fieldname.', \''.find_datetime_format('%x', 'mysql').'\')';
+  }
+
   function formvalue_date($field) {
     $value = parameter('get', "field:$field[fieldname]");
     return $value == "" ? null : local2date($value);

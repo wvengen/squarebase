@@ -1,7 +1,7 @@
 <?php
   include('functions.php');
 
-  $action = parameter('get', 'action', 'login');
+  $action = first_non_null(parameter('get', 'action'), 'login');
 
   if ($action == 'style')
     augment_file('style.css', 'text/css');
@@ -109,9 +109,7 @@
   /********************************************************************************************/
 
   if ($action == 'connect') {
-    $usernameandhost = parameter('get', 'lastusernameandhost');
-    if (!$usernameandhost)
-      $usernameandhost = parameter('get', 'usernameandhost');
+    $usernameandhost = first_non_null(parameter('get', 'lastusernameandhost'), parameter('get', 'usernameandhost'));
     if (preg_match('@^(\w+)\@(\w+)$@', $usernameandhost, $match)) {
       $username = $match[1];
       $host     = $match[2];
@@ -471,7 +469,7 @@
             html('td', array(),
               ($fieldname == $table['primarykeyfieldname']
               ? _('primary').html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$fieldname))
-              : (preg_match('@^(tinyint|smallint|mediumint|int|integer|bigint|char|varchar|date|datetime)\b@', $field['column_type'])
+              : (preg_match('@^(tiny|small|medium|big)?int(eger)?\b@', $field['column_type'])
                 ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename", 'class'=>'foreigntablename'),
                     join($tableoptions)
                   )
@@ -774,9 +772,9 @@
     $tablename         = parameter('get', 'tablename');
     $tablenamesingular = parameter('get', 'tablenamesingular');
     $uniquefieldname   = parameter('get', 'uniquefieldname');
-    $offset            = parameter('get', 'offset', 0);
+    $offset            = first_non_null(parameter('get', 'offset'), 0);
     $orderfieldname    = parameter('get', 'orderfieldname');
-    $orderasc          = parameter('get', 'orderasc', 'on') == 'on';
+    $orderasc          = first_non_null(parameter('get', 'orderasc'), 'on') == 'on';
 
     page($action, path($metabasename, $databasename, $tablename, $uniquefieldname),
       list_table($metabasename, $databasename, $tablename, $tablenamesingular, 0, $offset, $uniquefieldname, null, $orderfieldname, $orderasc, null, null, null, true)
@@ -869,7 +867,7 @@
   /********************************************************************************************/
 
   if ($action == 'explain_query') {
-    $query = preg_replace('@\\\"@', '"', parameter('get', 'query'));
+    $query = parameter('get', 'query');
 
     $explanations = query('top', 'EXPLAIN EXTENDED '.$query);
     query('top', 'SHOW WARNINGS');

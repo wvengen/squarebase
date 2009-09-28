@@ -1,7 +1,7 @@
 <?php
   include('inflection.php');
 
-  function parameter($type, $name = null, $default = null) {
+  function parameter($type, $name = null) {
     $arrays = array(
       'get'=>$_POST ? $_POST : $_GET,
       'server'=>$_SERVER,
@@ -14,7 +14,7 @@
     if (!$name)
       return $array;
     $value = $array[$name];
-    return is_null($value) ? (is_array($default) ? array_shift(array_filter($default, 'is_not_null')) : $default) : str_replace("\\'", "'", $value);
+    return is_null($value) ? null : str_replace(array('\\"', '\\\''), array('"', '\''), $value);
   }
 
   function is_not_null($var) {
@@ -40,6 +40,13 @@
     return join($glue, array_filter($pieces, 'is_not_null'));
   }
 
+  function first_non_null() {
+    foreach (func_get_args() as $arg)
+      if (!is_null($arg))
+        return $arg;
+    return null;
+  }
+
   function array_show($array) {
     return preg_replace(array('@^Array\s*\(\s*(.*?)\s*\)\s*$@s', '@ *\n *@s'), array('$1', "\n"), print_r($array, true));
   }
@@ -47,24 +54,22 @@
   function html($tag, $parameters = array(), $text = null) {
     if ($_SESSION['logsy']) {
       static $types = array(
-        'html'=>1, 'head'=>1, 'title'=>1, 'script'=>1, 'body'=>1, 'div'=>1, 'span'=>1, 'p'=>1, 'h1'=>1, 'h2'=>1, 'ol'=>1, 'ul'=>1, 'li'=>1, 'a'=>1, 'table'=>1, 'tr'=>1, 'th'=>1, 'td'=>1, 'form'=>1, 'optgroup'=>1, 'label'=>1, 'select'=>1, 'option'=>1, 'textarea'=>1, 'strong'=>1,
+        'html'=>1, 'head'=>1, 'title'=>1, 'script'=>1, 'body'=>1, 'div'=>1, 'span'=>1, 'p'=>1, 'h1'=>1, 'h2'=>1, 'ol'=>1, 'ul'=>1, 'li'=>1, 'a'=>1, 'table'=>1, 'tr'=>1, 'th'=>1, 'td'=>1, 'form'=>1, 'fieldset'=>1, 'optgroup'=>1, 'label'=>1, 'select'=>1, 'option'=>1, 'textarea'=>1, 'strong'=>1,
         'link'=>0, 'img'=>0, 'input'=>0
       );
       $type = $types[$tag];
       if ($type === 1) {
         if (is_null($text))
-          $warning = _('missing text for html tag %s');
+          $error = _('missing text for html tag %s');
       }
       elseif ($type === 0) {
         if (!is_null($text))
-          $warning = _('text for html tag %s');
+          $error = _('text for html tag %s');
       }
       else
-        $warning = _('unknown html tag %s');
-      if ($warning) {
-        addtolist('warnings', 'warning', sprintf($warning, $tag));
-        $parameters['class'] = join(' ', array_merge(explode(' ', $parameters['class']), array('tagwarning')));
-      }
+        $error = _('unknown html tag %s');
+      if ($error)
+        error(sprintf($error, $tag));
     }
     $parameterlist = array();
     foreach ($parameters as $parameter=>$value)
@@ -115,8 +120,7 @@
       }
       page($parameters['function'], null, $output);
     }
-    $url = parameter('get', 'back');
-    redirect($url ? $url : parameter('server', 'HTTP_REFERER'));
+    redirect(first_non_null(parameter('get', 'back'), parameter('server', 'HTTP_REFERER')));
   }
 
   function error($error) {
@@ -227,12 +231,10 @@
     if ($errno == 1044) // Access denied for user '%s'@'%s' to database '%s'
       return null;
     if ($errno == 1062) { // Duplicate entry '%s' for key %d
-      $tablename = preg_match1('@^INSERT INTO (\S+)@', $fullquery);
       $error = mysql_error();
-      $keyvalues = preg_match1('@Duplicate entry (\'.*\')@', $error);
+      $keyvalues = explode('-', preg_match1('@Duplicate entry \'(.*)\'@', $error));
       $keynr = preg_match1('@for key (\d+)@', $error);
-      $warning = "tablename=$tablename, keyvalues=$keyvalues, keynr=$keynr, $error: $fullquery";
-      if ($tablename && $keynr) {
+      if ($keynr) {
         $databasename = preg_match1('@^INSERT INTO `(.*?)`@', $fullquery);
         $tablename    = preg_match1('@^INSERT INTO `.*?`\.`(.*?)`@', $fullquery);
         $keyfields = array();
@@ -240,15 +242,22 @@
         while ($key = mysql_fetch_assoc($keys)) {
           if ($key['seq_in_index'] == 1)
             $keynr--;
-          if ($keynr < 0)
-            break;
           if ($keynr == 0)
             $keyfields[] = $key['column_name'];
+          if ($keynr < 0)
+            break;
         }
-
-        $warning = sprintf(_('%s with %s = %s already exists'), ucfirst($tablename), join(', ', $keyfields), $keyvalues);
+        if (count($keyfields) == count($keyvalues)) {
+          $combined = array();
+          foreach ($keyfields as $num=>$keyfield)
+            $combined[] = "$keyfield = $keyvalues[$num]";
+          $keyfieldsandvalues = join(', ', $combined);
+        }
+        else
+          $keyfieldsandvalues = join('-', $keyfields).' = '.join('-', $keyvalues);
+        $warning = sprintf(_('%s with %s already exists'), ucfirst($tablename), $keyfieldsandvalues);
       }
-      addtolist('warnings', 'warning', $warning);
+      addtolist('warnings', 'warning', $warning ? $warning : $error);
       return null;
     }
     error(_('problem while querying the databasemanager').html('p', array('class'=>'error'), "$errno: ".mysql_error()).$fullquery);
@@ -355,7 +364,7 @@
     if (!is_null($uniquevalue)) {
       if ($metabasename && $databasename && $tablename && $uniquefieldname) {
         $descriptor = descriptor($metabasename, $databasename, $tablename, $tablename);
-        $uniquepart = query1field('data', "SELECT $descriptor[select] FROM `<databasename>`.`<tablename>`$descriptor[joins] WHERE <uniquefieldname> = <uniquevalue>", array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+        $uniquepart = query1field('data', "SELECT $descriptor[select] FROM `<databasename>`.`<tablename>` ".join(' ', $descriptor['joins'])."WHERE <uniquefieldname> = <uniquevalue>", array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
       }
       else
         $uniquepart = $uniquevalue;
@@ -383,11 +392,11 @@
       $can_update = $can_update || $field['privilege_update'];
       $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
       if ($field['foreigntablename']) {
-        $joins[] = " LEFT JOIN `$databasename`.$field[foreigntablename] AS $field[foreigntablename]_$field[fieldname] ON $field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = $tablename.$field[fieldname]";
+        $joins[] = "LEFT JOIN `$databasename`.$field[foreigntablename] AS $field[foreigntablename]_$field[fieldname] ON $field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = $tablename.$field[fieldname]";
         $descriptor = descriptor($metabasename, $databasename, $field['foreigntablename'], "$field[foreigntablename]_$field[fieldname]");
-        $selectnames[] = $descriptor['select']." AS $field[foreigntablename]_$field[fieldname]_descriptor";
-        $joins[] = $descriptor['joins'];
-        $ordernames[] = "$field[foreigntablename]_$field[fieldname]_descriptor";
+        $selectnames[] = "$descriptor[select] AS $field[foreigntablename]_$field[fieldname]_descriptor";
+        $joins = array_merge($joins, $descriptor['joins']);
+        $ordernames = array_merge($ordernames, $descriptor['orders']);
       }
       else
         $ordernames[] = "${tablename}_$field[fieldname]";
@@ -421,9 +430,9 @@
       ($limit ? "SQL_CALC_FOUND_ROWS " : "").
       "$tablename.$uniquefieldname AS $uniquefieldname".
       ($selectnames ? ', '.join(', ', $selectnames) : '').
-      " FROM `$databasename`.$tablename".
-      join(array_unique($joins)).
-      (!is_null($foreignvalue) ? " WHERE $tablename.$foreignfieldname = '$foreignvalue'" : '').
+      " FROM `$databasename`.$tablename ".
+      join(' ', array_unique($joins)).
+      (!is_null($foreignvalue) ? "WHERE $tablename.$foreignfieldname = '$foreignvalue'" : '').
       ($ordernames ? " ORDER BY ".join(', ', $ordernames) : '').
       ($limit ? " LIMIT $limit".($offset ? " OFFSET $offset" : '') : '')
     );
@@ -649,27 +658,33 @@
   function descriptor($metabasename, $databasename, $tablename, $tablealias, $stack = array()) {
     static $descriptors = array();
     if (!$descriptors[$tablename]) {
-      $arguments = $joins = array();
+      $selects = $joins = $orders = array();
       $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'indesc');
       while ($field = mysql_fetch_assoc($fields)) {
+        include_once("presentation/$field[presentationname].php");
         $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
         if ($field['foreigntablename'] && !in_array($field['foreigntablename'], $stack)) {
-          $joins[] = " LEFT JOIN `$databasename`.$field[foreigntablename] AS {tablealias}_$field[foreigntablename]_$field[fieldname] ON {tablealias}_$field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = {tablealias}.$field[fieldname]";
+          $joins[] = "LEFT JOIN `$databasename`.$field[foreigntablename] AS {tablealias}_$field[foreigntablename]_$field[fieldname] ON {tablealias}_$field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = {tablealias}.$field[fieldname] ";
           $descriptor = descriptor($metabasename, $databasename, $field['foreigntablename'], "{tablealias}_$field[foreigntablename]_$field[fieldname]", array_merge($stack, array($field['foreigntablename'])));
-          $arguments[] = $descriptor['select'];
-          $joins[] = $descriptor['joins'];
+          $selects[] = $descriptor['select'];
+          $orders = array_merge($orders, $descriptor['orders']);
+          $joins = array_merge($joins, $descriptor['joins']);
         }
-        else
-          $arguments[] = "{tablealias}.$field[fieldname]";
+        else {
+          $selects[] = first_non_null(@call_user_func("formattedsql_$field[presentationname]", "{tablealias}.$field[fieldname]"), "{tablealias}.$field[fieldname]");
+          $orders[] = "{tablealias}.$field[fieldname]";
+        }
       }
       $descriptors[$tablename] = array(
-        'select'=>count($arguments) == 1 ? $arguments[0] : 'CONCAT_WS(" ", '.join(', ', $arguments).')',
-        'joins' =>$joins ? join($joins) : null
+        'select'=>count($selects) == 1 ? $selects[0] : 'CONCAT_WS(" ", '.join(', ', $selects).')',
+        'joins' =>$joins,
+        'orders'=>$orders
       );
     }
     return array(
       'select'=>preg_replace('@{tablealias}@', $tablealias, $descriptors[$tablename]['select']),
-      'joins' =>preg_replace('@{tablealias}@', $tablealias, $descriptors[$tablename]['joins'])
+      'joins' =>preg_replace('@{tablealias}@', $tablealias, $descriptors[$tablename]['joins']),
+      'orders'=>preg_replace('@{tablealias}@', $tablealias, $descriptors[$tablename]['orders'])
     );
   }
 
@@ -683,6 +698,7 @@
     $_SESSION['host']     = $host;
     $_SESSION['password'] = $password;
     $_SESSION['language'] = $language;
+    $_SESSION['timesconnected'] = 0;
 
     $expire = time() + 365 * 24 * 60 * 60;
     setcookie('lastusernamesandhosts', join_clean(',', array_diff(array_unique(array_merge(array("$username@$host"), array_diff(explode(',', $_COOKIE['lastusernamesandhosts']), array("$username@$host")))), array(''))), $expire);
@@ -729,8 +745,9 @@
       }
     }
 
-    if (parameter('get', 'metabasename'))
-      $content .= join(read_file('metabase/'.parameter('get', 'metabasename').'.css'));
+    $metabasename = parameter('get', 'metabasename');
+    if ($metabasename)
+      $content .= join(read_file("metabase/$metabasename.css"));
 
     header("Content-Type: $content_type");
     print $content;
@@ -744,15 +761,30 @@
     return strftime($to, mktime($matches['tm_hour'], $matches['tm_min'], $matches['tm_sec'], $matches['tm_mon'] + 1, $matches['tm_mday'], $matches['tm_year']));
   }
 
-  function find_datetime_format($format) {
-    $fmts = array('d'=>_('dd'), 'e'=>_('d'), 'b'=>_('mon'), 'B'=>_('month'), 'm'=>_('mm'), 'y'=>_('yy'), 'Y'=>_('yyyy'), 'H'=>_('hh'), 'I'=>_('hh'), 'l'=>_('hh'), 'M'=>_('mm'), 'p'=>_('AM/PM'), 'P'=>_('am/pm'), 'S'=>_('ss'));
+  function find_datetime_format($format, $dest = 'text') {
+    $fmts = array(
+      'd'=>array('text'=>_('dd'),    'mysql'=>'%d'), //%d = Two-digit day of the month (with leading zeros) = 01 to 31
+      'e'=>array('text'=>_('d'),     'mysql'=>'%e'), //%e = Day of the month, with a space preceding single digits = 1 to 31
+      'b'=>array('text'=>_('mon'),   'mysql'=>'%b'), //%b = Abbreviated month name, based on the locale = Jan through Dec
+      'B'=>array('text'=>_('month'), 'mysql'=>'%M'), //%B = Full month name, based on the locale = January through December
+      'm'=>array('text'=>_('mm'),    'mysql'=>'%m'), //%m = Two digit representation of the month = 01 (for January) through 12 (for December)
+      'y'=>array('text'=>_('yy'),    'mysql'=>'%y'), //%y = Two digit representation of the year = Example: 09 for 2009, 79 for 1979
+      'Y'=>array('text'=>_('yyyy'),  'mysql'=>'%Y'), //%Y = Four digit representation for the year = Example: 2038
+      'H'=>array('text'=>_('hh'),    'mysql'=>'%H'), //%H = Two digit representation of the hour in 24-hour format = 00 through 23
+      'I'=>array('text'=>_('hh'),    'mysql'=>'%h'), //%I = Two digit representation of the hour in 12-hour format = 01 through 12
+      'l'=>array('text'=>_('hh'),    'mysql'=>'%l'), //%l = Hour in 12-hour format, with a space preceeding single digits = 1 through 12
+      'M'=>array('text'=>_('mm'),    'mysql'=>'%i'), //%M = Two digit representation of the minute = 00 through 59
+      'p'=>array('text'=>_('AM/PM'), 'mysql'=>'%p'), //%p = UPPER-CASE 'AM' or 'PM' based on the given time = Example: AM for 00:31, PM for 22:23
+      'P'=>array('text'=>_('am/pm'), 'mysql'=>'%p'), //%P = lower-case 'am' or 'pm' based on the given time = Example: am for 00:31, pm for 22:23
+      'S'=>array('text'=>_('ss'),    'mysql'=>'%S')  //%S = Two digit representation of the second = 00 through 59
+    );
     $matches = array('tm_hour'=>23, 'tm_min'=>34, 'tm_sec'=>45, 'tm_mon'=>4, 'tm_mday'=>2, 'tm_year'=>2003);
     $date = mktime($matches['tm_hour'], $matches['tm_min'], $matches['tm_sec'], $matches['tm_mon'], $matches['tm_mday'], $matches['tm_year']);
     $output = strftime($format, $date);
     foreach ($fmts as $fmt=>$representation) {
       $result = strftime("%$fmt", $date);
       if ($result)
-        $output = preg_replace("@\b$result\b@", $representation, $output);
+        $output = preg_replace("@\b$result\b@", $representation[$dest], $output);
     }
     return $output;
   }
