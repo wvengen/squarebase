@@ -1,6 +1,7 @@
 * { margin: 0; border: 0; padding: 0; }
 body { margin: 0.5em; overflow-y: scroll; font-family: sans-serif !important; }
 .ajaxbusy { cursor: wait !important; }
+h1, h2 { display: block; }
 h2 { margin-bottom: 0.5em; }
 fieldset { border: 0.1em solid #ccc; padding: 0.2em; }
 p { margin: 0.5em 0; }
@@ -50,6 +51,9 @@ input.mainsubmit.delete { margin-left: 5em; }
 .column { white-space: nowrap; }
 .thisrecord { display: none; }
 
+.offsets { margin: 0; padding: 0; }
+.offsets li { list-style-type: none; display: inline; margin-right: 1em; }
+
 .tableedit { margin: 0.5em 0; }
 .foreigntable { margin-bottom: 1em; }
 
@@ -61,11 +65,13 @@ input.mainsubmit.delete { margin-left: 5em; }
 .title { width: 8em; }
 .presentationname { width: 11em; }
 
-#title { float: left; }
-#id { float: right; }
-#messages { clear: both; }
+#id { float: right; border: 0.1em solid #ccc; margin-bottom: 0.5em; }
+#id ul { float: left; padding: 0; margin: 0.2em 0.5em; }
+#id li { list-style-type: none; }
 
 .important { font-weight: bold; }
+
+#content { clear: both; }
 
 #warnings { padding: 0; }
 #warnings li { list-style-type: none; }

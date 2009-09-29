@@ -116,7 +116,7 @@ jQuery.fn.hidelogs = function() {
   $(this).
 
   find('.logs').
-  before('<a href="" class="togglelogs" class="ajaxified">logs</a>').
+  before('<a href="" class="togglelogs ajaxified">logs</a>').
   end().
 
   find('.togglelogs').
@@ -253,8 +253,8 @@ jQuery.fn.ajaxify = function() {
       }
 
       if (ajaxcontent.length > 0) {
-      $(this).
-      loading(true);
+        $(this).
+        loading(true);
 
         ajaxcontent.
         find('.ajaxcontainer:first').
@@ -284,8 +284,7 @@ ready(
     $('html').
     hidelogs();
 
-    $('body.editrecord, body.newrecord, body.showtable, body.showdatabase').
-    find('.ajax').
+    $('.ajaxy .ajax').
     ajaxify();
 
     $('form').

@@ -301,35 +301,43 @@
         html('head', array(),
           html('title', array(), $title).
           html('link', array('href'=>internalurl(array('action'=>'style', 'metabasename'=>parameter('get', 'metabasename'))), 'type'=>'text/css', 'rel'=>'stylesheet')).
-          ($_SESSION['ajaxy']
+          ($_SESSION['scripty']
           ? html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>'jquery.autogrow.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>internalurl(array('action'=>'script'))), '')
           : ''
           )
         ).
-        html('body', array('class'=>preg_replace('@_@', '', $action)),
+        html('body', array('class'=>join_clean(' ', preg_replace('@_@', '', $action), $_SESSION['ajaxy'] ? 'ajaxy' : null)),
           html('div', array('id'=>'header'),
-            html('h1', array('id'=>'title'), $title).
             ($_SESSION['username']
             ? html('div', array('id'=>'id'),
-                join_clean(' &ndash; ',
-                  get_locale(),
-                  "$_SESSION[username]@$_SESSION[host]",
-                  preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internalreference(parameter('server', 'REQUEST_URI').'&ajaxy='.($_SESSION['ajaxy'] ? 'off' : 'on'), $_SESSION['ajaxy'] ? _('ajax is on') : _('ajax is off')) : ($_SESSION['ajaxy'] ? _('ajax is on') : _('ajax is off')),
-                  preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internalreference(parameter('server', 'REQUEST_URI').'&logsy='.($_SESSION['logsy'] ? 'off' : 'on'), $_SESSION['logsy'] ? _('logging is on') : _('logging is off')) : ($_SESSION['logsy'] ? _('logging is on') : _('logging is off')),
-                  internalreference(array('action'=>'logout'), 'logout')
+                html('ul', array(),
+                  html('li', array(),
+                    array(
+                      preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internalreference(parameter('server', 'REQUEST_URI').'&scripty='.($_SESSION['scripty'] ? 'off' : 'on'), $_SESSION['scripty'] ? _('javascript is on') : _('javascript is off')) : ($_SESSION['scripty'] ? _('javascript is on') : _('javascript is off')),
+                      preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internalreference(parameter('server', 'REQUEST_URI').'&ajaxy='.($_SESSION['ajaxy'] ? 'off' : 'on'), $_SESSION['ajaxy'] ? _('ajax is on') : _('ajax is off')) : ($_SESSION['ajaxy'] ? _('ajax is on') : _('ajax is off')),
+                      preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internalreference(parameter('server', 'REQUEST_URI').'&logsy='.($_SESSION['logsy'] ? 'off' : 'on'), $_SESSION['logsy'] ? _('logging is on') : _('logging is off')) : ($_SESSION['logsy'] ? _('logging is on') : _('logging is off'))
+                    )
+                  )
+                ).
+                html('ul', array(),
+                  html('li', array(),
+                    array(
+                      "$_SESSION[username]@$_SESSION[host]",
+                      internalreference(array('action'=>'logout'), 'logout'),
+                      get_locale()
+                    )
+                  )
                 )
               )
             : ''
             ).
-
-            html('div', array('id'=>'messages'),
-              $error ? html('div', array('class'=>'error'), $error) : ''
-            ).
-            $path
+            html('h1', array('id'=>'title'), $title).
+            html('h2', array(), $path ? $path : '&nbsp;')
           ).
           html('div', array('id'=>'content'),
+            ($error ?  html('div', array('id'=>'error'), $error) : '').
             html('ol', array('id'=>'warnings'), join(getlist('warnings'))).
             $content.
             ($_SESSION['logsy'] ? html('ol', array('class'=>'logs'), join(getlist('logs'))) : '')
@@ -371,14 +379,13 @@
     }
     else
       $uniquepart = null;
-    return html('h2', array(),
+    return
       join_clean(' - ',
         !is_null($metabasename) ? $metabasename : '&hellip;',
         !is_null($databasename) ? ($metabasename ? internalreference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'back'=>parameter('server', 'REQUEST_URI')), $databasename) : $databasename) : null,
         !is_null($tablename)    ? ($metabasename && $databasename && $uniquefieldname ? internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename), $tablename) : $tablename) : null,
         $uniquepart
-      )
-    );
+      );
   }
 
   function list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, $uniquevalue, $orderfieldname, $orderasc = true, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = true) {
@@ -432,7 +439,7 @@
       ($selectnames ? ', '.join(', ', $selectnames) : '').
       " FROM `$databasename`.$tablename ".
       join(' ', array_unique($joins)).
-      (!is_null($foreignvalue) ? "WHERE $tablename.$foreignfieldname = '$foreignvalue'" : '').
+      (!is_null($foreignvalue) ? " WHERE $tablename.$foreignfieldname = '$foreignvalue'" : '').
       ($ordernames ? " ORDER BY ".join(', ', $ordernames) : '').
       ($limit ? " LIMIT $limit".($offset ? " OFFSET $offset" : '') : '')
     );
@@ -487,12 +494,12 @@
         );
     }
 
-    $offsets = array();
-    if ($limit > 0 && $foundrecords > $limit) {
+    if ($limit && $foundrecords > $limit) {
+      $offsets = array();
       for ($otheroffset = 0; $otheroffset < $foundrecords; $otheroffset += $limit) {
-        $lastrecord = min($otheroffset + $limit, $foundrecords);
-        $text = ($otheroffset + 1).($otheroffset + 1 == $lastrecord ? '' : '-'.$lastrecord);
-        $offsets[] = $offset == $otheroffset ? $text : internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'offset'=>$otheroffset, 'orderfieldname'=>$originalorderfieldname, 'orderasc'=>$orderasc), $text);
+        $title = sprintf($otheroffset + 1 < $foundrecords ? _('record %d till %d') : _('record %d'), $otheroffset + 1, min($otheroffset + $limit, $foundrecords));
+        $page = round($otheroffset / $limit) + 1;
+        $offsets[] = $offset == $otheroffset ? html('span', array('title'=>$title), $page) : internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'offset'=>$otheroffset, 'orderfieldname'=>$originalorderfieldname, 'orderasc'=>$orderasc ? 'on' : ''), $page, array('class'=>'ajaxreload', 'title'=>$title));
       }
     }
 
@@ -510,7 +517,7 @@
           )
         : ''
         ).
-        join(' ', $offsets).
+        ($offsets ? html('ol', array('class'=>'offsets'), html('li', array(), $offsets)) : '').
         (is_null($foreignvalue) ? internalreference(parameter('server', 'HTTP_REFERER'), 'close', array('class'=>'close')) : '')
       );
   }

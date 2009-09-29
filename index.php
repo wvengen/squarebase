@@ -12,8 +12,9 @@
   session_save_path('session');
   session_start();
 
-  $_SESSION['ajaxy'] = !is_null(parameter('get', 'ajaxy')) ? parameter('get', 'ajaxy') == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['ajaxy'] : true);
-  $_SESSION['logsy'] = !is_null(parameter('get', 'logsy')) ? parameter('get', 'logsy') == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['logsy'] : false);
+  $_SESSION['scripty'] = !is_null(parameter('get', 'scripty')) ? parameter('get', 'scripty') == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['scripty'] : true);
+  $_SESSION['ajaxy']   = !is_null(parameter('get', 'ajaxy'  )) ? parameter('get', 'ajaxy'  ) == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['ajaxy'  ] : true);
+  $_SESSION['logsy']   = !is_null(parameter('get', 'logsy'  )) ? parameter('get', 'logsy'  ) == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['logsy'  ] : false);
 
   addtolist('logs', 'get', 'get: '.html('div', array('class'=>'arrayshow'), array_show(parameter('get'))));
   addtolist('logs', 'cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
@@ -171,8 +172,8 @@
       internalredirect($links[0]);
 
     page($action, null,
-      ($can_create ? internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')) : '').
-      html('table', array(), join($rows))
+      html('table', array(), join($rows)).
+      ($can_create ? internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')) : '')
     );
   }
 
@@ -772,12 +773,13 @@
     $tablename         = parameter('get', 'tablename');
     $tablenamesingular = parameter('get', 'tablenamesingular');
     $uniquefieldname   = parameter('get', 'uniquefieldname');
+    $limit             = parameter('get', 'limit');
     $offset            = first_non_null(parameter('get', 'offset'), 0);
     $orderfieldname    = parameter('get', 'orderfieldname');
     $orderasc          = first_non_null(parameter('get', 'orderasc'), 'on') == 'on';
 
     page($action, path($metabasename, $databasename, $tablename, $uniquefieldname),
-      list_table($metabasename, $databasename, $tablename, $tablenamesingular, 0, $offset, $uniquefieldname, null, $orderfieldname, $orderasc, null, null, null, true)
+      list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, null, $orderfieldname, $orderasc, null, null, null, true)
     );
   }
 
