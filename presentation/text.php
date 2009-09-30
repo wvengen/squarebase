@@ -1,6 +1,6 @@
 <?php
   function probability_text($field) {
-    return preg_match('@^(tiny||medium|long)text\b@', $field['column_type']) ? 0.5 : 0;
+    return preg_match('@^(tiny|medium|long)?text\b@', $field['column_type']) ? 0.5 : 0;
   }
 
   function in_desc_text($field) { return 0; }
@@ -23,7 +23,9 @@
   }
   
   function css_text() {
-    return ".text { width: 20em; white-space: pre-wrap; margin-bottom: 0.2em; }\n";
+    return
+      ".text { width: 20em; white-space: pre-wrap; margin-bottom: 0.2em; }\n".
+      ".text.list { height: 1.25em; }\n";
   }
 
   function jquery_enhance_form_text() {

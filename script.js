@@ -120,6 +120,7 @@ jQuery.fn.hidelogs = function() {
   end().
 
   find('.togglelogs').
+  css('display', 'block').
   click(
     function() {
       $(this).

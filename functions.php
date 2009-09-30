@@ -171,19 +171,24 @@
 
     $fullquery = preg_replace('@(["`])?<(\w+)>(["`])?@e', '(is_null($arguments["$2"]) ? "NULL" : (is_bool($arguments["$2"]) ? ($arguments["$2"] ? "TRUE" : "FALSE") : (is_numeric($arguments["$2"]) ? (int) $arguments["$2"] : "$1".mysql_escape_string($arguments["$2"])."$3")))', $query);
 
-    $before = microtime();
-    $result = mysql_query($fullquery);
-    $after = microtime();
-    list($beforemsec, $beforesec) = explode(' ', $before);
-    list($aftermsec, $aftersec) = explode(' ', $after);
-
-    $errno = mysql_errno();
+    static $cache = array();
+    $fromcache = array_key_exists($fullquery, $cache);
+    if ($fromcache)
+      $result = $cache[$fullquery];
+    else {
+      $before = microtime();
+      $result = $cache[$fullquery] = mysql_query($fullquery);
+      $after = microtime();
+      list($beforemsec, $beforesec) = explode(' ', $before);
+      list($aftermsec, $aftersec) = explode(' ', $after);
+      $errno = mysql_errno();
+    }
 
     $sqlcommand = preg_match1('@^[^A-Z]*([A-Z]+) @i', $fullquery);
     $numresults = preg_match('@^(EXPLAIN|SELECT|SHOW)$@i', $sqlcommand) && $result ? mysql_num_rows($result) : null;
     if (!is_null($numresults)) {
       $resultlist = array();
-      while ($resultrow = mysql_fetch_assoc($result)) {
+      for (mysql_data_reset($result); $resultrow = mysql_fetch_assoc($result); ) {
         if (count($resultlist) == 10 - 1 && $numresults > 10) {
           $resultlist[] = html('li', array(), "&hellip; $numresults.");
           break;
@@ -208,17 +213,18 @@
           array('&lt;', '&gt;', '&amp; '),
           $fullquery
         ).
-        ' ['.sprintf(_('%.2f sec'), ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).']'.
+        ' '.
+        ($fromcache
+        ? '['._('from cache').']'
+        : '['.sprintf(_('%.2f sec'), ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).']'
+        ).
         ' '.internalreference(array('action'=>'explain_query', 'query'=>$fullquery), _('explain')).
         ' '.html('span', array('class'=>'traces'), join(' ', array_reverse($traces)))
       ).
       ($errno
       ? html('ul', array(), html('li', array(), $errno.'='.mysql_error()))
       : (!is_null($numresults)
-        ? ($resultlist
-          ? html('ol', array(), join($resultlist))
-          : null
-          )
+        ? ($resultlist ? html('ol', array(), join($resultlist)) : '')
         : html('ul', array(), html('li', array(), sprintf($sqlcommand == 'INSERT' ? _('%d inserted') : ($sqlcommand == 'UPDATE' ? _('%d updated') : _('%d affected')), mysql_affected_rows($connection))))
         )
       )
@@ -429,7 +435,7 @@
     if ($can_update)
       array_unshift($header, html('th', array('class'=>'small'), ''));
     if ($can_insert && $quickadd)
-      array_unshift($quickadd, html('td', array('class'=>'small'), ''));
+      array_unshift($quickadd, html('td', array('class'=>'small'), 'add'));
     if ($ordernames)
       $ordernames[0] = $ordernames[0].' '.($orderasc ? 'ASC' : 'DESC');
     $records = query('data',
@@ -474,7 +480,7 @@
       $rows[] = $quickadd
       ? html('tr', array(), join($quickadd)).
         html('tr', array(),
-          $quickadd[0].
+          html('td', array('class'=>'small'), '').
           html('td', array('colspan'=>count($quickadd) - 1),
             html('div', array(), 
               html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'class'=>'mainsubmit')).
@@ -503,6 +509,15 @@
       }
     }
 
+    if (is_null($foreignvalue) || $offsets)
+      $rows[] =
+        html('tr', array(),
+          html('td', array('class'=>'small'), is_null($foreignvalue) ? internalreference(parameter('server', 'HTTP_REFERER'), 'close', array('class'=>'close')) : '').
+          html('td', array('colspan'=>count($header) - 1),
+            $offsets ? html('ol', array('class'=>'offsets'), html('li', array(), $offsets)) : ''
+          )
+        );
+
     return
       html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'orderasc'=>$orderasc ? 'on' : '', 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
         (count($rows) > 1
@@ -516,9 +531,7 @@
             html('table', array('class'=>'tablelist'), join($rows)) 
           )
         : ''
-        ).
-        ($offsets ? html('ol', array('class'=>'offsets'), html('li', array(), $offsets)) : '').
-        (is_null($foreignvalue) ? internalreference(parameter('server', 'HTTP_REFERER'), 'close', array('class'=>'close')) : '')
+        )
       );
   }
 
@@ -535,12 +548,12 @@
     get_presentationnames();
 
     $lines = array(
-      html('th', array('colspan'=>2), $tablenamesingular)
+      html('th', array('colspan'=>2, 'class'=>'heading'), $tablenamesingular)
     );
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
       $lines[] =
         html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
-        html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), is_null($uniquevalue) ? parameter('get', "field:$field[fieldname]") : $row[$field['fieldname']], $privilege == 'SELECT' || ($privilege == 'INSERT' && !$field['privilege_insert']) || ($privilege == 'UPDATE' && !$field['privilege_update']), true));
+        html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), is_null($uniquevalue) ? parameter('get', "field:$field[fieldname]") : $row[$field['fieldname']], $privilege == 'SELECT' || ($privilege == 'INSERT' && (!$field['privilege_insert'] || parameter('get', "field:$field[fieldname]"))) || ($privilege == 'UPDATE' && !$field['privilege_update']), true));
     }
 
     $lines[] =
@@ -553,15 +566,15 @@
       );
 
     if (!is_null($uniquevalue)) {
-      $linesreferrers = array();
+      $referrers = array();
       $referringfields = query('meta', 'SELECT mt.tablename, mt.singular, mf.fieldname AS fieldname, mf.title AS title, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mtf ON mtf.tableid = mf.foreigntableid LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.fields mfu ON mt.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
-        $linesreferrers[] =
-          html('td', array('class'=>'description'), 
+        $referrers[] =
+          html('div', array('class'=>'referringlist'), 
             $referringfield['tablename'].
-            ($referringfield['title'] == $tablenamesingular ? '' : html('div', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['title'])))
-          ).
-          html('td', array(), list_table($metabasename, $databasename, $referringfield['tablename'], $referringfield['singular'], 0, 0, $referringfield['uniquefieldname'], null, null, true, $referringfield['fieldname'], $uniquevalue, $tablename, $privilege != 'SELECT'));
+            ($referringfield['title'] == $tablenamesingular ? '' : html('span', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['title']))).
+            list_table($metabasename, $databasename, $referringfield['tablename'], $referringfield['singular'], 0, 0, $referringfield['uniquefieldname'], null, null, true, $referringfield['fieldname'], $uniquevalue, $tablename, $privilege != 'SELECT')
+          );
       }
     }
 
@@ -576,7 +589,7 @@
         html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back ? $back : parameter('server', 'HTTP_REFERER'))).
         html('table', array('class'=>'tableedit'), html('tr', array(), $lines))
       ).
-      ($linesreferrers ? html('table', array('class'=>'tablereferrers'), html('tr', array(), $linesreferrers)) : '');
+      ($referrers ? join($referrers) : '');
   }
 
   function insertorupdate($databasename, $tablename, $fieldnamesandvalues, $uniquefieldname = null, $uniquevalue = null) {

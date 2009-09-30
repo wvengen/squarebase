@@ -46,19 +46,20 @@
     if (!$foreigntablename)
       error(sprintf(_('no foreigntablename for %s'), $fieldname));
     $descriptor = descriptor($metabasename, $databasename, $foreigntablename, $foreigntablename);
-    $references = query('data', "SELECT $foreigntablename.$foreignuniquefieldname AS _id, $descriptor[select] AS _descriptor FROM `$databasename`.$foreigntablename ".join(' ', $descriptor['joins'])."ORDER BY ".join(', ', $descriptor['orders']));
+    $references = query('data', "SELECT $foreigntablename.$foreignuniquefieldname AS _id, $descriptor[select] AS _descriptor FROM `$databasename`.$foreigntablename ".join(' ', $descriptor['joins']).($readonly ? "WHERE $fieldname = $value" : "ORDER BY ".join(', ', $descriptor['orders'])));
     $options = array();
     while ($reference = mysql_fetch_assoc($references)) {
       $selected = $value == $reference['_id'];
       $oneselected = $oneselected || $selected;
       $options[] = html('option', array_merge(array('value'=>$reference['_id']), $selected ? array('selected'=>'selected') : array()), $reference['_descriptor']);
     }
-    array_unshift($options, html('option', array_merge(array('value'=>''), $oneselected ? array() : array('selected'=>'selected')), ''));
+    if (!$readonly)
+      array_unshift($options, html('option', array_merge(array('value'=>''), $oneselected ? array() : array('selected'=>'selected')), ''));
     return
       html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'ajax_lookup', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'fieldname'=>$fieldname, 'value'=>$value, 'presentationname'=>$presentationname, 'foreigntablename'=>$foreigntablename, 'foreigntablenamesingular'=>$foreigntablenamesingular, 'foreignuniquefieldname'=>$foreignuniquefieldname, 'nullallowed'=>$nullallowed, 'hasdefaultvalue'=>$hasdefaultvalue, 'readonly'=>$readonly))),
         html('div', array(),
           html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>join_clean(' ', $presentationname, $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $nullallowed || $hasdefaultvalue ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options)).
-          ($extra ? ' '.internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablenamesingular)).html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)')) : '')
+          ($extra && !$readonly ? internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablenamesingular), array('class'=>'newrecordlookup')).html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)')) : '')
         )
       );
   }
@@ -86,6 +87,7 @@
   function css_lookup() {
     return 
       ".lookup.edit { width: 20.45em; }\n".
-      ".lookup.list { width: auto; }\n";
+      ".lookup.list { width: auto; max-width: 20.45em; }\n".
+      ".newrecordlookup, .changeslost { margin-left: 0.5em; }\n";
   }
 ?>
