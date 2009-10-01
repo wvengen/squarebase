@@ -46,7 +46,7 @@
     if (!$foreigntablename)
       error(sprintf(_('no foreigntablename for %s'), $fieldname));
     $descriptor = descriptor($metabasename, $databasename, $foreigntablename, $foreigntablename);
-    $references = query('data', "SELECT $foreigntablename.$foreignuniquefieldname AS _id, $descriptor[select] AS _descriptor FROM `$databasename`.$foreigntablename ".join(' ', $descriptor['joins']).($readonly ? "WHERE $fieldname = $value" : "ORDER BY ".join(', ', $descriptor['orders'])));
+    $references = query('data', "SELECT $foreigntablename.$foreignuniquefieldname AS _id, $descriptor[select] AS _descriptor FROM `$databasename`.$foreigntablename ".join(' ', $descriptor['joins']).($readonly ? "WHERE _id = $value" : "ORDER BY ".join(', ', $descriptor['orders'])));
     $options = array();
     while ($reference = mysql_fetch_assoc($references)) {
       $selected = $value == $reference['_id'];
