@@ -8,7 +8,7 @@ body { margin: 0.5em; overflow-y: scroll; font-family: sans-serif !important; }
 h1, h2 { display: block; }
 
 #content { clear: both; margin: 0.3em 0; }
-#content, .referringlist .tablelist { border: 0.1em solid #999; }
+table, .box { border: 0.1em solid #999; }
 .tableedit { margin-bottom: 0.5em; }
 .referringlist { margin: 0 0.5em 1em; }
 .referrer { font-size: 0.8em; margin-left: 0.5em; }
