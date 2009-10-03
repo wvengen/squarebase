@@ -110,7 +110,9 @@
   /********************************************************************************************/
 
   if ($action == 'connect') {
-    $usernameandhost = first_non_null(parameter('get', 'lastusernameandhost'), parameter('get', 'usernameandhost'));
+    $usernameandhost = parameter('get', 'lastusernameandhost');
+    if (!$usernameandhost)
+      $usernameandhost = parameter('get', 'usernameandhost');
     if (preg_match('@^(\w+)\@(\w+)$@', $usernameandhost, $match)) {
       $username = $match[1];
       $host     = $match[2];
