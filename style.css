@@ -17,7 +17,7 @@ a { color: #00e; }
 p { margin: 0.5em 0; }
 
 table { width: 100%; border-collapse: collapse; }
-th, td { padding: 0.1em; vertical-align: top; white-space: nowrap; }
+th, td { padding: 0.1em; vertical-align: top; white-space: nowrap; width: 1%; }
 th { text-align: left; background-color: #fff; font-weight: normal; font-style: italic; }
 th.heading { font-weight: bold; font-style: normal; }
 tr.rowodd { background-color: #ddd; }
@@ -26,8 +26,7 @@ tr.list:hover { background-color: #ffc; }
 td.description { width: 0.1em; height: 1.5em; }
 td.number { text-align: right; }
 th.center, td.center { text-align: center; }
-th.wide, td.wide { width: 99%; }
-th.small, td.small { width: 1%; }
+th.filler, td.filler { width: 99%; }
 
 ul, ol { padding: 0.5em 2.5em; }
 ul.compact { margin: 0; padding: 0; overflow: hidden; }

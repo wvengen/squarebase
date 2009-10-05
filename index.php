@@ -87,10 +87,10 @@
         html('table', array(),
           html('tr', array(),
             array(
-              html('td', array('class'=>'small'), html('label', array('for'=>'usernameandhost'), _('user').'@'._('host'))).html('td', array(), $usernameandhost_input),
-              html('td', array('class'=>'small'), html('label', array('for'=>'password'), _('password'))).html('td', array(), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password', 'value'=>$password))),
-              html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale()),
-              html('td', array('class'=>'small'), '').                                                    html('td', array(), html('input', array('type'=>'submit', 'name'=>'action',   'value'=>'connect', 'class'=>'mainsubmit')))
+              html('td', array(), html('label', array('for'=>'usernameandhost'), _('user').'@'._('host'))).html('td', array('class'=>'filler'), $usernameandhost_input),
+              html('td', array(), html('label', array('for'=>'password'), _('password'))).html('td', array(), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password', 'value'=>$password))),
+              html('td', array(), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale()),
+              html('td', array(), '').                                                    html('td', array(), html('input', array('type'=>'submit', 'name'=>'action',   'value'=>'connect', 'class'=>'mainsubmit')))
             )
           )
         )
@@ -140,7 +140,7 @@
 
   if ($action == 'index') {
     $metabases = all_databases();
-    $rows = array(html('th', array(), array(_('database'), _('metabase'), '')));
+    $rows = array(html('th', array('class'=>'filler'), _('database')).html('th', array(), _('metabase')).html('th', array(), ''));
     $links = array();
     while ($metabase = mysql_fetch_assoc($metabases)) {
       $metabasename = $metabase['schema_name'];
@@ -153,7 +153,7 @@
             html('td', array(),
               internalreference($link, $databasename)
             ).
-            html('td', array('class'=>'small'),
+            html('td', array(),
               has_grant('DROP', $metabasename)
               ? array(
                   internalreference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename),
@@ -182,7 +182,7 @@
   /********************************************************************************************/
 
   if ($action == 'new_metabase_from_database') {
-    $rows = array(html('th', array(), array(_('database'), _('tables'), '')));
+    $rows = array(html('th', array(), _('database')).html('th', array(), _('tables')).html('th', array('class'=>'filler'), ''));
     $databases = all_databases();
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['schema_name'];
@@ -269,9 +269,9 @@
         html('table', array(),
           html('tr', array(),
             array(
-              html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
-              html('td', array('class'=>'small'), html('label', array(), _('tables'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'tables', 'value'=>$tables, 'title'=>$tables, 'readonly'=>'readonly', 'class'=>'readonly'))),
-              html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale())
+              html('td', array(), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array('class'=>'filler'), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
+              html('td', array(), html('label', array(), _('tables'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'tables', 'value'=>$tables, 'title'=>$tables, 'readonly'=>'readonly', 'class'=>'readonly'))),
+              html('td', array(), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale())
             )
           )
         ).
@@ -385,7 +385,8 @@
             array(
               _('table'), _('top'), _('field'), _('title'), _('type'), _('null'), _('presentation'), _('key'), _('desc'), _('list'), _('edit')
             )
-          )
+          ).
+          html('th', array('class'=>'filler'), '')
         );
 
       foreach ($table['fields'] as &$field) {
@@ -482,7 +483,8 @@
             ).
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null))).
             html('td', array('class'=>join_clean(' ', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))).
-            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null)))
+            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null))).
+            html('td', array(), '')
           );
       }
     }
@@ -517,9 +519,9 @@
           html('table', array(),
             html('tr', array(),
               array(
-                html('td', array('class'=>'small'), html('label', array('for'=>'metabasename'), _('metabasename'))).html('td', array(), $metabase_input),
-                html('td', array('class'=>'small'), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
-                html('td', array('class'=>'small'), html('label', array('for'=>'language'), _('language'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'language', 'value'=>$language, 'readonly'=>'readonly', 'class'=>'readonly')))
+                html('td', array(), html('label', array('for'=>'metabasename'), _('metabasename'))).html('td', array('class'=>'filler'), $metabase_input),
+                html('td', array(), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
+                html('td', array(), html('label', array('for'=>'language'), _('language'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'language', 'value'=>$language, 'readonly'=>'readonly', 'class'=>'readonly')))
               )
             )
           ).
@@ -677,7 +679,7 @@
 
   if ($action == 'form_database_for_metabase') {
     $metabasename = parameter('get', 'metabasename');
-    $rows = array(html('th', array(), 'database'));
+    $rows = array(html('th', array(), _('database')).html('th', array('class'=>'filler'), 'database'));
     $databasenames = databasenames($metabasename);
 
     $databases = all_databases();
@@ -751,7 +753,7 @@
     $metabasename = parameter('get', 'metabasename');
     $databasename = parameter('get', 'databasename');
     $tables = query('meta', 'SELECT * FROM `<metabasename>`.tables LEFT JOIN `<metabasename>`.fields ON tables.uniquefieldid = fields.fieldid WHERE intablelist = true ORDER BY tablename', array('metabasename'=>$metabasename));
-    $rows = array(html('th', array(), 'table'));
+    $rows = array(html('th', array('class'=>'filler'), _('table')));
     while ($table = mysql_fetch_assoc($tables)) {
       $rows[] =
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),

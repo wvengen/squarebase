@@ -432,10 +432,14 @@
       if ($field['quickadd'])
         $quickadd[] = html('td', array('class'=>!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? $foreignvalue : null, (!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname) || !$field['privilege_insert'], false));
     }
+    $header[] = html('th', array('class'=>'filler'), '');
     if ($can_update)
-      array_unshift($header, html('th', array('class'=>'small'), ''));
-    if ($can_insert && $quickadd)
-      array_unshift($quickadd, html('td', array('class'=>'small'), 'add'));
+      array_unshift($header, html('th', array(), ''));
+    if ($quickadd) {
+      $quickadd[] = html('td', array(), '');
+      if ($can_insert)
+        array_unshift($quickadd, html('td', array(), 'add'));
+    }
     if ($ordernames)
       $ordernames[0] = $ordernames[0].' '.($orderasc ? 'ASC' : 'DESC');
     $records = query('data',
@@ -464,11 +468,12 @@
             ''.call_user_func("list_$field[presentationname]", $metabasename, $databasename, $field, $row["${tablename}_$field[fieldname]"])
           );
       }
+      $columns[] = html('td', array(), '');
       $rows[] =
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           ($interactive
           ? ($can_update
-            ? html('td', array('class'=>'small'), internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), 'edit'))
+            ? html('td', array(), internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), 'edit'))
             : ''
             )
           : ''
@@ -480,7 +485,7 @@
       $rows[] = $quickadd
       ? html('tr', array(), join($quickadd)).
         html('tr', array(),
-          html('td', array('class'=>'small'), '').
+          html('td', array(), '').
           html('td', array('colspan'=>count($quickadd) - 1),
             html('div', array(), 
               html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'class'=>'mainsubmit')).
@@ -512,7 +517,7 @@
     if (is_null($foreignvalue) || $offsets)
       $rows[] =
         html('tr', array(),
-          html('td', array('class'=>'small'), is_null($foreignvalue) ? internalreference(parameter('server', 'HTTP_REFERER'), 'close', array('class'=>'close')) : '').
+          html('td', array(), is_null($foreignvalue) ? internalreference(parameter('server', 'HTTP_REFERER'), 'close', array('class'=>'close')) : '').
           html('td', array('colspan'=>count($header) - 1),
             $offsets ? html('ol', array('class'=>'offsets'), html('li', array(), $offsets)) : ''
           )
@@ -548,12 +553,14 @@
     get_presentationnames();
 
     $lines = array(
-      html('th', array('colspan'=>2, 'class'=>'heading'), $tablenamesingular)
+      html('th', array('colspan'=>2, 'class'=>'heading'), $tablenamesingular).
+      html('th', array('class'=>'filler'), '')
     );
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
       $lines[] =
         html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
-        html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), is_null($uniquevalue) ? parameter('get', "field:$field[fieldname]") : $row[$field['fieldname']], $privilege == 'SELECT' || ($privilege == 'INSERT' && (!$field['privilege_insert'] || parameter('get', "field:$field[fieldname]"))) || ($privilege == 'UPDATE' && !$field['privilege_update']), true));
+        html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), is_null($uniquevalue) ? parameter('get', "field:$field[fieldname]") : $row[$field['fieldname']], $privilege == 'SELECT' || ($privilege == 'INSERT' && (!$field['privilege_insert'] || parameter('get', "field:$field[fieldname]"))) || ($privilege == 'UPDATE' && !$field['privilege_update']), true)).
+        html('td', array(), '');
     }
 
     $lines[] =
@@ -563,7 +570,8 @@
         (is_null($uniquevalue) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
         internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel')).
         ($privilege == 'UPDATE' && has_grant('DELETE', $databasename, $tablename) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_clean(' ', 'mainsubmit', 'delete'))) : '')
-      );
+      ).
+      html('td', array(), '');
 
     if (!is_null($uniquevalue)) {
       $referrers = array();
