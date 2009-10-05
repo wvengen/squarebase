@@ -294,7 +294,13 @@
 
     // pass 1: store query results and find the primary key field name
     $infos = $alltablenames = $tableswithoutsinglevaluedprimarykey = array();
-    $tables = query('data', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
+    $tables = query('data',
+      'SELECT tb.table_name '.
+      'FROM INFORMATION_SCHEMA.TABLES tb '.
+      'LEFT JOIN INFORMATION_SCHEMA.VIEWS vw ON vw.table_schema = tb.table_schema AND vw.table_name = tb.table_name '.
+      'WHERE tb.table_schema = "<databasename>" AND vw.view_definition IS NULL',
+      array('databasename'=>$databasename)
+    );
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table['table_name'];
       $alltablenames[] = $tablename;
@@ -618,7 +624,13 @@
     foreach ($presentationnames as $presentationname)
       $presentationids[$presentationname] = insertorupdate($metabasename, 'presentations', array('presentationname'=>$presentationname));
 
-    $tables = query('data', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
+    $tables = query('data',
+      'SELECT tb.table_name '.
+      'FROM INFORMATION_SCHEMA.TABLES tb '.
+      'LEFT JOIN INFORMATION_SCHEMA.VIEWS vw ON vw.table_schema = tb.table_schema AND vw.table_name = tb.table_name '.
+      'WHERE tb.table_schema = "<databasename>" AND vw.view_definition IS NULL',
+      array('databasename'=>$databasename)
+    );
     $tableids = array();
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table['table_name'];
