@@ -29,6 +29,8 @@
   }
   
   function css_int() {
-    return ".int { text-align: right; width: 3em; }\n";
+    return
+      ".int { text-align: right; }\n".
+      "input.int { width: 3em; }\n";
   }
 ?>
