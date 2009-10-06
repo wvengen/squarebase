@@ -58,13 +58,13 @@
   function jquery_enhance_form_image() {
     return
       "find('.image :input[type=file]').\n".
-      "attr('disabled', 'disabled').\n".
+      "  attr('disabled', 'disabled').\n".
       "end().\n".
       "find('.image :input[value=new]').\n".
-      "attr('disabled', 'disabled').\n".
+      "  attr('disabled', 'disabled').\n".
       "end().\n".
       "find('.image .ajaxwarning').\n".
-      "show().\n".
+      "  show().\n".
       "end().\n";
   }
 ?>
