@@ -45,8 +45,9 @@
   function ajax_lookup($metabasename, $databasename, $fieldname, $value, $presentationname, $foreigntablename, $foreigntablenamesingular, $foreignuniquefieldname, $nullallowed, $hasdefaultvalue, $readonly, $extra = true) {
     if (!$foreigntablename)
       error(sprintf(_('no foreigntablename for %s'), $fieldname));
-    $descriptor = descriptor($metabasename, $databasename, $foreigntablename, $foreigntablename);
-    $references = query('data', "SELECT $foreigntablename.$foreignuniquefieldname AS _id, $descriptor[select] AS _descriptor FROM `$databasename`.$foreigntablename ".join(' ', $descriptor['joins']).($readonly ? "WHERE $foreigntablename.$foreignuniquefieldname = $value" : "ORDER BY ".join(', ', $descriptor['orders'])));
+    $foreignviewname = table_or_view($metabasename, $databasename, $foreigntablename);
+    $descriptor = descriptor($metabasename, $databasename, $foreigntablename, $foreignviewname);
+    $references = query('data', "SELECT $foreignviewname.$foreignuniquefieldname AS _id, $descriptor[select] AS _descriptor FROM `$databasename`.$foreignviewname ".join(' ', $descriptor['joins']).($readonly ? "WHERE $foreignviewname.$foreignuniquefieldname = $value" : "ORDER BY ".join(', ', $descriptor['orders'])));
     $options = array();
     while ($reference = mysql_fetch_assoc($references)) {
       $selected = $value == $reference['_id'];

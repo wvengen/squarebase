@@ -70,6 +70,7 @@ input.mainsubmit.delete { margin-left: 5em; }
 .pluralsingular li { list-style-type: none; white-space: nowrap; }
 .pluralsingular label { width: 0.8em; display: inline-block; }
 .pluralsingular input { width: 8em; }
+.views { padding: 0; margin-left: 1em; }
 
 .title { width: 8em; }
 .presentationname { width: 11em; }

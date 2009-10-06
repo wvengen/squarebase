@@ -162,7 +162,7 @@
         logout(_('mysql module not found'));
       $connection = @mysql_connect($_SESSION['host'], $_SESSION['username'], $_SESSION['password']);
       if (mysql_errno())
-        logout(sprintf(_('problem connecting to the databasemanager: %s').array_show(debug_backtrace()), mysql_error()));
+        logout(sprintf(_('problem connecting to the databasemanager: %s'), mysql_error()).array_show(debug_backtrace()));
       $_SESSION['timesconnected'] += 1;
     }
 
@@ -234,39 +234,51 @@
 
     if ($result)
       return $result;
-    if ($errno == 1044) // Access denied for user '%s'@'%s' to database '%s'
-      return null;
-    if ($errno == 1062) { // Duplicate entry '%s' for key %d
-      $error = mysql_error();
-      $keyvalues = explode('-', preg_match1('@Duplicate entry \'(.*)\'@', $error));
-      $keynr = preg_match1('@for key (\d+)@', $error);
-      if ($keynr) {
-        $databasename = preg_match1('@^INSERT INTO `(.*?)`@', $fullquery);
-        $tablename    = preg_match1('@^INSERT INTO `.*?`\.`(.*?)`@', $fullquery);
-        $keyfields = array();
-        $keys = query($metaordata, 'SELECT seq_in_index, column_name FROM INFORMATION_SCHEMA.STATISTICS WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$databasename, 'tablename'=>$tablename));
-        while ($key = mysql_fetch_assoc($keys)) {
-          if ($key['seq_in_index'] == 1)
-            $keynr--;
-          if ($keynr == 0)
-            $keyfields[] = $key['column_name'];
-          if ($keynr < 0)
-            break;
+    switch ($errno) {
+      case 1044: // Access denied for user '%s'@'%s' to database '%s'
+        return null;
+      case 1062: // Duplicate entry '%s' for key %d
+        $error = mysql_error();
+        $keyvalues = explode('-', preg_match1('@Duplicate entry \'(.*)\'@', $error));
+        $keynr = preg_match1('@for key (\d+)@', $error);
+        if ($keynr) {
+          $databasename = preg_match1('@^INSERT INTO `(.*?)`@', $fullquery);
+          $tablename    = preg_match1('@^INSERT INTO `.*?`\.`(.*?)`@', $fullquery);
+          $keyfields = array();
+          $keys = query($metaordata, 'SELECT seq_in_index, column_name FROM INFORMATION_SCHEMA.STATISTICS WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$databasename, 'tablename'=>$tablename));
+          while ($key = mysql_fetch_assoc($keys)) {
+            if ($key['seq_in_index'] == 1)
+              $keynr--;
+            if ($keynr == 0)
+              $keyfields[] = $key['column_name'];
+            if ($keynr < 0)
+              break;
+          }
+          if (count($keyfields) == count($keyvalues)) {
+            $combined = array();
+            foreach ($keyfields as $num=>$keyfield)
+              $combined[] = "$keyfield = $keyvalues[$num]";
+            $keyfieldsandvalues = join(', ', $combined);
+          }
+          else
+            $keyfieldsandvalues = join('-', $keyfields).' = '.join('-', $keyvalues);
+          $warning = sprintf(_('%s with %s already exists'), ucfirst($tablename), $keyfieldsandvalues);
         }
-        if (count($keyfields) == count($keyvalues)) {
-          $combined = array();
-          foreach ($keyfields as $num=>$keyfield)
-            $combined[] = "$keyfield = $keyvalues[$num]";
-          $keyfieldsandvalues = join(', ', $combined);
+        addtolist('warnings', 'warning', $warning ? $warning : $error);
+        return null;
+      case 1369: // CHECK OPTION failed '%s'
+        $error = mysql_error();
+        if (preg_match('@^CHECK OPTION failed \'(.*?)\.(.*?)\'$@', $error, $matches)) {
+          $warning = _('not allowed to add a record with these values');
+          $view = query01($metaordata, 'SELECT view_definition FROM INFORMATION_SCHEMA.VIEWS WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$matches[1], 'tablename'=>$matches[2]));
+          if ($view && preg_match('@ where \(`(.*?)`\.`(.*?)`\.`(.*?)` = (.*?)\)$@', $view['view_definition'], $where))
+            $warning = sprintf(_('only allowed to add a record with %s = %s'), $where[3], $where[4]);
         }
-        else
-          $keyfieldsandvalues = join('-', $keyfields).' = '.join('-', $keyvalues);
-        $warning = sprintf(_('%s with %s already exists'), ucfirst($tablename), $keyfieldsandvalues);
-      }
-      addtolist('warnings', 'warning', $warning ? $warning : $error);
-      return null;
+        addtolist('warnings', 'warning', $warning ? $warning : $error);
+        return null;
+      default:
+        error(_('problem while querying the databasemanager').html('p', array('class'=>'error'), "$errno: ".mysql_error()).$fullquery);
     }
-    error(_('problem while querying the databasemanager').html('p', array('class'=>'error'), "$errno: ".mysql_error()).$fullquery);
   }
 
   function query01($metaordata, $query, $arguments = array()) {
@@ -395,17 +407,19 @@
   }
 
   function list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, $uniquevalue, $orderfieldname, $orderasc = true, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = true) {
+    $viewname = table_or_view($metabasename, $databasename, $tablename);
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
     $can_insert = $can_update = false;
     $header = $quickadd = array();
-    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inlist', 'SELECT', true);
+    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, $viewname, 'inlist', 'SELECT', true);
     while ($field = mysql_fetch_assoc($fields)) {
       $can_insert = $can_insert || $field['privilege_insert'];
       $can_update = $can_update || $field['privilege_update'];
-      $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
+      $selectnames[] = "$viewname.$field[fieldname] AS ${tablename}_$field[fieldname]";
       if ($field['foreigntablename']) {
-        $joins[] = "LEFT JOIN `$databasename`.$field[foreigntablename] AS $field[foreigntablename]_$field[fieldname] ON $field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = $tablename.$field[fieldname]";
+        $foreignviewname = table_or_view($metabasename, $databasename, $field['foreigntablename']);
+        $joins[] = "LEFT JOIN `$databasename`.$foreignviewname AS $field[foreigntablename]_$field[fieldname] ON $field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = $viewname.$field[fieldname]";
         $descriptor = descriptor($metabasename, $databasename, $field['foreigntablename'], "$field[foreigntablename]_$field[fieldname]");
         $selectnames[] = "$descriptor[select] AS $field[foreigntablename]_$field[fieldname]_descriptor";
         $joins = array_merge($joins, $descriptor['joins']);
@@ -445,11 +459,11 @@
     $records = query('data',
       "SELECT ".
       ($limit ? "SQL_CALC_FOUND_ROWS " : "").
-      "$tablename.$uniquefieldname AS $uniquefieldname".
+      "$viewname.$uniquefieldname AS $uniquefieldname".
       ($selectnames ? ', '.join(', ', $selectnames) : '').
-      " FROM `$databasename`.$tablename ".
+      " FROM `$databasename`.$viewname ".
       join(' ', array_unique($joins)).
-      (!is_null($foreignvalue) ? " WHERE $tablename.$foreignfieldname = '$foreignvalue'" : '').
+      (!is_null($foreignvalue) ? " WHERE $viewname.$foreignfieldname = '$foreignvalue'" : '').
       ($ordernames ? " ORDER BY ".join(', ', $ordernames) : '').
       ($limit ? " LIMIT $limit".($offset ? " OFFSET $offset" : '') : '')
     );
@@ -541,13 +555,14 @@
   }
 
   function edit_record($privilege, $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $back = null) {
-    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inedit', $privilege, true);
+    $viewname = table_or_view($metabasename, $databasename, $tablename);
+    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, $viewname, 'inedit', $privilege, true);
 
     if (!is_null($uniquevalue)) {
       $fieldnames = array();
       while ($field = mysql_fetch_assoc($fields))
         $fieldnames[] = $field['fieldname'];
-      $row = query1('data', 'SELECT '.join(', ', $fieldnames).' FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+      $row = query1('data', 'SELECT '.join(', ', $fieldnames).' FROM `<databasename>`.`<viewname>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
     }
 
     get_presentationnames();
@@ -631,7 +646,33 @@
       mysql_data_seek($results, 0);
   }
 
-  function fieldsforpurpose($metabasename, $databasename, $tablename, $purpose, $privilege = 'SELECT', $allprivileges = false) {
+  function table_or_view($metabasename, $databasename, $tablename) {
+    static $alternatives = array();
+    if (!$alternatives[$metabasename][$databasename]) {
+      $views = query('meta',
+        '('.
+          'SELECT tablename, viewname '.
+          'FROM `<metabasename>`.views '.
+          'LEFT JOIN `<metabasename>`.tables ON tables.tableid = views.tableid '.
+          'LEFT JOIN INFORMATION_SCHEMA.TABLES tb ON tb.table_schema = "<databasename>" AND tb.table_name = viewname '.
+          'WHERE table_name IS NOT NULL'.
+        ') '.
+        'UNION '.
+        '('.
+          'SELECT tablename, tablename AS viewname '.
+          'FROM `<metabasename>`.tables '.
+          'LEFT JOIN INFORMATION_SCHEMA.TABLES tb ON tb.table_schema = "<databasename>" AND tb.table_name = tablename '.
+          'WHERE table_name IS NOT NULL'.
+        ')',
+        array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename)
+      );
+      while ($view = mysql_fetch_assoc($views))
+        $alternatives[$metabasename][$databasename][$view['tablename']] = $view['viewname'];
+    }
+    return $alternatives[$metabasename][$databasename][$tablename];
+  }
+
+  function fieldsforpurpose($metabasename, $databasename, $tablename, $viewname, $purpose, $privilege = 'SELECT', $allprivileges = false) {
     $selectparts = $joinparts = array();
     foreach (array('SELECT', 'INSERT', 'UPDATE') as $oneprivilege) {
       if ($allprivileges || $privilege == $oneprivilege) {
@@ -640,8 +681,8 @@
         $joinparts[] = 
           "LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   u$letter ON u$letter.privilege_type = \"$oneprivilege\" AND u$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") ".
           "LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES s$letter ON s$letter.privilege_type = \"$oneprivilege\" AND s$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND s$letter.table_schema = \"<databasename>\" ".
-          "LEFT JOIN INFORMATION_SCHEMA.TABLE_PRIVILEGES  t$letter ON t$letter.privilege_type = \"$oneprivilege\" AND t$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND t$letter.table_schema = \"<databasename>\" AND t$letter.table_name = mt.tablename ".
-          "LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES c$letter ON c$letter.privilege_type = \"$oneprivilege\" AND c$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND c$letter.table_schema = \"<databasename>\" AND c$letter.table_name = mt.tablename AND c$letter.column_name = mf.fieldname ";
+          "LEFT JOIN INFORMATION_SCHEMA.TABLE_PRIVILEGES  t$letter ON t$letter.privilege_type = \"$oneprivilege\" AND t$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND t$letter.table_schema = \"<databasename>\" AND t$letter.table_name = \"<viewname>\" ".
+          "LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES c$letter ON c$letter.privilege_type = \"$oneprivilege\" AND c$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND c$letter.table_schema = \"<databasename>\" AND c$letter.table_name = \"<viewname>\" AND c$letter.column_name = mf.fieldname ";
         if ($privilege == $oneprivilege)
           $wherepart = "COALESCE(u$letter.privilege_type, s$letter.privilege_type, t$letter.privilege_type, c$letter.privilege_type) IS NOT NULL ";
       }
@@ -649,6 +690,7 @@
     return query('meta',
       'SELECT '.
         join_clean(', ',
+          ($viewname == $tablename ? 'mt.tablename' : 'vw.viewname').' AS viewname',
           'mt.tablename',
           'mt.singular',
           'mt.plural',
@@ -658,7 +700,6 @@
           'mf.fieldname',
           'mf.title',
           'mr.presentationname',
-          'mf.foreigntableid',
           'mf.nullallowed',
           'mf.indesc',
           'mf.inlist',
@@ -668,29 +709,34 @@
           'mf2.fieldname AS foreignuniquefieldname',
           $selectparts
         ).' '.
-      'FROM `<metabasename>`.tables mt '.
+      ($viewname == $tablename
+      ? 'FROM `<metabasename>`.tables mt '
+      : 'FROM `<metabasename>`.views vw '.
+        'LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = vw.tableid '
+      ).
       'RIGHT JOIN `<metabasename>`.fields mf ON mf.tableid = mt.tableid '.
       'LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid '.
       'LEFT JOIN `<metabasename>`.tables mt2 ON mt2.tableid = mf.foreigntableid '.
       'LEFT JOIN `<metabasename>`.fields mf2 ON mf2.fieldid = mt2.uniquefieldid '.
       join($joinparts).
       'WHERE '.
-        'mt.tablename = "<tablename>" AND '.
-        'mf.<purpose> AND '.
-        $wherepart.
+        'mt.tablename = "<tablename>" '.
+        'AND mf.<purpose> '.
+        'AND '.  $wherepart.
       'ORDER BY mf.fieldid',
-      array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'purpose'=>$purpose, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'])
+      array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'viewname'=>$viewname, 'purpose'=>$purpose, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'])
     );
   }
 
   function descriptor($metabasename, $databasename, $tablename, $tablealias, $stack = array()) {
     static $descriptors = array();
-    if (!$descriptors[$tablename]) {
+    $viewname = table_or_view($metabasename, $databasename, $tablename);
+    if (!$descriptors[$viewname]) {
       $selects = $joins = $orders = array();
-      $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'indesc');
+      $fields = fieldsforpurpose($metabasename, $databasename, $tablename, $viewname, 'indesc');
       while ($field = mysql_fetch_assoc($fields)) {
         include_once("presentation/$field[presentationname].php");
-        $selectnames[] = "$tablename.$field[fieldname] AS ${tablename}_$field[fieldname]";
+        $selectnames[] = "$viewname.$field[fieldname] AS ${viewname}_$field[fieldname]";
         if ($field['foreigntablename'] && !in_array($field['foreigntablename'], $stack)) {
           $joins[] = "LEFT JOIN `$databasename`.$field[foreigntablename] AS {tablealias}_$field[foreigntablename]_$field[fieldname] ON {tablealias}_$field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = {tablealias}.$field[fieldname] ";
           $descriptor = descriptor($metabasename, $databasename, $field['foreigntablename'], "{tablealias}_$field[foreigntablename]_$field[fieldname]", array_merge($stack, array($field['foreigntablename'])));
@@ -703,16 +749,16 @@
           $orders[] = "{tablealias}.$field[fieldname]";
         }
       }
-      $descriptors[$tablename] = array(
+      $descriptors[$viewname] = array(
         'select'=>count($selects) == 1 ? $selects[0] : 'CONCAT_WS(" ", '.join(', ', $selects).')',
         'joins' =>$joins,
         'orders'=>$orders
       );
     }
     return array(
-      'select'=>preg_replace('@{tablealias}@', $tablealias, $descriptors[$tablename]['select']),
-      'joins' =>preg_replace('@{tablealias}@', $tablealias, $descriptors[$tablename]['joins']),
-      'orders'=>preg_replace('@{tablealias}@', $tablealias, $descriptors[$tablename]['orders'])
+      'select'=>preg_replace('@{tablealias}@', $tablealias, $descriptors[$viewname]['select']),
+      'joins' =>preg_replace('@{tablealias}@', $tablealias, $descriptors[$viewname]['joins']),
+      'orders'=>preg_replace('@{tablealias}@', $tablealias, $descriptors[$viewname]['orders'])
     );
   }
 

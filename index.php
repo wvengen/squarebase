@@ -146,7 +146,7 @@
       $metabasename = $metabase['schema_name'];
       $databasenames = databasenames($metabasename);
       foreach ($databasenames as $databasename) {
-        $link = array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename);
+        $link = array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename);
         $links[] = $link;
         $rows[] =
           html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
@@ -195,7 +195,7 @@
         $contents = html('ul', array('class'=>'compact'), html('li', array(), $dblist));
       }
       else {
-        $tables = query('data', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
+        $tables = query('top', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
         if ($tables) {
           $tablelist = array();
           while ($table = mysql_fetch_assoc($tables)) {
@@ -255,7 +255,7 @@
   if ($action == 'language_for_database') {
     $databasename = parameter('get', 'databasename');
 
-    $tables = query('data', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
+    $tables = query('top', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
     if ($tables) {
       $tablelist = array();
       while ($table = mysql_fetch_assoc($tables)) {
@@ -294,7 +294,7 @@
 
     // pass 1: store query results and find the primary key field name
     $infos = $alltablenames = $tableswithoutsinglevaluedprimarykey = array();
-    $tables = query('data',
+    $tables = query('top',
       'SELECT tb.table_name '.
       'FROM INFORMATION_SCHEMA.TABLES tb '.
       'LEFT JOIN INFORMATION_SCHEMA.VIEWS vw ON vw.table_schema = tb.table_schema AND vw.table_name = tb.table_name '.
@@ -307,7 +307,7 @@
       $tableinfo = array('table_name'=>$tablename, 'fields'=>array());
 
       $allprimarykeyfieldnames = array();
-      $fields = query('data',
+      $fields = query('top',
         'SELECT c.table_schema, c.table_name, c.column_name, column_key, column_type, is_nullable, column_default, referenced_table_name '.
         'FROM INFORMATION_SCHEMA.COLUMNS c '.
         'LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu ON kcu.table_schema = c.table_schema AND kcu.table_name = c.table_name AND kcu.column_name = c.column_name AND referenced_table_schema = c.table_schema '.
@@ -326,15 +326,28 @@
         $tableinfo['primarykeyfieldname'] = $allprimarykeyfieldnames[0];
       else
         $tableswithoutsinglevaluedprimarykey[] = $tablename;
-      $infos[] = $tableinfo;
+      $tableinfo['views'] = array();
+      $infos[$tablename] = $tableinfo;
+    }
+
+    $views = query('top',
+      'SELECT table_name, view_definition, is_updatable '.
+      'FROM INFORMATION_SCHEMA.VIEWS '.
+      'WHERE table_schema = "<databasename>"',
+      array('databasename'=>$databasename)
+    );
+    while ($view = mysql_fetch_assoc($views)) {
+      $viewname = $view['table_name'];
+      if ($view['is_updatable'] == 'YES') {
+        $fromname = preg_match1('@ from `.*?`\.`(.*?)`@', $view['view_definition']);
+        $infos[$fromname]['views'][] = $viewname;
+      }
     }
 
     // pass 2: find presentation and in_desc, in_list and in_edit (needs $alltablenames and $infos)
     $presentationnames = get_presentationnames();
     $referencesin = $referencesout = array();
-    foreach ($infos as &$table) {
-      $tablename = $table['table_name'];
-
+    foreach ($infos as $tablename=>&$table) {
       $max_in_desc = $max_in_list = $max_in_edit = 0;
       foreach ($table['fields'] as &$field) {
         $fieldname = $field['column_name'];
@@ -382,9 +395,7 @@
 
     // pass 3: produce output for tables and fields (needs $max_in_**** and $referencesin/-out)
     $rowsfields = array();
-    foreach ($infos as &$table) {
-      $tablename = $table['table_name'];
-
+    foreach ($infos as $tablename=>&$table) {
       $rowsfields[] =
         html('tr', array(),
           html('th', array(),
@@ -460,6 +471,15 @@
                       html('label', array('for'=>"$tablename:plural"), '2').html('input', array('type'=>'text', 'name'=>"$tablename:plural", 'id'=>"$tablename:plural", 'value'=>$plural))
                     )
                   )
+                ).
+                ($table['views']
+                ? _('alternative views').':'.
+                  html('ul', array('class'=>'views'),
+                    html('li', array(),
+                      $table['views']
+                    )
+                  )
+                : ''
                 )
               ).
               html('td', array('class'=>join_clean(' ', 'top', 'center'), 'rowspan'=>count($table['fields'])),
@@ -607,6 +627,17 @@
     );
 
     query('meta',
+      'CREATE TABLE `<metabasename>`.views ('.
+        'viewid           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+        'viewname         VARCHAR(100) NOT NULL,'.
+        'tableid          INT UNSIGNED NOT NULL REFERENCES `tables` (tableid),'.
+        'UNIQUE KEY (viewname),'.
+        'INDEX (tableid)'.
+      ')',
+      array('metabasename'=>$metabasename)
+    );
+
+    query('meta',
       'CREATE TABLE `<metabasename>`.presentations ('.
         'presentationid   INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
         'presentationname VARCHAR(100) NOT NULL,'.
@@ -624,7 +655,7 @@
     foreach ($presentationnames as $presentationname)
       $presentationids[$presentationname] = insertorupdate($metabasename, 'presentations', array('presentationname'=>$presentationname));
 
-    $tables = query('data',
+    $tables = query('top',
       'SELECT tb.table_name '.
       'FROM INFORMATION_SCHEMA.TABLES tb '.
       'LEFT JOIN INFORMATION_SCHEMA.VIEWS vw ON vw.table_schema = tb.table_schema AND vw.table_name = tb.table_name '.
@@ -643,7 +674,7 @@
       $tableid = $tableids[$tablename];
 
       $descs = $sorts = $lists = $edits = 0;
-      $fields = query('data',
+      $fields = query('top',
         'SELECT c.table_schema, c.table_name, c.column_name, column_key, column_type, is_nullable, column_default, referenced_table_name '.
         'FROM INFORMATION_SCHEMA.COLUMNS c '.
         'LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu ON kcu.table_schema = c.table_schema AND kcu.table_name = c.table_name AND kcu.column_name = c.column_name AND referenced_table_schema = c.table_schema '.
@@ -681,10 +712,25 @@
       if (!$inedits)
         $errors[] = sprintf(_('no fields to edit for %s'), $tablename);
     }
+
+    $views = query('top',
+      'SELECT table_name, view_definition, is_updatable '.
+      'FROM INFORMATION_SCHEMA.VIEWS '.
+      'WHERE table_schema = "<databasename>"',
+      array('databasename'=>$databasename)
+    );
+    while ($view = mysql_fetch_assoc($views)) {
+      $viewname = $view['table_name'];
+      if ($view['is_updatable'] == 'YES') {
+        $fromname = preg_match1('@ from `.*?`\.`(.*?)`@', $view['view_definition']);
+        insertorupdate($metabasename, 'views', array('viewname'=>$viewname, 'tableid'=>$tableids[$fromname]));
+      }
+    }
+
     if ($errors)
       error(join(', ', $errors));
 
-    internalredirect(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
+    internalredirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
   }
 
   /********************************************************************************************/
@@ -701,8 +747,8 @@
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array(),
             array(
-              internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $databasename),
-              internalreference(array('action'=>'update_database_from_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename), in_array($databasename, $databasenames) ? 'update' : 'add')
+              internalreference(array('action'=>'attach_database_to_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $databasename),
+              internalreference(array('action'=>'attach_database_to_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename), in_array($databasename, $databasenames) ? 'update' : 'add')
             )
           )
         );
@@ -713,7 +759,7 @@
           array(
             html('input', array('type'=>'text', 'name'=>'databasename')),
             html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
-            html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_database_from_metabase', 'class'=>'mainsubmit'))
+            html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'attach_database_to_metabase', 'class'=>'mainsubmit'))
           )
         )
       );
@@ -726,35 +772,11 @@
 
   /********************************************************************************************/
 
-  if ($action == 'update_database_from_metabase') {
+  if ($action == 'attach_database_to_metabase') {
     $metabasename = parameter('get', 'metabasename');
     $databasename = parameter('get', 'databasename');
 
-    if (has_grant('ALL', $metabasename)) {
-      query('meta', 'INSERT IGNORE INTO `<metabasename>`.databases SET databasename = "<databasename>"', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
-
-      query('data', 'CREATE DATABASE IF NOT EXISTS `<databasename>`', array('databasename'=>$databasename));
-
-      $tables = query('meta', 'SELECT * FROM `<metabasename>`.tables mt LEFT JOIN `<metabasename>`.fields mf ON mf.fieldid = mt.uniquefieldid', array('metabasename'=>$metabasename));
-      while ($table = mysql_fetch_assoc($tables)) {
-        if (!$table['fieldname'])
-          error(sprintf(_('table %s has no single valued primary key'), $table['tablename']));
-
-        $associatedoldindices = array();
-        $oldindices = query($metaordata, 'SELECT seq_in_index, column_name FROM INFORMATION_SCHEMA.STATISTICS WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$databasename, 'tablename'=>$table['tablename']));
-        while ($oldindex = mysql_fetch_assoc($oldindices))
-          if ($oldindex['seq_in_index'] == 1)
-            $associatedoldindices[$oldindex['column_name']] = $oldindex;
-
-        $fields = query('meta', 'SELECT mt.tablename, mf.fieldid, mf.fieldname, mf.foreigntableid, mt.uniquefieldid, mf.nullallowed FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid WHERE mf.tableid = <tableid>', array('metabasename'=>$metabasename, 'tableid'=>$table['tableid']));
-        while ($field = mysql_fetch_assoc($fields)) {
-          if ($field['uniquefieldid'] != $field['fieldid']) {
-            if ($field['foreigntableid'] && !$associatedoldindices[$field['fieldname']])
-              query('data', 'ALTER TABLE `<databasename>`.`<tablename>` ADD INDEX (<fieldname>) #warning WAS non-existent', array('databasename'=>$databasename, 'tablename'=>$field['tablename'], 'fieldname'=>$field['fieldname']));
-          }
-        }
-      }
-    }
+    query('meta', 'INSERT IGNORE INTO `<metabasename>`.databases SET databasename = "<databasename>"', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
 
     internalredirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
   }
@@ -767,12 +789,14 @@
     $tables = query('meta', 'SELECT * FROM `<metabasename>`.tables LEFT JOIN `<metabasename>`.fields ON tables.uniquefieldid = fields.fieldid WHERE intablelist = true ORDER BY tablename', array('metabasename'=>$metabasename));
     $rows = array(html('th', array('class'=>'filler'), _('table')));
     while ($table = mysql_fetch_assoc($tables)) {
-      $rows[] =
-        html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
-          html('td', array(),
-            internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$table['tablename'], 'tablenamesingular'=>$table['singular'], 'uniquefieldname'=>$table['fieldname']), $table['plural'])
-          )
-        );
+      $tablename = $table['tablename'];
+      if (has_grant('SELECT', $databasename, table_or_view($metabasename, $databasename, $tablename)))
+        $rows[] =
+          html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
+            html('td', array(),
+              internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$table['singular'], 'uniquefieldname'=>$table['fieldname']), $table['plural'])
+            )
+          );
     }
     page($action, path($metabasename, $databasename),
       html('div', array('class'=>'ajax'),
@@ -840,15 +864,17 @@
     $uniquevalue       = parameter('get', 'uniquevalue');
     $back              = parameter('get', 'back');
 
+    $viewname = table_or_view($metabasename, $databasename, $tablename);
+
     get_presentationnames();
 
     $fieldnamesandvalues = array();
-    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, 'inedit', $action == 'update_record' ? 'UPDATE' : 'INSERT');
+    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, $viewname, 'inedit', $action == 'update_record' ? 'UPDATE' : 'INSERT');
     while ($field = mysql_fetch_assoc($fields)) {
       $fieldnamesandvalues[$field['fieldname']] = call_user_func("formvalue_$field[presentationname]", $field);
     }
 
-    $uniquevalue = insertorupdate($databasename, $tablename, $fieldnamesandvalues, $uniquefieldname, $uniquevalue);
+    $uniquevalue = insertorupdate($databasename, $viewname, $fieldnamesandvalues, $uniquefieldname, $uniquevalue);
 
     if ($action == 'add_record_and_edit') {
       $ajax = parameter('get', 'ajax');
