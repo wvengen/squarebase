@@ -613,7 +613,7 @@
         'fieldname        VARCHAR(100) NOT NULL,'.
         'title            VARCHAR(100) NOT NULL,'.
         'nullallowed      BOOLEAN      NOT NULL,'.
-        'hasdefaultvalue  BOOLEAN      NOT NULL,'.
+        'defaultvalue     VARCHAR(100)         ,'.
         'presentationid   INT UNSIGNED NOT NULL REFERENCES `presentations` (presentationid),'.
         'indesc           BOOLEAN      NOT NULL,'.
         'inlist           BOOLEAN      NOT NULL,'.
@@ -694,7 +694,7 @@
         if ($field['column_key'] != 'PRI' && $field['is_nullable'] == 'NO' && !$field['column_default'] && !$inlist)
           $quickadd = false;
 
-        $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'hasdefaultvalue'=>is_null($field['column_default']) ? false : true, 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
+        $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
 
         $indescs += $indesc;
         $inlists += $inlist;
