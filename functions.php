@@ -739,7 +739,8 @@
         include_once("presentation/$field[presentationname].php");
         $selectnames[] = "$viewname.$field[fieldname] AS ${viewname}_$field[fieldname]";
         if ($field['foreigntablename'] && !in_array($field['foreigntablename'], $stack)) {
-          $joins[] = "LEFT JOIN `$databasename`.$field[foreigntablename] AS {tablealias}_$field[foreigntablename]_$field[fieldname] ON {tablealias}_$field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = {tablealias}.$field[fieldname] ";
+          $foreignviewname = table_or_view($metabasename, $databasename, $field['foreigntablename']);
+          $joins[] = "LEFT JOIN `$databasename`.$foreignviewname AS {tablealias}_$field[foreigntablename]_$field[fieldname] ON {tablealias}_$field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = {tablealias}.$field[fieldname] ";
           $descriptor = descriptor($metabasename, $databasename, $field['foreigntablename'], "{tablealias}_$field[foreigntablename]_$field[fieldname]", array_merge($stack, array($field['foreigntablename'])));
           $selects[] = $descriptor['select'];
           $orders = array_merge($orders, $descriptor['orders']);
