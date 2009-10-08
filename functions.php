@@ -928,8 +928,6 @@
     //for privilege see http://dev.mysql.com/doc/refman/5.0/en/privileges-provided.html
     //$databasename == '*' means privilege on all databases
     //$databasename == '?' means privilege on at least one database
-    if ($tablename == '*')
-      $tablename =
     return mysql_num_rows(
       query('meta',
         'SELECT "<privilege>" '.
