@@ -142,11 +142,11 @@
   }
 
   function addtolist($list, $class, $text) {
-    if ($_SESSION['logsy']) {
-      if (!$_SESSION[$list])
-        $_SESSION[$list] = array();
-      $_SESSION[$list][] = html('li', array('class'=>$class), $text);
-    }
+    if ($list == 'logs' && !$_SESSION['logsy'])
+      return;
+    if (!$_SESSION[$list])
+      $_SESSION[$list] = array();
+    $_SESSION[$list][] = html('li', array('class'=>$class), $text);
   }
 
   function getlist($list) {
@@ -271,8 +271,8 @@
         if (preg_match('@^CHECK OPTION failed \'(.*?)\.(.*?)\'$@', $error, $matches)) {
           $warning = _('not allowed to add a record with these values');
           $view = query01($metaordata, 'SELECT view_definition FROM INFORMATION_SCHEMA.VIEWS WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$matches[1], 'tablename'=>$matches[2]));
-          if ($view && preg_match('@ where \(`(.*?)`\.`(.*?)`\.`(.*?)` = (.*?)\)$@', $view['view_definition'], $where))
-            $warning = sprintf(_('only allowed to add a record with %s = %s'), $where[3], $where[4]);
+          if ($view && preg_match('@ where \(`(.*?)`\.`(.*?)`\.`(.*?)` = (.*?)\)+$@', $view['view_definition'], $where))
+            $warning = sprintf(_('only allowed to add a record with %s = %s'), $where[3], preg_replace('@^_\w+@', '', $where[4]));
         }
         addtolist('warnings', 'warning', $warning ? $warning : $error);
         return null;
@@ -928,6 +928,8 @@
     //for privilege see http://dev.mysql.com/doc/refman/5.0/en/privileges-provided.html
     //$databasename == '*' means privilege on all databases
     //$databasename == '?' means privilege on at least one database
+    if ($tablename == '*')
+      $tablename =
     return mysql_num_rows(
       query('meta',
         'SELECT "<privilege>" '.

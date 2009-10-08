@@ -790,7 +790,7 @@
     $rows = array(html('th', array('class'=>'filler'), _('table')));
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table['tablename'];
-      if (has_grant('SELECT', $databasename, table_or_view($metabasename, $databasename, $tablename)))
+      if (has_grant('SELECT', $databasename, table_or_view($metabasename, $databasename, $tablename), '?'))
         $rows[] =
           html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
             html('td', array(),
