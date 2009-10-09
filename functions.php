@@ -410,49 +410,49 @@
     $viewname = table_or_view($metabasename, $databasename, $tablename);
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
-    $can_insert = $can_update = false;
+    $can_insert = $can_update = $can_quickadd = true;
     $header = $quickadd = array();
-    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, $viewname, 'inlist', 'SELECT', true);
+    $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, 'SELECT', true);
     while ($field = mysql_fetch_assoc($fields)) {
-      $can_insert = $can_insert || $field['privilege_insert'];
-      $can_update = $can_update || $field['privilege_update'];
-      $selectnames[] = "$viewname.$field[fieldname] AS ${tablename}_$field[fieldname]";
-      if ($field['foreigntablename']) {
-        $foreignviewname = table_or_view($metabasename, $databasename, $field['foreigntablename']);
-        $joins[] = "LEFT JOIN `$databasename`.$foreignviewname AS $field[foreigntablename]_$field[fieldname] ON $field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = $viewname.$field[fieldname]";
-        $descriptor = descriptor($metabasename, $databasename, $field['foreigntablename'], "$field[foreigntablename]_$field[fieldname]");
-        $selectnames[] = "$descriptor[select] AS $field[foreigntablename]_$field[fieldname]_descriptor";
-        $joins = array_merge($joins, $descriptor['joins']);
-        $ordernames = array_merge($ordernames, $descriptor['orders']);
-      }
-      else
-        $ordernames[] = "${tablename}_$field[fieldname]";
-      if ($field['fieldname'] == $orderfieldname)
-        array_unshift($ordernames, array_pop($ordernames));
-      if (!$orderfieldname)
-        $orderfieldname = $field['fieldname'];
+      $can_update = $can_update && ($field['fieldid'] == $field['uniquefieldid'] || $field['nullallowed'] || $field['defaultvalue'] || ($field['inedit'] && $field['privilege_update']));
+      $can_insert = $can_insert && ($field['fieldid'] == $field['uniquefieldid'] || $field['nullallowed'] || $field['defaultvalue'] || ($field['inedit'] && $field['privilege_insert']));
+      $can_quickadd = $can_quickadd && ($field['fieldid'] == $field['uniquefieldid'] || $field['nullallowed'] || $field['defaultvalue'] || ($field['inlist'] && $field['privilege_insert']));
 
-      include_once("presentation/$field[presentationname].php");
-      $header[] =
-        html('th', array('class'=>join_clean(' ', $field['presentationname'], !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null)),
-          !is_null($foreignvalue) || !call_user_func("is_sortable_$field[presentationname]")
-          ? $field['title']
-          : internalreference(
-              array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$field['fieldname'], 'orderasc'=>$field['fieldname'] == $orderfieldname ? ($orderasc ? '' : 'on') : 'on'),
-              $field['title'].($field['fieldname'] == $orderfieldname ? ' '.($orderasc ? '&#x25be;' : '&#x25b4;') : ''),
-              array('class'=>'ajaxreload')
-            )
-        );
-      if ($field['quickadd'])
+      if ($field['inlist']) {
+        $selectnames[] = "$viewname.$field[fieldname] AS ${tablename}_$field[fieldname]";
+        if ($field['foreigntablename']) {
+          $foreignviewname = table_or_view($metabasename, $databasename, $field['foreigntablename']);
+          $joins[] = "LEFT JOIN `$databasename`.$foreignviewname AS $field[foreigntablename]_$field[fieldname] ON $field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = $viewname.$field[fieldname]";
+          $descriptor = descriptor($metabasename, $databasename, $field['foreigntablename'], "$field[foreigntablename]_$field[fieldname]");
+          $selectnames[] = "$descriptor[select] AS $field[foreigntablename]_$field[fieldname]_descriptor";
+          $joins = array_merge($joins, $descriptor['joins']);
+          $ordernames = array_merge($ordernames, $descriptor['orders']);
+        }
+        else
+          $ordernames[] = "${tablename}_$field[fieldname]";
+        if ($field['fieldname'] == $orderfieldname)
+          array_unshift($ordernames, array_pop($ordernames));
+        if (!$orderfieldname)
+          $orderfieldname = $field['fieldname'];
+
+        include_once("presentation/$field[presentationname].php");
+        $header[] =
+          html('th', array('class'=>join_clean(' ', $field['presentationname'], !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null)),
+            !is_null($foreignvalue) || !call_user_func("is_sortable_$field[presentationname]")
+            ? $field['title']
+            : internalreference(
+                array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$field['fieldname'], 'orderasc'=>$field['fieldname'] == $orderfieldname ? ($orderasc ? '' : 'on') : 'on'),
+                $field['title'].($field['fieldname'] == $orderfieldname ? ' '.($orderasc ? '&#x25be;' : '&#x25b4;') : ''),
+                array('class'=>'ajaxreload')
+              )
+          );
         $quickadd[] = html('td', array('class'=>!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? $foreignvalue : $field['defaultvalue'], (!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname) || !$field['privilege_insert'], false));
+      }
     }
     $header[] = html('th', array('class'=>'filler'), '');
-    if ($can_update)
+    if ($can_update || $can_insert) {
       array_unshift($header, html('th', array(), ''));
-    if ($quickadd) {
-      $quickadd[] = html('td', array(), '');
-      if ($can_insert)
-        array_unshift($quickadd, html('td', array(), 'add'));
+      array_unshift($quickadd, html('td', array(), $can_insert ? 'add' : ''));
     }
     if ($ordernames)
       $ordernames[0] = $ordernames[0].' '.($orderasc ? 'ASC' : 'DESC');
@@ -473,21 +473,23 @@
     while ($row = mysql_fetch_assoc($records)) {
       $columns = array();
       for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
-        $field['descriptor'] = $row["$field[foreigntablename]_$field[fieldname]_descriptor"];
-        $field['thisrecord'] = !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname;
-        $field['uniquefieldname'] = $uniquefieldname;
-        $field['uniquevalue'] = $row[$uniquefieldname];
-        $columns[] =
-          html('td', array('class'=>join_clean(' ', 'column', $field['presentationname'], $field['thisrecord'] ? 'thisrecord' : null)),
-            ''.call_user_func("list_$field[presentationname]", $metabasename, $databasename, $field, $row["${tablename}_$field[fieldname]"])
-          );
+        if ($field['inlist']) {
+          $field['descriptor'] = $row["$field[foreigntablename]_$field[fieldname]_descriptor"];
+          $field['thisrecord'] = !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname;
+          $field['uniquefieldname'] = $uniquefieldname;
+          $field['uniquevalue'] = $row[$uniquefieldname];
+          $columns[] =
+            html('td', array('class'=>join_clean(' ', 'column', $field['presentationname'], $field['thisrecord'] ? 'thisrecord' : null)),
+              ''.call_user_func("list_$field[presentationname]", $metabasename, $databasename, $field, $row["${tablename}_$field[fieldname]"])
+            );
+        }
       }
       $columns[] = html('td', array(), '');
       $rows[] =
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           ($interactive
-          ? ($can_update
-            ? html('td', array(), internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), 'edit'))
+          ? ($can_update || $can_insert
+            ? html('td', array(), $can_update ? internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), 'edit') : '')
             : ''
             )
           : ''
@@ -495,8 +497,8 @@
           join($columns)
         );
     }
-    if ($interactive) {
-      $rows[] = $quickadd
+    if ($interactive && ($can_quickadd || $can_insert)) {
+      $rows[] = $can_quickadd
       ? html('tr', array(), join($quickadd)).
         html('tr', array(),
           html('td', array(), '').
@@ -556,12 +558,13 @@
 
   function edit_record($privilege, $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $back = null) {
     $viewname = table_or_view($metabasename, $databasename, $tablename);
-    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, $viewname, 'inedit', $privilege, true);
+    $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, $privilege, true);
 
     if ($privilege != 'INSERT') {
       $fieldnames = array();
       while ($field = mysql_fetch_assoc($fields))
-        $fieldnames[] = $field['fieldname'];
+        if ($field['inedit'])
+          $fieldnames[] = $field['fieldname'];
       $row = query1('data', 'SELECT '.join(', ', $fieldnames).' FROM `<databasename>`.`<viewname>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
     }
 
@@ -572,10 +575,11 @@
       html('th', array('class'=>'filler'), '')
     );
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
-      $lines[] =
-        html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
-        html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), $privilege == 'INSERT' ? first_non_null(parameter('get', "field:$field[fieldname]"), $field['defaultvalue']) : $row[$field['fieldname']], $privilege == 'SELECT' || ($privilege == 'INSERT' && (!$field['privilege_insert'] || parameter('get', "field:$field[fieldname]"))) || ($privilege == 'UPDATE' && !$field['privilege_update']), true)).
-        html('td', array(), '');
+      if ($field['inedit'])
+        $lines[] =
+          html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
+          html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), $privilege == 'INSERT' ? first_non_null(parameter('get', "field:$field[fieldname]"), $field['defaultvalue']) : $row[$field['fieldname']], $privilege == 'SELECT' || ($privilege == 'INSERT' && (!$field['privilege_insert'] || parameter('get', "field:$field[fieldname]"))) || ($privilege == 'UPDATE' && !$field['privilege_update']), true)).
+          html('td', array(), '');
     }
 
     $lines[] =
@@ -672,7 +676,7 @@
     return $alternatives[$metabasename][$databasename][$tablename];
   }
 
-  function fieldsforpurpose($metabasename, $databasename, $tablename, $viewname, $purpose, $privilege = 'SELECT', $allprivileges = false) {
+  function fields_from_table($metabasename, $databasename, $tablename, $viewname, $privilege = 'SELECT', $allprivileges = false) {
     $selectparts = $joinparts = array();
     foreach (array('SELECT', 'INSERT', 'UPDATE') as $oneprivilege) {
       if ($allprivileges || $privilege == $oneprivilege) {
@@ -695,7 +699,7 @@
           'mt.singular',
           'mt.plural',
           'mt.tableid',
-          'mt.quickadd',
+          'mt.uniquefieldid',
           'mf.fieldid',
           'mf.fieldname',
           'mf.title',
@@ -722,10 +726,9 @@
       join($joinparts).
       'WHERE '.
         'mt.tablename = "<tablename>" '.
-        'AND mf.<purpose> '.
         'AND '.  $wherepart.
       'ORDER BY mf.fieldid',
-      array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'viewname'=>$viewname, 'purpose'=>$purpose, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'])
+      array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'viewname'=>$viewname, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'])
     );
   }
 
@@ -734,21 +737,23 @@
     $viewname = table_or_view($metabasename, $databasename, $tablename);
     if (!$descriptors[$viewname]) {
       $selects = $joins = $orders = array();
-      $fields = fieldsforpurpose($metabasename, $databasename, $tablename, $viewname, 'indesc');
+      $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname);
       while ($field = mysql_fetch_assoc($fields)) {
-        include_once("presentation/$field[presentationname].php");
-        $selectnames[] = "$viewname.$field[fieldname] AS ${viewname}_$field[fieldname]";
-        if ($field['foreigntablename'] && !in_array($field['foreigntablename'], $stack)) {
-          $foreignviewname = table_or_view($metabasename, $databasename, $field['foreigntablename']);
-          $joins[] = "LEFT JOIN `$databasename`.$foreignviewname AS {tablealias}_$field[foreigntablename]_$field[fieldname] ON {tablealias}_$field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = {tablealias}.$field[fieldname] ";
-          $descriptor = descriptor($metabasename, $databasename, $field['foreigntablename'], "{tablealias}_$field[foreigntablename]_$field[fieldname]", array_merge($stack, array($field['foreigntablename'])));
-          $selects[] = $descriptor['select'];
-          $orders = array_merge($orders, $descriptor['orders']);
-          $joins = array_merge($joins, $descriptor['joins']);
-        }
-        else {
-          $selects[] = first_non_null(@call_user_func("formattedsql_$field[presentationname]", "{tablealias}.$field[fieldname]"), "{tablealias}.$field[fieldname]");
-          $orders[] = "{tablealias}.$field[fieldname]";
+        if ($field['indesc']) {
+          include_once("presentation/$field[presentationname].php");
+          $selectnames[] = "$viewname.$field[fieldname] AS ${viewname}_$field[fieldname]";
+          if ($field['foreigntablename'] && !in_array($field['foreigntablename'], $stack)) {
+            $foreignviewname = table_or_view($metabasename, $databasename, $field['foreigntablename']);
+            $joins[] = "LEFT JOIN `$databasename`.$foreignviewname AS {tablealias}_$field[foreigntablename]_$field[fieldname] ON {tablealias}_$field[foreigntablename]_$field[fieldname].$field[foreignuniquefieldname] = {tablealias}.$field[fieldname] ";
+            $descriptor = descriptor($metabasename, $databasename, $field['foreigntablename'], "{tablealias}_$field[foreigntablename]_$field[fieldname]", array_merge($stack, array($field['foreigntablename'])));
+            $selects[] = $descriptor['select'];
+            $orders = array_merge($orders, $descriptor['orders']);
+            $joins = array_merge($joins, $descriptor['joins']);
+          }
+          else {
+            $selects[] = first_non_null(@call_user_func("formattedsql_$field[presentationname]", "{tablealias}.$field[fieldname]"), "{tablealias}.$field[fieldname]");
+            $orders[] = "{tablealias}.$field[fieldname]";
+          }
         }
       }
       $descriptors[$viewname] = array(

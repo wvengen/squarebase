@@ -599,7 +599,6 @@
         'plural           VARCHAR(100) NOT NULL,'.
         'uniquefieldid    INT UNSIGNED NOT NULL REFERENCES `fields` (fieldid),'.
         'intablelist      BOOLEAN      NOT NULL,'.
-        'quickadd         BOOLEAN      NOT NULL,'.
         'UNIQUE KEY (tablename),'.
         'INDEX (uniquefieldid)'.
       ')',
@@ -665,7 +664,7 @@
     $tableids = array();
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table['table_name'];
-      $tableids[$tablename] = insertorupdate($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>parameter('get', "$tablename:singular"), 'plural'=>parameter('get', "$tablename:plural"), 'intablelist'=>parameter('get', "$tablename:intablelist") == 'on', 'quickadd'=>true));
+      $tableids[$tablename] = insertorupdate($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>parameter('get', "$tablename:singular"), 'plural'=>parameter('get', "$tablename:plural"), 'intablelist'=>parameter('get', "$tablename:intablelist") == 'on'));
     }
 
     $errors = array();
@@ -681,7 +680,6 @@
         'WHERE c.table_schema = "<databasename>" AND c.table_name = "<tablename>"',
         array('databasename'=>$databasename, 'tablename'=>$tablename)
       );
-      $quickadd = true;
       while ($field = mysql_fetch_assoc($fields)) {
         $fieldname = $field['column_name'];
 
@@ -690,9 +688,6 @@
         $indesc = parameter('get', "$tablename:$fieldname:indesc") ? true : false;
         $inlist = parameter('get', "$tablename:$fieldname:inlist") ? true : false;
         $inedit = parameter('get', "$tablename:$fieldname:inedit") ? true : false;
-
-        if ($field['column_key'] != 'PRI' && $field['is_nullable'] == 'NO' && !$field['column_default'] && !$inlist)
-          $quickadd = false;
 
         $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
 
@@ -703,8 +698,6 @@
         if (parameter('get', "$tablename:primary") == $fieldname)
           query('meta', 'UPDATE `<metabasename>`.tables SET uniquefieldid = <fieldid> WHERE tableid = <tableid>', array('metabasename'=>$metabasename, 'fieldid'=>$fieldid, 'tableid'=>$tableid));
       }
-      if (!$quickadd)
-        query('meta', 'UPDATE `<metabasename>`.tables SET quickadd = FALSE WHERE tableid = <tableid>', array('metabasename'=>$metabasename, 'tableid'=>$tableid));
       if (!$indescs)
         $errors[] = sprintf(_('no fields to desc for %s'), $tablename);
       if (!$inlists)
@@ -869,9 +862,10 @@
     get_presentationnames();
 
     $fieldnamesandvalues = array();
-    $fields = fieldsforpurpose($metabasename, $databasename, $tablename, $viewname, 'inedit', $action == 'update_record' ? 'UPDATE' : 'INSERT');
+    $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, $action == 'update_record' ? 'UPDATE' : 'INSERT');
     while ($field = mysql_fetch_assoc($fields)) {
-      $fieldnamesandvalues[$field['fieldname']] = call_user_func("formvalue_$field[presentationname]", $field);
+      if ($field['inedit'])
+        $fieldnamesandvalues[$field['fieldname']] = call_user_func("formvalue_$field[presentationname]", $field);
     }
 
     $uniquevalue = insertorupdate($databasename, $viewname, $fieldnamesandvalues, $uniquefieldname, $uniquevalue);
