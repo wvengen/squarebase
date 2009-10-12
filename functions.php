@@ -162,7 +162,7 @@
         logout(_('mysql module not found'));
       $connection = @mysql_connect($_SESSION['host'], $_SESSION['username'], $_SESSION['password']);
       if (mysql_errno())
-        logout(sprintf(_('problem connecting to the databasemanager: %s'), mysql_error()).array_show(debug_backtrace()));
+        logout(sprintf(_('problem connecting to the databasemanager: %s'), mysql_error()));
       $_SESSION['timesconnected'] += 1;
     }
 
@@ -839,30 +839,30 @@
     return strftime($to, mktime($matches['tm_hour'], $matches['tm_min'], $matches['tm_sec'], $matches['tm_mon'] + 1, $matches['tm_mday'], $matches['tm_year']));
   }
 
-  function find_datetime_format($format, $dest = 'text') {
-    $fmts = array(
-      'd'=>array('text'=>_('dd'),    'mysql'=>'%d'), //%d = Two-digit day of the month (with leading zeros) = 01 to 31
-      'e'=>array('text'=>_('d'),     'mysql'=>'%e'), //%e = Day of the month, with a space preceding single digits = 1 to 31
-      'b'=>array('text'=>_('mon'),   'mysql'=>'%b'), //%b = Abbreviated month name, based on the locale = Jan through Dec
-      'B'=>array('text'=>_('month'), 'mysql'=>'%M'), //%B = Full month name, based on the locale = January through December
-      'm'=>array('text'=>_('mm'),    'mysql'=>'%m'), //%m = Two digit representation of the month = 01 (for January) through 12 (for December)
-      'y'=>array('text'=>_('yy'),    'mysql'=>'%y'), //%y = Two digit representation of the year = Example: 09 for 2009, 79 for 1979
-      'Y'=>array('text'=>_('yyyy'),  'mysql'=>'%Y'), //%Y = Four digit representation for the year = Example: 2038
-      'H'=>array('text'=>_('hh'),    'mysql'=>'%H'), //%H = Two digit representation of the hour in 24-hour format = 00 through 23
-      'I'=>array('text'=>_('hh'),    'mysql'=>'%h'), //%I = Two digit representation of the hour in 12-hour format = 01 through 12
-      'l'=>array('text'=>_('hh'),    'mysql'=>'%l'), //%l = Hour in 12-hour format, with a space preceeding single digits = 1 through 12
-      'M'=>array('text'=>_('mm'),    'mysql'=>'%i'), //%M = Two digit representation of the minute = 00 through 59
-      'p'=>array('text'=>_('AM/PM'), 'mysql'=>'%p'), //%p = UPPER-CASE 'AM' or 'PM' based on the given time = Example: AM for 00:31, PM for 22:23
-      'P'=>array('text'=>_('am/pm'), 'mysql'=>'%p'), //%P = lower-case 'am' or 'pm' based on the given time = Example: am for 00:31, pm for 22:23
-      'S'=>array('text'=>_('ss'),    'mysql'=>'%S')  //%S = Two digit representation of the second = 00 through 59
+  function find_datetime_format($format, $dest) {
+    $subformats = array(
+      array('php'=>'d', 'jquery'=>'dd', 'text'=>_('dd'),    'mysql'=>'%d'), //%d = Two-digit day of the month (with leading zeros) = 01 to 31
+      array('php'=>'e', 'jquery'=>'d',  'text'=>_('d'),     'mysql'=>'%e'), //%e = Day of the month, with a space preceding single digits = 1 to 31
+      array('php'=>'b', 'jquery'=>'M',  'text'=>_('mon'),   'mysql'=>'%b'), //%b = Abbreviated month name, based on the locale = Jan through Dec
+      array('php'=>'B', 'jquery'=>'MM', 'text'=>_('month'), 'mysql'=>'%M'), //%B = Full month name, based on the locale = January through December
+      array('php'=>'m', 'jquery'=>'mm', 'text'=>_('mm'),    'mysql'=>'%m'), //%m = Two digit representation of the month = 01 (for January) through 12 (for December)
+      array('php'=>'y', 'jquery'=>'y',  'text'=>_('yy'),    'mysql'=>'%y'), //%y = Two digit representation of the year = Example: 09 for 2009, 79 for 1979
+      array('php'=>'Y', 'jquery'=>'yy', 'text'=>_('yyyy'),  'mysql'=>'%Y'), //%Y = Four digit representation for the year = Example: 2038
+      array('php'=>'H', 'jquery'=>'',   'text'=>_('hh'),    'mysql'=>'%H'), //%H = Two digit representation of the hour in 24-hour format = 00 through 23
+      array('php'=>'I', 'jquery'=>'',   'text'=>_('hh'),    'mysql'=>'%h'), //%I = Two digit representation of the hour in 12-hour format = 01 through 12
+      array('php'=>'l', 'jquery'=>'',   'text'=>_('hh'),    'mysql'=>'%l'), //%l = Hour in 12-hour format, with a space preceeding single digits = 1 through 12
+      array('php'=>'M', 'jquery'=>'',   'text'=>_('mm'),    'mysql'=>'%i'), //%M = Two digit representation of the minute = 00 through 59
+      array('php'=>'p', 'jquery'=>'',   'text'=>_('AM/PM'), 'mysql'=>'%p'), //%p = UPPER-CASE 'AM' or 'PM' based on the given time = Example: AM for 00:31, PM for 22:23
+      array('php'=>'P', 'jquery'=>'',   'text'=>_('am/pm'), 'mysql'=>'%p'), //%P = lower-case 'am' or 'pm' based on the given time = Example: am for 00:31, pm for 22:23
+      array('php'=>'S', 'jquery'=>'',   'text'=>_('ss'),    'mysql'=>'%S')  //%S = Two digit representation of the second = 00 through 59
     );
     $matches = array('tm_hour'=>23, 'tm_min'=>34, 'tm_sec'=>45, 'tm_mon'=>4, 'tm_mday'=>2, 'tm_year'=>2003);
     $date = mktime($matches['tm_hour'], $matches['tm_min'], $matches['tm_sec'], $matches['tm_mon'], $matches['tm_mday'], $matches['tm_year']);
     $output = strftime($format, $date);
-    foreach ($fmts as $fmt=>$representation) {
-      $result = strftime("%$fmt", $date);
+    foreach ($subformats as $subformat) {
+      $result = strftime("%$subformat[php]", $date);
       if ($result)
-        $output = preg_replace("@\b$result\b@", $representation[$dest], $output);
+        $output = preg_replace("@\b$result\b@", $subformat[$dest], $output);
     }
     return $output;
   }

@@ -12,7 +12,11 @@
   function formfield_datetime($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return 
       html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>datetime2local($value), 'readonly'=>$readonly ? 'readonly' : null)).
-      ($extra ? html('span', array('class'=>'help'), find_datetime_format('%X')) : '');
+      ($extra ? html('span', array('class'=>'help'), find_datetime_format('%X', 'text')) : '');
+  }
+
+  function formattedsql_datetime($fieldname) {
+    return 'DATE_FORMAT('.$fieldname.', \''.find_datetime_format('%X', 'mysql').'\')';
   }
 
   function formvalue_datetime($field) {
