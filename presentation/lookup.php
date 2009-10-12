@@ -108,7 +108,7 @@
       "      function() {\n".
       "        $(this).\n".
       "        siblings('.editexistingrecord').\n".
-      "        attr('href', $(this).siblings('.editexistingrecord').attr('href').replace(/(uniquevalue=)\d*/, '$1' + $(this).val())).\n".
+      "        attr('href', $(this).siblings('.editexistingrecord').attr('href').replace(/uniquevalue=\d*/, '') + '&uniquevalue=' + $(this).val()).\n".
       "        text($(this).siblings('.editexistingrecord').text().replace(/^(\w+ \w+ ).*$/, '$1' + $(this).find('option:selected').text())).\n".
       "        removeClass('hidden').\n".
       "        addClass($(this).val() ? null : 'hidden');\n".

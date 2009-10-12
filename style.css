@@ -46,10 +46,10 @@ ul.minimal li { list-style-type: none; }
 ul.minimal li .radio { margin-right: 0.3em; }
 input.mainsubmit, input.minorsubmit { border: 0.15em solid #ccc; border-color: #ccc #666 #666 #ccc; background-color: #eee; color: #33f; padding: 0 0.2em; }
 input.mainsubmit, input.minorsubmit, .cancel { margin-right: 1em; }
-input.mainsubmit:hover, input.minorsubmit:hover { background-color: #ddd; }
-.cancel, .forget { padding: 0.1em 0.5em; }
-input.mainsubmit.delete:hover, .cancel:hover, .close:hover, .drop:hover, .forget:hover { background-color: #f00 !important; color: #fff !important; }
+input.mainsubmit:hover, input.minorsubmit:hover, .close:hover { background-color: #ddd; }
 input.mainsubmit.delete { margin-left: 5em; }
+input.mainsubmit.delete:hover, .cancel:hover, .drop:hover, .forget:hover { background-color: #f00 !important; color: #fff !important; }
+.cancel, .close, .forget { padding: 0.1em 0.5em; }
 .inlistforquickadd { background-color: #fda; }
 .countreferences { font-size: 0.6em; }
 

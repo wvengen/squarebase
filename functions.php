@@ -322,6 +322,8 @@
           ($_SESSION['scripty']
           ? html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>'jquery.autogrow.js'), '').
+            html('script', array('type'=>'text/javascript', 'src'=>'ui.core.js'), '').
+            html('script', array('type'=>'text/javascript', 'src'=>'ui.datepicker.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>internalurl(array('action'=>'script'))), '')
           : ''
           )
@@ -410,7 +412,8 @@
     $viewname = table_or_view($metabasename, $databasename, $tablename);
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
-    $can_insert = $can_update = $can_quickadd = true;
+    $can_insert = $can_quickadd = has_grant('INSERT', $databasename, $viewname) || has_grant('INSERT', $databasename, $viewname, '?');
+    $can_update = has_grant('UPDATE', $databasename, $viewname) || has_grant('UPDATE', $databasename, $viewname, '?');
     $header = $quickadd = array();
     $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, 'SELECT', true);
     while ($field = mysql_fetch_assoc($fields)) {
@@ -450,10 +453,8 @@
       }
     }
     $header[] = html('th', array('class'=>'filler'), '');
-    if ($can_update || $can_insert) {
-      array_unshift($header, html('th', array(), ''));
-      array_unshift($quickadd, html('td', array(), $can_insert ? 'add' : ''));
-    }
+    array_unshift($header, html('th', array(), ''));
+    array_unshift($quickadd, html('td', array(), $can_insert ? 'add' : ''));
     if ($ordernames)
       $ordernames[0] = $ordernames[0].' '.($orderasc ? 'ASC' : 'DESC');
     $records = query('data',
@@ -487,13 +488,7 @@
       $columns[] = html('td', array(), '');
       $rows[] =
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
-          ($interactive
-          ? ($can_update || $can_insert
-            ? html('td', array(), $can_update ? internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), 'edit') : '')
-            : ''
-            )
-          : ''
-          ).
+          ($interactive ? html('td', array(), internalreference(array('action'=>$can_update ? 'edit_record' : 'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), $can_update ? _('edit') : _('show'))) : '').
           join($columns)
         );
     }
@@ -585,16 +580,16 @@
     $lines[] =
       html('td', array('class'=>'description'), '').
       html('td', array(),
-        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$privilege == 'SELECT' ? 'delete_record' : ($privilege == 'UPDATE' ? 'update_record' : 'add_record'), 'class'=>'mainsubmit')).
-        (is_null($uniquevalue) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
-        internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel')).
-        ($privilege == 'UPDATE' && has_grant('DELETE', $databasename, $tablename) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_clean(' ', 'mainsubmit', 'delete'))) : '')
+        ($privilege == 'UPDATE' || $privilege == 'INSERT' ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$privilege == 'UPDATE' ? 'update_record' : 'add_record', 'class'=>'mainsubmit')) : '').
+        ($privilege == 'INSERT' ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
+        internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), $privilege == 'SELECT' ? _('close') : _('cancel'), array('class'=>$privilege == 'SELECT' ? 'close' : 'cancel')).
+        (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $tablename) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_clean(' ', 'mainsubmit', 'delete'))) : '')
       ).
       html('td', array(), '');
 
     if (!is_null($uniquevalue)) {
       $referrers = array();
-      $referringfields = query('meta', 'SELECT mt.tablename, mt.singular, mf.fieldname AS fieldname, mf.title AS title, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.fields mf LEFT JOIN `<metabasename>`.tables mtf ON mtf.tableid = mf.foreigntableid LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = mf.tableid LEFT JOIN `<metabasename>`.fields mfu ON mt.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
+      $referringfields = query('meta', 'SELECT tbl.tablename, tbl.singular, fld.fieldname AS fieldname, fld.title AS title, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.fields fld LEFT JOIN `<metabasename>`.tables mtf ON mtf.tableid = fld.foreigntableid LEFT JOIN `<metabasename>`.tables tbl ON tbl.tableid = fld.tableid LEFT JOIN `<metabasename>`.fields mfu ON tbl.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
         $viewname = table_or_view($metabasename, $databasename, $referringfield['tablename']);
         if ($viewname)
@@ -660,14 +655,14 @@
           'SELECT tablename, viewname '.
           'FROM `<metabasename>`.views '.
           'LEFT JOIN `<metabasename>`.tables ON tables.tableid = views.tableid '.
-          'LEFT JOIN INFORMATION_SCHEMA.TABLES tb ON tb.table_schema = "<databasename>" AND tb.table_name = viewname '.
+          'LEFT JOIN INFORMATION_SCHEMA.TABLES tbl ON tbl.table_schema = "<databasename>" AND tbl.table_name = viewname '.
           'WHERE table_name IS NOT NULL'.
         ') '.
         'UNION '.
         '('.
           'SELECT tablename, tablename AS viewname '.
           'FROM `<metabasename>`.tables '.
-          'LEFT JOIN INFORMATION_SCHEMA.TABLES tb ON tb.table_schema = "<databasename>" AND tb.table_name = tablename '.
+          'LEFT JOIN INFORMATION_SCHEMA.TABLES tbl ON tbl.table_schema = "<databasename>" AND tbl.table_name = tablename '.
           'WHERE table_name IS NOT NULL'.
         ')',
         array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename)
@@ -688,7 +683,7 @@
           "LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   u$letter ON u$letter.privilege_type = \"$oneprivilege\" AND u$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") ".
           "LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES s$letter ON s$letter.privilege_type = \"$oneprivilege\" AND s$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND s$letter.table_schema = \"<databasename>\" ".
           "LEFT JOIN INFORMATION_SCHEMA.TABLE_PRIVILEGES  t$letter ON t$letter.privilege_type = \"$oneprivilege\" AND t$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND t$letter.table_schema = \"<databasename>\" AND t$letter.table_name = \"<viewname>\" ".
-          "LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES c$letter ON c$letter.privilege_type = \"$oneprivilege\" AND c$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND c$letter.table_schema = \"<databasename>\" AND c$letter.table_name = \"<viewname>\" AND c$letter.column_name = mf.fieldname ";
+          "LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES c$letter ON c$letter.privilege_type = \"$oneprivilege\" AND c$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND c$letter.table_schema = \"<databasename>\" AND c$letter.table_name = \"<viewname>\" AND c$letter.column_name = fld.fieldname ";
         if ($privilege == $oneprivilege)
           $wherepart = "COALESCE(u$letter.privilege_type, s$letter.privilege_type, t$letter.privilege_type, c$letter.privilege_type) IS NOT NULL ";
       }
@@ -696,40 +691,40 @@
     return query('meta',
       'SELECT '.
         join_clean(', ',
-          ($viewname == $tablename ? 'mt.tablename' : 'vw.viewname').' AS viewname',
-          'mt.tablename',
-          'mt.singular',
-          'mt.plural',
-          'mt.tableid',
-          'mt.uniquefieldid',
-          'mf.fieldid',
-          'mf.fieldname',
-          'mf.title',
-          'mr.presentationname',
-          'mf.nullallowed',
-          'mf.defaultvalue',
-          'mf.indesc',
-          'mf.inlist',
-          'mf.inedit',
-          'mt2.tablename AS foreigntablename',
-          'mt2.singular AS foreigntablenamesingular',
-          'mf2.fieldname AS foreignuniquefieldname',
+          ($viewname == $tablename ? 'tbl.tablename' : 'vw.viewname').' AS viewname',
+          'tbl.tablename',
+          'tbl.singular',
+          'tbl.plural',
+          'tbl.tableid',
+          'tbl.uniquefieldid',
+          'fld.fieldid',
+          'fld.fieldname',
+          'fld.title',
+          'pst.presentationname',
+          'fld.nullallowed',
+          'fld.defaultvalue',
+          'fld.indesc',
+          'fld.inlist',
+          'fld.inedit',
+          'ftbl.tablename AS foreigntablename',
+          'ftbl.singular AS foreigntablenamesingular',
+          'ffld.fieldname AS foreignuniquefieldname',
           $selectparts
         ).' '.
       ($viewname == $tablename
-      ? 'FROM `<metabasename>`.tables mt '
+      ? 'FROM `<metabasename>`.tables tbl '
       : 'FROM `<metabasename>`.views vw '.
-        'LEFT JOIN `<metabasename>`.tables mt ON mt.tableid = vw.tableid '
+        'LEFT JOIN `<metabasename>`.tables tbl ON tbl.tableid = vw.tableid '
       ).
-      'RIGHT JOIN `<metabasename>`.fields mf ON mf.tableid = mt.tableid '.
-      'LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid '.
-      'LEFT JOIN `<metabasename>`.tables mt2 ON mt2.tableid = mf.foreigntableid '.
-      'LEFT JOIN `<metabasename>`.fields mf2 ON mf2.fieldid = mt2.uniquefieldid '.
+      'RIGHT JOIN `<metabasename>`.fields fld ON fld.tableid = tbl.tableid '.
+      'LEFT JOIN `<metabasename>`.presentations pst ON pst.presentationid = fld.presentationid '.
+      'LEFT JOIN `<metabasename>`.tables ftbl ON ftbl.tableid = fld.foreigntableid '.
+      'LEFT JOIN `<metabasename>`.fields ffld ON ffld.fieldid = ftbl.uniquefieldid '.
       join($joinparts).
       'WHERE '.
-        'mt.tablename = "<tablename>" '.
+        'tbl.tablename = "<tablename>" '.
         'AND '.  $wherepart.
-      'ORDER BY mf.fieldid',
+      'ORDER BY fld.fieldid',
       array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'viewname'=>$viewname, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'])
     );
   }

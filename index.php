@@ -384,7 +384,7 @@
         $max_in_edit = max($max_in_edit, $field['in_edit']);
 
         if ($metabasename)
-          $field['original'] = query01('meta', 'SELECT mt.singular, mt.plural, mt.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, mt2.tablename AS foreigntablename FROM `<metabasename>`.tables AS mt LEFT JOIN `<metabasename>`.fields AS mf ON mf.tableid = mt.tableid LEFT JOIN `<metabasename>`.presentations mr ON mr.presentationid = mf.presentationid LEFT JOIN `<metabasename>`.tables AS mt2 ON mf.foreigntableid = mt2.tableid WHERE mt.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname));
+          $field['original'] = query01('meta', 'SELECT tbl.singular, tbl.plural, tbl.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, ftbl.tablename AS foreigntablename FROM `<metabasename>`.tables AS tbl LEFT JOIN `<metabasename>`.fields AS fld ON fld.tableid = tbl.tableid LEFT JOIN `<metabasename>`.presentations pst ON pst.presentationid = fld.presentationid LEFT JOIN `<metabasename>`.tables AS ftbl ON fld.foreigntableid = ftbl.tableid WHERE tbl.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname));
         $field['linkedtable'] = $field['original'] ? $field['original']['foreigntablename'] : @call_user_func("linkedtable_$bestpresentationname", $tablename, $fieldname);
         if ($field['linkedtable']) {
           $referencesout[$tablename]++;
