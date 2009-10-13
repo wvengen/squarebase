@@ -47,7 +47,7 @@
       error(sprintf(_('no foreigntablename for %s'), $fieldname));
     $foreignviewname = table_or_view($metabasename, $databasename, $foreigntablename);
     $descriptor = descriptor($metabasename, $databasename, $foreigntablename, $foreignviewname);
-    $references = query('data', "SELECT $foreignviewname.$foreignuniquefieldname AS _id, $descriptor[select] AS _descriptor FROM `$databasename`.$foreignviewname ".join(' ', $descriptor['joins']).($readonly && $value != '' ? "WHERE $foreignviewname.$foreignuniquefieldname = $value" : "ORDER BY ".join(', ', $descriptor['orders'])));
+    $references = query('data', "SELECT $foreignviewname.$foreignuniquefieldname AS _id, $descriptor[select] AS _descriptor FROM `$databasename`.$foreignviewname ".join(' ', $descriptor['joins']).($readonly ? ($value ? "WHERE $foreignviewname.$foreignuniquefieldname = $value" : "LIMIT 0") : "ORDER BY ".join(', ', $descriptor['orders'])));
     $options = array();
     while ($reference = mysql_fetch_assoc($references)) {
       $selected = $value == $reference['_id'];
@@ -63,8 +63,11 @@
         html('div', array(),
           html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>join_clean(' ', $presentationname, $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options)).
           ($extra && !$readonly
-          ? internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablenamesingular), array('class'=>'newrecordlookup')).
-            internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'uniquevalue'=>$value, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('edit %s %s'), $foreigntablenamesingular, $selected_descriptor), array('class'=>join_clean(' ', 'editexistingrecord', $value ? null : 'hidden'))).
+          ? (has_grant('INSERT', $databasename, $foreigntablename, '?') ? internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablenamesingular), array('class'=>'newrecordlookup')) : '').
+            (has_grant('UPDATE', $databasename, $foreigntablename, '?')
+            ? internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'uniquevalue'=>$value, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('edit %s %s'), $foreigntablenamesingular, $selected_descriptor), array('class'=>join_clean(' ', 'existingrecord', $value ? null : 'hidden')))
+            : internalreference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'uniquevalue'=>$value, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('show %s %s'), $foreigntablenamesingular, $selected_descriptor), array('class'=>join_clean(' ', 'existingrecord', $value ? null : 'hidden')))
+            ).
             html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)'))
           : ''
           )
@@ -96,20 +99,20 @@
     return 
       ".lookup.edit { width: 20.45em; }\n".
       ".lookup.list { width: auto; max-width: 20.45em; }\n".
-      ".newrecordlookup, .editexistingrecord, .changeslost { margin-left: 0.5em; }\n".
-      ".editexistingrecord.hidden { display: none; }\n";
+      ".newrecordlookup, .existingrecord, .changeslost { margin-left: 0.5em; }\n".
+      ".existingrecord.hidden { display: none; }\n";
   }
 
   function jquery_enhance_form_lookup() {
     return
-      "find('.editexistingrecord').\n".
+      "find('.existingrecord').\n".
       "  siblings('select').\n".
       "    change(\n".
       "      function() {\n".
       "        $(this).\n".
-      "        siblings('.editexistingrecord').\n".
-      "        attr('href', $(this).siblings('.editexistingrecord').attr('href').replace(/uniquevalue=\d*/, '') + '&uniquevalue=' + $(this).val()).\n".
-      "        text($(this).siblings('.editexistingrecord').text().replace(/^(\w+ \w+ ).*$/, '$1' + $(this).find('option:selected').text())).\n".
+      "        siblings('.existingrecord').\n".
+      "        attr('href', $(this).siblings('.existingrecord').attr('href').replace(/uniquevalue=\d*/, '') + '&uniquevalue=' + $(this).val()).\n".
+      "        text($(this).siblings('.existingrecord').text().replace(/^(\w+ \w+ ).*$/, '$1' + $(this).find('option:selected').text())).\n".
       "        removeClass('hidden').\n".
       "        addClass($(this).val() ? null : 'hidden');\n".
       "      }\n".

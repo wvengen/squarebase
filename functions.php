@@ -451,8 +451,10 @@
       }
     }
     $header[] = html('th', array('class'=>'filler'), '');
-    array_unshift($header, html('th', array(), ''));
-    array_unshift($quickadd, html('td', array(), $can_insert ? 'add' : ''));
+    if ($interactive) {
+      array_unshift($header, html('th', array(), ''));
+      array_unshift($quickadd, html('td', array(), $can_insert ? 'add' : ''));
+    }
     if ($ordernames)
       $ordernames[0] = $ordernames[0].' '.($orderasc ? 'ASC' : 'DESC');
     $records = query('data',
@@ -486,7 +488,14 @@
       $columns[] = html('td', array(), '');
       $rows[] =
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
-          ($interactive ? html('td', array(), internalreference(array('action'=>$can_update ? 'edit_record' : 'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), $can_update ? _('edit') : _('show'))) : '').
+          ($interactive
+          ? html('td', array(), 
+              $can_update 
+              ? internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('edit'))
+              : internalreference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('show'))
+            )
+          : ''
+          ).
           join($columns)
         );
     }
@@ -551,7 +560,7 @@
 
   function edit_record($privilege, $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $back = null) {
     $viewname = table_or_view($metabasename, $databasename, $tablename);
-    $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, $privilege, true);
+    $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, 'SELECT', true);
 
     if ($privilege != 'INSERT') {
       $fieldnames = array();
