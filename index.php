@@ -113,7 +113,7 @@
     $usernameandhost = parameter('get', 'lastusernameandhost');
     if (!$usernameandhost)
       $usernameandhost = parameter('get', 'usernameandhost');
-    if (preg_match('@^(\w+)\@(\w+)$@', $usernameandhost, $match)) {
+    if (preg_match('@^([^\@]+)\@([^\@]+)$@', $usernameandhost, $match)) {
       $username = $match[1];
       $host     = $match[2];
     }
