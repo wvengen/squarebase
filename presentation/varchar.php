@@ -7,8 +7,8 @@
     return 0.1;
   }
 
-  function in_desc_varchar($field) { return preg_match('@'.special_nameparts($field['table_name']).'@i', $field['column_name']) ? ($field['fieldnr'] < 5 ? 1 : 0.9) : 0.2; }
-  function in_list_varchar($field) { return preg_match('@'.special_nameparts($field['table_name']).'@i', $field['column_name']) ? ($field['fieldnr'] < 5 ? 1 : 0.9) : 0.2; }
+  function in_desc_varchar($field) { return preg_match('@'.special_nameparts($field['table_name']).'@i', $field['column_name']) ? ($field['fieldnr'] < 5 ? 1 : 0.9) : ($field['fieldnr'] < 5 ? 0.3 : 0.2); }
+  function in_list_varchar($field) { return preg_match('@'.special_nameparts($field['table_name']).'@i', $field['column_name']) ? ($field['fieldnr'] < 5 ? 1 : 0.9) : ($field['fieldnr'] < 5 ? 0.3 : 0.2); }
   function in_edit_varchar($field) { return 1; }
 
   function is_sortable_varchar() { return true; }

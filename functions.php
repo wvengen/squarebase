@@ -412,13 +412,11 @@
     $viewname = table_or_view($metabasename, $databasename, $tablename);
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
-    $can_insert = $can_quickadd = has_grant('INSERT', $databasename, $viewname) || has_grant('INSERT', $databasename, $viewname, '?');
-    $can_update = has_grant('UPDATE', $databasename, $viewname) || has_grant('UPDATE', $databasename, $viewname, '?');
+    $can_insert = $can_quickadd = has_grant('INSERT', $databasename, $viewname, '?');
+    $can_update = has_grant('UPDATE', $databasename, $viewname, '?');
     $header = $quickadd = array();
     $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, 'SELECT', true);
     while ($field = mysql_fetch_assoc($fields)) {
-      $can_update = $can_update && ($field['fieldid'] == $field['uniquefieldid'] || $field['nullallowed'] || $field['defaultvalue'] || ($field['inedit'] && $field['privilege_update']));
-      $can_insert = $can_insert && ($field['fieldid'] == $field['uniquefieldid'] || $field['nullallowed'] || $field['defaultvalue'] || ($field['inedit'] && $field['privilege_insert']));
       $can_quickadd = $can_quickadd && ($field['fieldid'] == $field['uniquefieldid'] || $field['nullallowed'] || $field['defaultvalue'] || ($field['inlist'] && $field['privilege_insert']));
 
       if ($field['inlist']) {
@@ -535,6 +533,7 @@
         );
 
     return
+      html('ul', array(), html('li', array(), $text)).
       html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'orderasc'=>$orderasc ? 'on' : '', 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
         (count($rows) > 1
         ? form(
