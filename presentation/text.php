@@ -31,7 +31,7 @@
   function jquery_enhance_form_text() {
     return
       "find('.text.edit').\n".
-      "autogrow().\n".
+      "  autogrow().\n".
       "end().\n";
   }
 ?>

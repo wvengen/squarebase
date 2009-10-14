@@ -730,6 +730,7 @@
       join($joinparts).
       'WHERE '.
         'tbl.tablename = "<tablename>" '.
+        ($viewname == $tablename ? '' : 'AND vw.viewname = "<viewname>" ').
         'AND '.  $wherepart.
       'ORDER BY fld.fieldid',
       array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'viewname'=>$viewname, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'])
