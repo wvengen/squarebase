@@ -451,10 +451,8 @@
       }
     }
     $header[] = html('th', array('class'=>'filler'), '');
-    if ($interactive) {
-      array_unshift($header, html('th', array(), ''));
-      array_unshift($quickadd, html('td', array(), $can_insert ? 'add' : ''));
-    }
+    array_unshift($header, html('th', array(), ''));
+    array_unshift($quickadd, html('td', array(), $can_insert ? 'add' : ''));
     if ($ordernames)
       $ordernames[0] = $ordernames[0].' '.($orderasc ? 'ASC' : 'DESC');
     $records = query('data',
@@ -488,13 +486,10 @@
       $columns[] = html('td', array(), '');
       $rows[] =
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
-          ($interactive
-          ? html('td', array(), 
-              $can_update 
-              ? internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('edit'))
-              : internalreference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('show'))
-            )
-          : ''
+          html('td', array(), 
+            $can_update 
+            ? internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('edit'))
+            : internalreference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('show'))
           ).
           join($columns)
         );
@@ -587,9 +582,12 @@
     $lines[] =
       html('td', array('class'=>'description'), '').
       html('td', array(),
-        ($privilege == 'UPDATE' || $privilege == 'INSERT' ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$privilege == 'UPDATE' ? 'update_record' : 'add_record', 'class'=>'mainsubmit')) : '').
-        ($privilege == 'INSERT' ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
-        internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), $privilege == 'SELECT' ? _('close') : _('cancel'), array('class'=>$privilege == 'SELECT' ? 'close' : 'cancel')).
+        (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $tablename, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$privilege == 'UPDATE' ? 'update_record' : 'add_record', 'class'=>'mainsubmit')) : '').
+        ($privilege == 'INSERT' && has_grant($privilege, $databasename, $tablename, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
+        ($privilege == 'SELECT' || !has_grant($privilege, $databasename, $tablename, '?')
+        ? internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), _('close'), array('class'=>'close'))
+        : internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), _('cancel'), array('class'=>'cancel'))
+        ).
         (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $tablename) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_clean(' ', 'mainsubmit', 'delete'))) : '')
       ).
       html('td', array(), '');
