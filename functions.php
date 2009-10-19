@@ -554,7 +554,7 @@
   }
 
   function edit_record($privilege, $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $back = null) {
-    $viewname = table_or_view($metabasename, $databasename, $tablename);
+    $viewname = table_or_view($metabasename, $databasename, $tablename, $uniquefieldname, $uniquevalue);
     $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, 'SELECT', true);
 
     if ($privilege != 'INSERT') {
@@ -652,7 +652,7 @@
       mysql_data_seek($results, 0);
   }
 
-  function table_or_view($metabasename, $databasename, $tablename) {
+  function table_or_view($metabasename, $databasename, $tablename, $uniquefieldname = null, $uniquevalue = null) {
     static $alternatives = array();
     if (!$alternatives[$metabasename][$databasename]) {
       $views = query('meta',
@@ -673,9 +673,14 @@
         array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename)
       );
       while ($view = mysql_fetch_assoc($views))
-        $alternatives[$metabasename][$databasename][$view['tablename']] = $view['viewname'];
+        $alternatives[$metabasename][$databasename][$view['tablename']][] = $view['viewname'];
     }
-    return $alternatives[$metabasename][$databasename][$tablename];
+    if ($alternatives[$metabasename][$databasename][$tablename][0] == $tablename || is_null($uniquefieldname))
+      return $alternatives[$metabasename][$databasename][$tablename][0];
+    foreach ($alternatives[$metabasename][$databasename][$tablename] as $viewname)
+      if (query1field('data', 'SELECT COUNT(*) FROM `<databasename>`.`<viewname>` WHERE <uniquefieldname> = <uniquevalue>', array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)))
+        return $viewname;
+    return null;
   }
 
   function fields_from_table($metabasename, $databasename, $tablename, $viewname, $privilege = 'SELECT', $allprivileges = false) {
