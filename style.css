@@ -8,15 +8,15 @@ body { margin: 0.5em; overflow-y: scroll; font-family: sans-serif !important; }
 h1, h2 { display: block; }
 
 #content { clear: both; margin: 0.3em 0; }
-table, .box { border: 0.1em solid #999; }
-.tableedit { margin-bottom: 0.5em; }
-.referringlist { margin: 0 0.5em 1em; }
+.box { border: 0.1em solid #999; }
+.tableedit { padding-bottom: 0.5em; }
+.tablelist { margin-bottom: 1em; }
 .referrer { font-size: 0.8em; margin-left: 0.5em; }
 
 a { color: #00e; }
 p { margin: 0.5em 0; }
 
-table { width: 100%; border-collapse: collapse; }
+table { width: 100%; border-collapse: collapse; background-color: #fff; }
 th, td { padding: 0.1em; vertical-align: top; white-space: nowrap; width: 1%; }
 th { text-align: left; background-color: #fff; font-weight: normal; font-style: italic; }
 th.heading { font-weight: bold; font-style: normal; }
@@ -53,6 +53,7 @@ input.mainsubmit.delete:hover, .cancel:hover, .drop:hover, .forget:hover { backg
 .inlistforquickadd { background-color: #fda; }
 .countreferences { font-size: 0.6em; }
 
+.closing { background-color: #fcc !important; }
 .ajaxcontainer { margin: 0 0.5em; }
 .ajaxproblem { border-color: #c00 !important; }
 .ajaxincompatible { background-color: #f90 !important; }

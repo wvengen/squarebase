@@ -276,6 +276,39 @@ jQuery.fn.ajaxify = function() {
       return false;
     }
   );
+
+  $('.referringlist').
+  find('td:first').
+    each(
+      function() {
+        $(this).
+        width(
+          $(this).
+          closest('.box').
+          find('.tableedit td:first').
+          width()
+        );
+      }
+    ).
+  end().
+  find('td:eq(1)').
+    each(
+      function() {
+        $(this).
+        width(
+          $(this).
+          closest('table').
+          width()
+          -
+          $(this).
+          closest('.box').
+          find('.tableedit td:first').
+          width()
+        );
+      }
+    ).
+  end();
+
   return this;
 };
 

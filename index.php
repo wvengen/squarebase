@@ -84,7 +84,7 @@
 
     page($action, null,
       form(
-        html('table', array(),
+        html('table', array('class'=>'box'),
           html('tr', array(),
             array(
               html('td', array(), html('label', array('for'=>'usernameandhost'), _('user').'@'._('host'))).html('td', array('class'=>'filler'), $usernameandhost_input),
@@ -174,7 +174,7 @@
       internalredirect($links[0]);
 
     page($action, null,
-      html('table', array(), join($rows)).
+      html('table', array('class'=>'box'), join($rows)).
       ($can_create ? internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')) : '')
     );
   }
@@ -222,7 +222,7 @@
     }
     page($action, null,
       form(
-        html('table', array(), join($rows))
+        html('table', array('class'=>'box'), join($rows))
       )
     );
   }
@@ -266,7 +266,7 @@
 
     page($action, path(null, $databasename),
       form(
-        html('table', array(),
+        html('table', array('class'=>'box'),
           html('tr', array(),
             array(
               html('td', array(), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array('class'=>'filler'), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
@@ -542,7 +542,7 @@
           html('span', array('class'=>'error'), sprintf(_('no single valued primary key for table(s) %s'), join(', ', $tableswithoutsinglevaluedprimarykey)))
         )
       : form(
-          html('table', array(),
+          html('table', array('class'=>'box'),
             html('tr', array(),
               array(
                 html('td', array(), html('label', array('for'=>'metabasename'), _('metabasename'))).html('td', array('class'=>'filler'), $metabase_input),
@@ -551,7 +551,7 @@
               )
             )
           ).
-          html('table', array(),
+          html('table', array('class'=>'box'),
             join($rowsfields)
           ).
           html('p', array(),
@@ -758,7 +758,7 @@
       );
     page($action, path($metabasename),
       form(
-        html('table', array(), html('tr', array(), $rows))
+        html('table', array('class'=>'box'), html('tr', array(), $rows))
       )
     );
   }
@@ -793,7 +793,7 @@
     }
     page($action, path($metabasename, $databasename),
       html('div', array('class'=>'ajax'),
-        html('table', array(), join($rows))
+        html('table', array('class'=>'box'), join($rows))
       )
     );
   }
@@ -927,7 +927,7 @@
 
     page($action, null,
       html('p', array(), $query).
-      html('table', array(), 
+      html('table', array('class'=>'box'), 
         join($rows)
       ).
       html('p', array(), externalreference('http://dev.mysql.com/doc/refman/5.0/en/using-explain.html', 'MySQL 5.0 Reference Manual :: 7.2.1 Optimizing Queries with EXPLAIN'))

@@ -546,7 +546,7 @@
             html('input', array('type'=>'hidden', 'name'=>'tablenamesingular', 'value'=>$tablenamesingular)).
             html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
             html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back ? $back : parameter('server', 'HTTP_REFERER'))).
-            html('table', array('class'=>'tablelist'), join($rows)) 
+            html('table', array('class'=>join_clean(' ', $interactive ? 'box' : null, 'tablelist')), join($rows)) 
           )
         : ''
         )
@@ -582,13 +582,13 @@
     $lines[] =
       html('td', array('class'=>'description'), '').
       html('td', array(),
-        (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $tablename, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$privilege == 'UPDATE' ? 'update_record' : 'add_record', 'class'=>'mainsubmit')) : '').
-        ($privilege == 'INSERT' && has_grant($privilege, $databasename, $tablename, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
-        ($privilege == 'SELECT' || !has_grant($privilege, $databasename, $tablename, '?')
+        (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$privilege == 'UPDATE' ? 'update_record' : 'add_record', 'class'=>'mainsubmit')) : '').
+        ($privilege == 'INSERT' && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
+        ($privilege == 'SELECT' || !has_grant($privilege, $databasename, $viewname, '?')
         ? internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), _('close'), array('class'=>'close'))
         : internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), _('cancel'), array('class'=>'cancel'))
         ).
-        (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $tablename) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_clean(' ', 'mainsubmit', 'delete'))) : '')
+        (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $viewname) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_clean(' ', 'mainsubmit', 'delete'))) : '')
       ).
       html('td', array(), '');
 
@@ -599,26 +599,32 @@
         $viewname = table_or_view($metabasename, $databasename, $referringfield['tablename']);
         if ($viewname)
           $referrers[] =
-            html('div', array('class'=>'referringlist'), 
-              $referringfield['tablename'].
-              ($referringfield['title'] == $tablenamesingular ? '' : html('span', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['title']))).
-              list_table($metabasename, $databasename, $referringfield['tablename'], $referringfield['singular'], 0, 0, $referringfield['uniquefieldname'], null, null, true, $referringfield['fieldname'], $uniquevalue, $tablename, $privilege != 'SELECT')
+            html('tr', array(),
+              html('td', array(),
+                $referringfield['tablename'].
+                ($referringfield['title'] == $tablenamesingular ? '' : html('span', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['title'])))
+              ).
+              html('td', array(),
+                list_table($metabasename, $databasename, $referringfield['tablename'], $referringfield['singular'], 0, 0, $referringfield['uniquefieldname'], null, null, true, $referringfield['fieldname'], $uniquevalue, $tablename, $privilege != 'SELECT')
+              )
             );
       }
     }
 
     return
-      form(
-        html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
-        html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
-        html('input', array('type'=>'hidden', 'name'=>'tablename', 'value'=>$tablename)).
-        html('input', array('type'=>'hidden', 'name'=>'tablenamesingular', 'value'=>$tablenamesingular)).
-        html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
-        html('input', array('type'=>'hidden', 'name'=>'uniquevalue', 'value'=>$uniquevalue)).
-        html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back ? $back : parameter('server', 'HTTP_REFERER'))).
-        html('table', array('class'=>'tableedit'), html('tr', array(), $lines))
-      ).
-      ($referrers ? join($referrers) : '');
+      html('div', array('class'=>'box'),
+        form(
+          html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
+          html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
+          html('input', array('type'=>'hidden', 'name'=>'tablename', 'value'=>$tablename)).
+          html('input', array('type'=>'hidden', 'name'=>'tablenamesingular', 'value'=>$tablenamesingular)).
+          html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
+          html('input', array('type'=>'hidden', 'name'=>'uniquevalue', 'value'=>$uniquevalue)).
+          html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back ? $back : parameter('server', 'HTTP_REFERER'))).
+          html('table', array('class'=>'tableedit'), html('tr', array(), $lines))
+        ).
+        ($referrers ? html('table', array('class'=>'referringlist'), join($referrers)) : '')
+      );
   }
 
   function insertorupdate($databasename, $tablename, $fieldnamesandvalues, $uniquefieldname = null, $uniquevalue = null) {
