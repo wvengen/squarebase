@@ -584,10 +584,6 @@
       html('td', array(),
         (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$privilege == 'UPDATE' ? 'update_record' : 'add_record', 'class'=>'mainsubmit')) : '').
         ($privilege == 'INSERT' && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
-        ($privilege == 'SELECT' || !has_grant($privilege, $databasename, $viewname, '?')
-        ? internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), _('close'), array('class'=>'close'))
-        : internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), _('cancel'), array('class'=>'cancel'))
-        ).
         (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $viewname) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_clean(' ', 'mainsubmit', 'delete'))) : '')
       ).
       html('td', array(), '');
@@ -623,7 +619,11 @@
           html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back ? $back : parameter('server', 'HTTP_REFERER'))).
           html('table', array('class'=>'tableedit'), html('tr', array(), $lines))
         ).
-        ($referrers ? html('table', array('class'=>'referringlist'), join($referrers)) : '')
+        ($referrers ? html('table', array('class'=>'referringlist'), join($referrers)) : '').
+        ($privilege == 'SELECT' || !has_grant($privilege, $databasename, $viewname, '?')
+        ? internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), _('close'), array('class'=>'close'))
+        : internalreference($back ? $back : parameter('server', 'HTTP_REFERER'), _('cancel'), array('class'=>'cancel'))
+        )
       );
   }
 

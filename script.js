@@ -52,21 +52,21 @@ jQuery.fn.enhance_form = function() {
   addClass('enhancedform').
 
   find(':input').
-  keyup(
-    function() {
-      $(this).
-      check_form();
-    }
-  ).
+    keyup(
+      function() {
+        $(this).
+        check_form();
+      }
+    ).
   end().
 
   find('select').
-  change(
-    function() {
-      $(this).
-      check_form();
-    }
-  ).
+    change(
+      function() {
+        $(this).
+        check_form();
+      }
+    ).
   end().
 
   check_form().
@@ -74,21 +74,21 @@ jQuery.fn.enhance_form = function() {
   //jquery_enhance_form_presentation goes here
 
   find(':radio+:text').
-  focus(
-    function() {
-      $(this).
-      prev().
-      attr('checked', 'checked');
-    }
-  ).
-  blur(
-    function() {
-      if (!$(this).val())
-        $('[name=' + $(this).prev().attr('name') + ']').
-        eq(0).
+    focus(
+      function() {
+        $(this).
+        prev().
         attr('checked', 'checked');
-    }
-  ).
+      }
+    ).
+    blur(
+      function() {
+        if (!$(this).val())
+          $('[name=' + $(this).prev().attr('name') + ']').
+          eq(0).
+          attr('checked', 'checked');
+      }
+    ).
   end().
 
   find('input, select').
@@ -103,7 +103,7 @@ jQuery.fn.check_form = function() {
   $(this).
   closest('form').
   find('.ajaxproblem').
-  removeClass('ajaxproblem').
+    removeClass('ajaxproblem').
   end().
 
   find('.notempty:enabled:not([value])').
@@ -116,7 +116,7 @@ jQuery.fn.hidelogs = function() {
   $(this).
 
   find('.logs').
-  before('<a href="" class="togglelogs ajaxified">logs</a>').
+    before('<a href="" class="togglelogs ajaxified">logs</a>').
   end().
 
   find('.togglelogs').
@@ -145,12 +145,12 @@ jQuery.fn.ajaxsubmit = function() {
 
       $(this).
       find(':input[name=back]').
-      attr('name', 'ajax').
-      val(
-        $(this).
-        closest('.ajax').
-        attr('id')
-      ).
+        attr('name', 'ajax').
+        val(
+          $(this).
+          closest('.ajax').
+          attr('id')
+        ).
       end().
 
       closest('form').
@@ -185,37 +185,51 @@ jQuery.fn.unload = function() {
 jQuery.fn.ajaxify = function() {
   $(this).
   find('form').
-  enhance_form().
-  ajaxsubmit().
+    enhance_form().
+    ajaxsubmit().
   end().
 
   find('.changeslost').
-  css('display', 'none').
+    css('display', 'none').
   end().
 
   find(':input[type=submit]:not(.ajaxified)').
-  addClass('ajaxified').
-  click(
-    function() {
-      // the following line is needed because the name=value of the submit button isn't included in form.serialize()/form.formhash()
-      // because there is no way to know which submit button is pressed
-      $(this).
-      append('<input type="hidden" name="action" value="' + $(this).val() + '"/>');
-      return true;
-    }
-  ).
+    addClass('ajaxified').
+    click(
+      function() {
+        // the following line is needed because the name=value of the submit button isn't included in form.serialize()/form.formhash()
+        // because there is no way to know which submit button is pressed
+        $(this).
+        append('<input type="hidden" name="action" value="' + $(this).val() + '"/>');
+        return true;
+      }
+    ).
   end().
 
   find('.cancel:not(.ajaxified), .close:not(.ajaxified)').
-  addClass('ajaxified').
-  click(
-    function() {
-      $(this).
-      closest('.ajaxcontent').
-      unload();
-      return false;
-    }
-  ).
+    addClass('ajaxified').
+    click(
+      function() {
+        $(this).
+        closest('.ajaxcontent').
+        unload();
+        return false;
+      }
+    ).
+    hover(
+      function() {
+        $(this).
+        closest('.ajaxcontent').
+        find('*').
+        addClass('closing');
+      },
+      function() {
+        $(this).
+        closest('.ajaxcontent').
+        find('*').
+        removeClass('closing');
+      }
+    ).
   end().
 
   find('a:not(.ajaxified)').
@@ -326,32 +340,32 @@ ready(
 
     $('body.formmetabasefordatabase').
     find('.insome').
-    change(
-      function() {
-        $(this).
-        closest('form').
-        find('.insome[name^=' + $(this).attr('name').regexmatch('^\\w+:') + '][name$=' + $(this).attr('name').regexmatch(':\\w+$') + ']').
-        closest('td').
-        toggleClass('ajaxincompatible', 
+      change(
+        function() {
           $(this).
           closest('form').
-          find('.insome[name^=' + $(this).attr('name').regexmatch('^\\w+:') + '][name$=' + $(this).attr('name').regexmatch(':\\w+$') + ']:checked').
-          length == 0
-        );
-      }
-    ).
+          find('.insome[name^=' + $(this).attr('name').regexmatch('^\\w+:') + '][name$=' + $(this).attr('name').regexmatch(':\\w+$') + ']').
+          closest('td').
+          toggleClass('ajaxincompatible', 
+            $(this).
+            closest('form').
+            find('.insome[name^=' + $(this).attr('name').regexmatch('^\\w+:') + '][name$=' + $(this).attr('name').regexmatch(':\\w+$') + ']:checked').
+            length == 0
+          );
+        }
+      ).
     end().
 
     find('.presentationname').
-    change(
-      function() {
-        $(this).closest('tr').find('.foreigntablename').toggle($(this).val() == 'lookup');
-      }
-    ).
-//  change(). this takes too long on Firefox 3.0, therefore the following lines
+      change(
+        function() {
+          $(this).closest('tr').find('.foreigntablename').toggle($(this).val() == 'lookup');
+        }
+      ).
+//    change(). this takes too long on Firefox 3.0, therefore the following lines
     end().
     find('.foreigntablename').
-    hide().
+      hide().
     end().
     find('.presentationname[value=lookup]').
     each(
