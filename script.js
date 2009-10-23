@@ -291,37 +291,35 @@ jQuery.fn.ajaxify = function() {
     }
   );
 
-  $('.referringlist').
-  find('td:first').
-    each(
-      function() {
-        $(this).
-        width(
-          $(this).
-          closest('.box').
-          find('.tableedit td:first').
-          width()
-        );
-      }
-    ).
-  end().
-  find('td:eq(1)').
-    each(
-      function() {
-        $(this).
-        width(
-          $(this).
-          closest('table').
-          width()
-          -
-          $(this).
-          closest('.box').
-          find('.tableedit td:first').
-          width()
-        );
-      }
-    ).
-  end();
+  if ($('.referringlist').length > 0) {
+    referringlist = $('.referringlist');
+    tableedit = referringlist.closest('.box').find('.tableedit');
+
+    if (referringlist.find('td:first').width() > tableedit.find('td:first').width()) {
+      source = referringlist;
+      target = tableedit;
+    }
+    else {
+      source = tableedit;
+      target = referringlist;
+    }
+    width1 = source.find('td:first').width();
+    width2 = target.width() - width1;
+
+    target.
+    find('>tbody>tr>.filler').
+      remove().
+    end().
+    find('th').
+      width(width1 + width2).
+    end().
+    find('tr td:nth-child(1)').
+      width(width1).
+    end().
+    find('tr td:nth-child(2)').
+      width(width2).
+    end();
+  }
 
   return this;
 };

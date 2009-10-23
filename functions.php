@@ -452,6 +452,7 @@
     }
     $header[] = html('th', array('class'=>'filler'), '');
     array_unshift($header, html('th', array(), ''));
+    $quickadd[] = html('td', array('class'=>'filler'), '');
     array_unshift($quickadd, html('td', array(), $can_insert ? 'add' : ''));
     if ($ordernames)
       $ordernames[0] = $ordernames[0].' '.($orderasc ? 'ASC' : 'DESC');
@@ -483,7 +484,7 @@
             );
         }
       }
-      $columns[] = html('td', array(), '');
+      $columns[] = html('td', array('class'=>'filler'), '');
       $rows[] =
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array(), 
@@ -576,7 +577,7 @@
         $lines[] =
           html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
           html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), $privilege == 'INSERT' ? first_non_null(parameter('get', "field:$field[fieldname]"), $field['defaultvalue']) : $row[$field['fieldname']], $privilege == 'SELECT' || ($privilege == 'INSERT' && (!$field['privilege_insert'] || parameter('get', "field:$field[fieldname]"))) || ($privilege == 'UPDATE' && !$field['privilege_update']), true)).
-          html('td', array(), '');
+          html('td', array('class'=>'filler'), '');
     }
 
     $lines[] =
@@ -586,7 +587,7 @@
         ($privilege == 'INSERT' && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
         (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $viewname) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_clean(' ', 'mainsubmit', 'delete'))) : '')
       ).
-      html('td', array(), '');
+      html('td', array('class'=>'filler'), '');
 
     if (!is_null($uniquevalue)) {
       $referrers = array();
@@ -602,7 +603,8 @@
               ).
               html('td', array(),
                 list_table($metabasename, $databasename, $referringfield['tablename'], $referringfield['singular'], 0, 0, $referringfield['uniquefieldname'], null, null, true, $referringfield['fieldname'], $uniquevalue, $tablename, $privilege != 'SELECT')
-              )
+              ).
+              html('td', array('class'=>'filler'), '')
             );
       }
     }
