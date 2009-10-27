@@ -612,6 +612,7 @@
         'tableid          INT UNSIGNED NOT NULL REFERENCES `tables` (tableid),'.
         'fieldname        VARCHAR(100) NOT NULL,'.
         'title            VARCHAR(100) NOT NULL,'.
+        'type             VARCHAR(100) NOT NULL,'.
         'nullallowed      BOOLEAN      NOT NULL,'.
         'defaultvalue     VARCHAR(100)         ,'.
         'presentationid   INT UNSIGNED NOT NULL REFERENCES `presentations` (presentationid),'.
@@ -690,7 +691,7 @@
         $inlist = parameter('get', "$tablename:$fieldname:inlist") ? true : false;
         $inedit = parameter('get', "$tablename:$fieldname:inedit") ? true : false;
 
-        $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
+        $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'type'=>$field['column_type'], 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
 
         $indescs += $indesc;
         $inlists += $inlist;

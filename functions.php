@@ -718,6 +718,7 @@
           'fld.fieldid',
           'fld.fieldname',
           'fld.title',
+          'fld.type',
           'pst.presentationname',
           'fld.nullallowed',
           'fld.defaultvalue',

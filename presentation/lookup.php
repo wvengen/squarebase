@@ -97,8 +97,8 @@
   
   function css_lookup() {
     return 
-      ".lookup.edit { width: 20.45em; }\n".
-      ".lookup.list { width: auto; max-width: 20.45em; }\n".
+      ".lookup.edit { width: 20.5em; }\n".
+      ".lookup.list { width: auto; max-width: 20.5em; }\n".
       ".newrecordlookup, .existingrecord, .changeslost { margin-left: 0.5em; }\n".
       ".existingrecord.hidden { display: none; }\n";
   }
