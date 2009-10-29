@@ -67,8 +67,11 @@
 
   function jquery_enhance_form_date() {
     return
-      "find('.date:not(.readonly)').\n".
-      "  datepicker({ changeMonth: true, changeYear: true, duration: '', gotoCurrent: true, prevText: '<', nextText: '>', showOn: 'button', beforeShow: function(input) { $('.ui-datepicker').removeClass('edit list').addClass($(input).hasClass('edit') ? 'edit' : 'list').addClass('box'); }, dateFormat: '".find_datetime_format('%x', 'jquery')."' }).\n".
-      "end().\n";
+      "getScripts(['ui.core.js', 'ui.datepicker.js'], '.date:not(.readonly)',\n".
+      "  function() {\n".
+      "    $(this).\n".
+      "    datepicker({ changeMonth: true, changeYear: true, duration: '', gotoCurrent: true, prevText: '<', nextText: '>', showOn: 'button', beforeShow: function(input, inst) { $(inst.dpDiv).removeClass('edit list').addClass($(input).hasClass('edit') ? 'edit' : 'list').addClass('box'); }, onClose: function(dateText, inst) { $(inst.dpDiv).removeClass('box'); }, dateFormat: '".find_datetime_format('%x', 'jquery')."' });\n".
+      "  }\n".
+      ").\n";
   }
 ?>

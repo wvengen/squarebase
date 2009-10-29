@@ -43,17 +43,20 @@
 
   function jquery_enhance_form_textwithpreview() {
     return
-      "find('.textwithpreview.edit').\n".
-      "autogrow().\n".
-      "wrap('<div class=\"wrapper\"></div>').\n".
-      "addClass('blur').\n".
-      "focus(function() { $(this).parent().css('height', 'auto'); $(this).removeClass('blur').next().addClass('blur'); }).\n".
-      "blur( function() { $(this).parent().css('height', $(this).addClass('blur').next().removeClass('blur').html(this.value).css('height')); }).\n".
-      "after('<div class=\"preview\"></div>').\n".
-      "blur().\n". //to put the html in the preview box
-      "next().\n".
-      "click(function() { $(this).prev().focus(); }).\n".
-      "end().\n".
-      "end().\n";
+      "getScripts('jquery.autogrow.js', '.textwithpreview.edit',\n".
+      "  function() {\n".
+      "    $(this).\n".
+      "    autogrow().\n".
+      "    wrap('<div class=\"wrapper\"></div>').\n".
+      "    addClass('blur').\n".
+      "    focus(function() { $(this).parent().css('height', 'auto'); $(this).removeClass('blur').next().addClass('blur'); }).\n".
+      "    blur( function() { $(this).parent().css('height', $(this).addClass('blur').next().removeClass('blur').html(this.value).css('height')); }).\n".
+      "    after('<div class=\"preview\"></div>').\n".
+      "    blur().\n". //to put the html in the preview box
+      "    next().\n".
+      "      click(function() { $(this).prev().focus(); }).\n".
+      "    end();\n".
+      "  }\n".
+      ").\n";
   }
 ?>

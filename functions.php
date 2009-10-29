@@ -322,9 +322,7 @@
           html('link', array('href'=>internalurl(array('action'=>'style', 'metabasename'=>parameter('get', 'metabasename'))), 'type'=>'text/css', 'rel'=>'stylesheet')).
           ($_SESSION['scripty']
           ? html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
-            html('script', array('type'=>'text/javascript', 'src'=>'jquery.autogrow.js'), '').
-            html('script', array('type'=>'text/javascript', 'src'=>'ui.core.js'), '').
-            html('script', array('type'=>'text/javascript', 'src'=>'ui.datepicker.js'), '').
+            html('script', array('type'=>'text/javascript', 'src'=>'jquery.requirescript.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>internalurl(array('action'=>'script'))), '')
           : ''
           )

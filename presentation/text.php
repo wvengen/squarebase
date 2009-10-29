@@ -30,8 +30,11 @@
 
   function jquery_enhance_form_text() {
     return
-      "find('.text.edit').\n".
-      "  autogrow().\n".
-      "end().\n";
+      "getScripts('jquery.autogrow.js', '.text.edit',\n".
+      "  function() {\n".
+      "    $(this).\n".
+      "    autogrow();\n".
+      "  }\n".
+      ").\n";
   }
 ?>

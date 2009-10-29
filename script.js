@@ -3,7 +3,7 @@ String.prototype.regexmatch = function (format) {
   return !result ? null : (result.length === 1 ? result[0] : (result.length === 2 ? result[1] : result));
 }
 
-$.extend(
+jQuery.extend(
   $.expr[':'],
   {
     inline:     function(a) { return $(a).css('display') === 'inline'; },
@@ -12,7 +12,19 @@ $.extend(
   }
 );
 
-$.fn.loading = function(on) {
+jQuery.fn.log = function(msg) {
+  console.log("%s: %o", msg, this);
+  return this;
+};
+
+jQuery.fn.getScripts = function(url, selector, callback) {
+  var target = $(selector);
+  if (target.length)
+    $.requireScript(url, callback, target);
+  return this;
+};
+
+jQuery.fn.loading = function(on) {
   if (on)
     $(this).
     attr('id', 'loading').
@@ -27,7 +39,7 @@ $.fn.loading = function(on) {
 }
 
 //hash equivalent of serialize
-$.fn.formhash = function() {
+jQuery.fn.formhash = function() {
   var hash = {};
   this.
   find(':input[name]:not([type=submit])').
@@ -47,6 +59,9 @@ jQuery.fn.formvalue = function() {
 }
 
 jQuery.fn.enhance_form = function() {
+  if (!$(this).length)
+    return this;
+
   $(this).
   filter(':not(.enhancedform)').
   addClass('enhancedform').
@@ -330,10 +345,10 @@ ready(
     $('html').
     hidelogs();
 
-    $('.ajaxy .ajax').
+    $('body.ajaxy .ajax').
     ajaxify();
 
-    $('form').
+    $('body:not(.ajaxy) form').
     enhance_form();
 
     $('body.formmetabasefordatabase').
