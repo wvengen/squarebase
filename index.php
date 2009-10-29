@@ -296,16 +296,17 @@
     // pass 1: store query results and find the primary key field name
     $infos = $alltablenames = $tableswithoutsinglevaluedprimarykey = array();
     $tables = query('top',
-      'SELECT tb.table_name '.
+      'SELECT tb.table_name, vw.table_name AS view_name, is_updatable, view_definition '.
       'FROM INFORMATION_SCHEMA.TABLES tb '.
       'LEFT JOIN INFORMATION_SCHEMA.VIEWS vw ON vw.table_schema = tb.table_schema AND vw.table_name = tb.table_name '.
-      'WHERE tb.table_schema = "<databasename>" AND vw.view_definition IS NULL',
+      'WHERE tb.table_schema = "<databasename>" '.
+      'ORDER BY vw.table_name, tb.table_name', // base tables first, views last, so the primary key of a view can be set to that of the underlying base table for simple views
       array('databasename'=>$databasename)
     );
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table['table_name'];
       $alltablenames[] = $tablename;
-      $tableinfo = array('table_name'=>$tablename, 'fields'=>array());
+      $tableinfo = array('table_name'=>$tablename, 'fields'=>array(), 'is_view'=>!is_null($table['view_name']));
 
       $allprimarykeyfieldnames = array();
       $fields = query('top',
@@ -323,33 +324,30 @@
         if ($field['column_key'] == 'PRI')
           $allprimarykeyfieldnames[] = $field['column_name'];
       }
-      if (count($allprimarykeyfieldnames) == 1)
-        $tableinfo['primarykeyfieldname'] = $allprimarykeyfieldnames[0];
-      else
-        $tableswithoutsinglevaluedprimarykey[] = $tablename;
-      $tableinfo['views'] = array();
+      if ($tableinfo['is_view']) {
+        if ($table['is_updatable'] == 'YES') {
+          $tableinfo['possible_view_for_table'] = preg_match1('@ from `.*?`\.`(.*?)`@', $table['view_definition']);
+          $tableinfo['primarykeyfieldname'] = $infos[$tableinfo['possible_view_for_table']]['primarykeyfieldname'];
+        }
+      }
+      else {
+        if (count($allprimarykeyfieldnames) == 1)
+          $tableinfo['primarykeyfieldname'] = $allprimarykeyfieldnames[0];
+        else
+          $tableswithoutsinglevaluedprimarykey[] = $tablename;
+      }
       $infos[$tablename] = $tableinfo;
     }
-
-    $views = query('top',
-      'SELECT table_name, view_definition, is_updatable '.
-      'FROM INFORMATION_SCHEMA.VIEWS '.
-      'WHERE table_schema = "<databasename>"',
-      array('databasename'=>$databasename)
-    );
-    while ($view = mysql_fetch_assoc($views)) {
-      $viewname = $view['table_name'];
-      if ($view['is_updatable'] == 'YES') {
-        $fromname = preg_match1('@ from `.*?`\.`(.*?)`@', $view['view_definition']);
-        $infos[$fromname]['views'][] = $viewname;
-      }
-    }
+    ksort($infos);
 
     // pass 2: find presentation and in_desc, in_list and in_edit (needs $alltablenames and $infos)
     $presentationnames = get_presentationnames();
     $referencesin = $referencesout = array();
     foreach ($infos as $tablename=>&$table) {
       $max_in_desc = $max_in_list = $max_in_edit = 0;
+      if (!$table['table_name']) {
+        print html('div', array(), array_show($table));
+      }
       foreach ($table['fields'] as &$field) {
         $fieldname = $field['column_name'];
 
@@ -358,7 +356,7 @@
             $field,
             array(
               'alltablenames'=>$alltablenames,
-              'primarykeyfieldname'=>$primarykeyfieldname,
+              'primarykeyfieldname'=>$table['primarykeyfieldname'],
               'fieldnr'=>$field['fieldnr'],
               'numfields'=>count($table['fields'])
             )
@@ -410,7 +408,7 @@
       foreach ($table['fields'] as &$field) {
         $fieldname = $field['column_name'];
 
-        $inlistforquickadd = $field['column_key'] != 'PRI' && $field['is_nullable'] == 'NO' && !$field['column_default'];
+        $inlistforquickadd = $field['column_name'] != $table['primarykeyfieldname'] && $field['is_nullable'] == 'NO' && !$field['column_default'];
         if ($field['original']) {
           $plural           = $field['original']['plural'];
           $singular         = $field['original']['singular'];
@@ -473,13 +471,10 @@
                     )
                   )
                 ).
-                ($table['views']
-                ? _('alternative views').':'.
-                  html('ul', array('class'=>'views'),
-                    html('li', array(),
-                      $table['views']
-                    )
-                  )
+                ($table['possible_view_for_table'] 
+                ? html('input', array('type'=>'hidden', 'name'=>"$tablename:possibleviewfortable", 'value'=>$table['possible_view_for_table'])).
+                  html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:viewfortable", 'id'=>"$tablename:viewfortable", 'checked'=>'checked')).
+                  html('label', array('for'=>"$tablename:viewfortable", 'class'=>'alternative'), sprintf(_('alternative for %s'), $table['possible_view_for_table']))
                 : ''
                 )
               ).
@@ -657,68 +652,60 @@
       $presentationids[$presentationname] = insertorupdate($metabasename, 'presentations', array('presentationname'=>$presentationname));
 
     $tables = query('top',
-      'SELECT tb.table_name '.
+      'SELECT tb.table_name, vw.table_name AS view_name, is_updatable, view_definition '.
       'FROM INFORMATION_SCHEMA.TABLES tb '.
       'LEFT JOIN INFORMATION_SCHEMA.VIEWS vw ON vw.table_schema = tb.table_schema AND vw.table_name = tb.table_name '.
-      'WHERE tb.table_schema = "<databasename>" AND vw.view_definition IS NULL',
+      'WHERE tb.table_schema = "<databasename>" '.
+      'ORDER BY vw.table_name, tb.table_name', // base tables first, views last, so the table id of a view can be set to that of the underlying base table for alternative views
       array('databasename'=>$databasename)
     );
     $tableids = array();
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table['table_name'];
-      $tableids[$tablename] = insertorupdate($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>parameter('get', "$tablename:singular"), 'plural'=>parameter('get', "$tablename:plural"), 'intablelist'=>parameter('get', "$tablename:intablelist") == 'on'));
+      if (!parameter('get', "$tablename:viewfortable"))
+        $tableids[$tablename] = insertorupdate($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>parameter('get', "$tablename:singular"), 'plural'=>parameter('get', "$tablename:plural"), 'intablelist'=>parameter('get', "$tablename:intablelist") == 'on'));
+      else
+        insertorupdate($metabasename, 'views', array('viewname'=>$tablename, 'tableid'=>$tableids[parameter('get', "$tablename:possibleviewfortable")]));
     }
 
     $errors = array();
     for (mysql_data_reset($tables); $table = mysql_fetch_assoc($tables); ) {
       $tablename = $table['table_name'];
-      $tableid = $tableids[$tablename];
+      if (!parameter('get', "$tablename:viewfortable")) {
+        $tableid = $tableids[$tablename];
 
-      $descs = $sorts = $lists = $edits = 0;
-      $fields = query('top',
-        'SELECT c.table_schema, c.table_name, c.column_name, column_key, column_type, is_nullable, column_default, referenced_table_name '.
-        'FROM INFORMATION_SCHEMA.COLUMNS c '.
-        'LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu ON kcu.table_schema = c.table_schema AND kcu.table_name = c.table_name AND kcu.column_name = c.column_name AND referenced_table_schema = c.table_schema '.
-        'WHERE c.table_schema = "<databasename>" AND c.table_name = "<tablename>"',
-        array('databasename'=>$databasename, 'tablename'=>$tablename)
-      );
-      while ($field = mysql_fetch_assoc($fields)) {
-        $fieldname = $field['column_name'];
+        $descs = $sorts = $lists = $edits = 0;
+        $fields = query('top',
+          'SELECT c.table_schema, c.table_name, c.column_name, column_key, column_type, is_nullable, column_default, referenced_table_name '.
+          'FROM INFORMATION_SCHEMA.COLUMNS c '.
+          'LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu ON kcu.table_schema = c.table_schema AND kcu.table_name = c.table_name AND kcu.column_name = c.column_name AND referenced_table_schema = c.table_schema '.
+          'WHERE c.table_schema = "<databasename>" AND c.table_name = "<tablename>"',
+          array('databasename'=>$databasename, 'tablename'=>$tablename)
+        );
+        while ($field = mysql_fetch_assoc($fields)) {
+          $fieldname = $field['column_name'];
 
-        $foreigntablename = parameter('get', "$tablename:$fieldname:foreigntablename");
+          $foreigntablename = parameter('get', "$tablename:$fieldname:foreigntablename");
 
-        $indesc = parameter('get', "$tablename:$fieldname:indesc") ? true : false;
-        $inlist = parameter('get', "$tablename:$fieldname:inlist") ? true : false;
-        $inedit = parameter('get', "$tablename:$fieldname:inedit") ? true : false;
+          $indesc = parameter('get', "$tablename:$fieldname:indesc") ? true : false;
+          $inlist = parameter('get', "$tablename:$fieldname:inlist") ? true : false;
+          $inedit = parameter('get', "$tablename:$fieldname:inedit") ? true : false;
 
-        $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'type'=>$field['column_type'], 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
+          $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'type'=>$field['column_type'], 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
 
-        $indescs += $indesc;
-        $inlists += $inlist;
-        $inedits += $inedit;
+          $indescs += $indesc;
+          $inlists += $inlist;
+          $inedits += $inedit;
 
-        if (parameter('get', "$tablename:primary") == $fieldname)
-          query('meta', 'UPDATE `<metabasename>`.tables SET uniquefieldid = <fieldid> WHERE tableid = <tableid>', array('metabasename'=>$metabasename, 'fieldid'=>$fieldid, 'tableid'=>$tableid));
-      }
-      if (!$indescs)
-        $errors[] = sprintf(_('no fields to desc for %s'), $tablename);
-      if (!$inlists)
-        $errors[] = sprintf(_('no fields to list for %s'), $tablename);
-      if (!$inedits)
-        $errors[] = sprintf(_('no fields to edit for %s'), $tablename);
-    }
-
-    $views = query('top',
-      'SELECT table_name, view_definition, is_updatable '.
-      'FROM INFORMATION_SCHEMA.VIEWS '.
-      'WHERE table_schema = "<databasename>"',
-      array('databasename'=>$databasename)
-    );
-    while ($view = mysql_fetch_assoc($views)) {
-      $viewname = $view['table_name'];
-      if ($view['is_updatable'] == 'YES') {
-        $fromname = preg_match1('@ from `.*?`\.`(.*?)`@', $view['view_definition']);
-        insertorupdate($metabasename, 'views', array('viewname'=>$viewname, 'tableid'=>$tableids[$fromname]));
+          if (parameter('get', "$tablename:primary") == $fieldname)
+            query('meta', 'UPDATE `<metabasename>`.tables SET uniquefieldid = <fieldid> WHERE tableid = <tableid>', array('metabasename'=>$metabasename, 'fieldid'=>$fieldid, 'tableid'=>$tableid));
+        }
+        if (!$indescs)
+          $errors[] = sprintf(_('no fields to desc for %s'), $tablename);
+        if (!$inlists)
+          $errors[] = sprintf(_('no fields to list for %s'), $tablename);
+        if (!$inedits)
+          $errors[] = sprintf(_('no fields to edit for %s'), $tablename);
       }
     }
 

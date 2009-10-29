@@ -73,7 +73,7 @@ tr.roweven.closing td, tr.roweven.closing td a { background-color: #fbb !importa
 .pluralsingular li { list-style-type: none; white-space: nowrap; }
 .pluralsingular label { width: 0.8em; display: inline-block; }
 .pluralsingular input { width: 8em; }
-.views { padding: 0; margin-left: 1em; }
+label.alternative { margin-left: 0.4em; }
 
 .title { width: 8em; }
 .presentationname { width: 11em; }

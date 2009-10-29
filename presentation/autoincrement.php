@@ -1,6 +1,6 @@
 <?php
   function probability_autoincrement($field) {
-    return preg_match('@\bPRI\b@', $field['column_key']) ? 0.9 : 0;
+    return preg_match('@\bPRI\b@', $field['column_key']) || $field['column_name'] == $field['primarykeyfieldname'] ? 0.9 : 0;
   }
 
   function in_desc_autoincrement($field) { return 0.1; }
