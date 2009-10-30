@@ -664,17 +664,17 @@
     if (!$alternatives[$metabasename][$databasename]) {
       $views = query('meta',
         '('.
-          'SELECT tablename, viewname '.
-          'FROM `<metabasename>`.views '.
-          'LEFT JOIN `<metabasename>`.tables ON tables.tableid = views.tableid '.
-          'LEFT JOIN INFORMATION_SCHEMA.TABLES tbl ON tbl.table_schema = "<databasename>" AND tbl.table_name = viewname '.
+          'SELECT tablename, tablename AS viewname '.
+          'FROM `<metabasename>`.tables '.
+          'LEFT JOIN INFORMATION_SCHEMA.TABLES tbl ON tbl.table_schema = "<databasename>" AND tbl.table_name = tablename '.
           'WHERE table_name IS NOT NULL'.
         ') '.
         'UNION '.
         '('.
-          'SELECT tablename, tablename AS viewname '.
-          'FROM `<metabasename>`.tables '.
-          'LEFT JOIN INFORMATION_SCHEMA.TABLES tbl ON tbl.table_schema = "<databasename>" AND tbl.table_name = tablename '.
+          'SELECT tablename, viewname '.
+          'FROM `<metabasename>`.views '.
+          'LEFT JOIN `<metabasename>`.tables ON tables.tableid = views.tableid '.
+          'LEFT JOIN INFORMATION_SCHEMA.TABLES tbl ON tbl.table_schema = "<databasename>" AND tbl.table_name = viewname '.
           'WHERE table_name IS NOT NULL'.
         ')',
         array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename)

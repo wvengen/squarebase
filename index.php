@@ -10,7 +10,7 @@
   $_SESSION['ajaxy']   = !is_null(parameter('get', 'ajaxy'  )) ? parameter('get', 'ajaxy'  ) == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['ajaxy'  ] : true);
   $_SESSION['logsy']   = !is_null(parameter('get', 'logsy'  )) ? parameter('get', 'logsy'  ) == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['logsy'  ] : false);
 
-  addtolist('logs', 'get', 'get: '.html('div', array('class'=>'arrayshow'), array_show(parameter('get'))));
+  addtolist('logs', 'get', html('div', array('class'=>'arrayshow'), 'get: '.array_show(parameter('get'))));
 //addtolist('logs', 'cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
 
   $languagename = !parameter('get', 'language') && parameter('get', 'metabasename') ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;
