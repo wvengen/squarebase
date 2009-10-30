@@ -40,24 +40,25 @@
     return
       ".date.edit { width: 20em; }\n".
       ".date.list { width: 6em; }\n".
-      ".ui-datepicker-div { border: 0; }\n".
       ".ui-datepicker-trigger { margin-left: 0.5em; }\n".
-      ".ui-datepicker { background-color: #eee; width: 17em; }\n".
+      ".ui-datepicker { background-color: #ffc; width: 17em; }\n".
       ".ui-datepicker.edit { margin: -1.5em 0 0 22.5em; }\n".
       ".ui-datepicker .ui-datepicker-header { position: relative; padding: 0.2em 0; }\n".
-      ".ui-datepicker .ui-datepicker-prev, .ui-datepicker .ui-datepicker-next { position: absolute; top: 0.2em; width: 1.8em; height: 1.8em; }\n".
+      ".ui-datepicker .ui-datepicker-prev, .ui-datepicker .ui-datepicker-next { position: absolute; top: 0.2em; width: 1.8em; height: 1.8em; cursor: pointer; }\n".
       ".ui-datepicker .ui-datepicker-prev { left: 0.5em; }\n".
       ".ui-datepicker .ui-datepicker-next { right: 0; }\n".
       ".ui-datepicker .ui-datepicker-prev span, .ui-datepicker .ui-datepicker-next span { display: block; position: absolute; top: 50%; margin-top: -0.8em;  }\n".
       ".ui-datepicker .ui-datepicker-title { margin: 0 2.3em; line-height: 1.8em; text-align: center; }\n".
-      ".ui-datepicker .ui-datepicker-title select { float: left; font-size: 1em; margin: 0.1em 0; }\n".
+      ".ui-datepicker .ui-datepicker-title select { float: left; font-size: 1em; margin: 0.1em 0; background-color: inherit; }\n".
       ".ui-datepicker select.ui-datepicker-month-year { width: 100%; }\n".
       ".ui-datepicker select.ui-datepicker-month, \n".
       ".ui-datepicker select.ui-datepicker-year { width: 50%; }\n".
       ".ui-datepicker .ui-datepicker-title select.ui-datepicker-year { float: right; }\n".
-      ".ui-datepicker table { border: 0; width: 100%; font-size: 0.9em; border-collapse: collapse; margin: 0 0 0.4em; }\n".
-      ".ui-datepicker th { background-color: #eee; padding: 0.7em 0.3em; text-align: center; font-weight: bold; border: 0;  }\n".
-      ".ui-datepicker .ui-state-active { background-color: #ccc; }\n".
+      ".ui-datepicker table { border: 0; width: 100%; font-size: 0.9em; border-collapse: collapse; margin: 0 0 0.4em; background-color: inherit; }\n".
+      ".ui-datepicker th { background-color: inherit; padding: 0.7em 0.3em; text-align: center; font-weight: bold; border: 0;  }\n".
+      ".ui-datepicker .ui-state-default { text-decoration: underline; border: 0.1em solid #ffc; }\n".
+      ".ui-datepicker .ui-state-default:hover { border-color: #00f; }\n".
+      ".ui-datepicker .ui-state-active { font-weight: bold; }\n".
       ".ui-datepicker td { border: 0; padding: 0.1em; }\n".
       ".ui-datepicker td span, .ui-datepicker td a { display: block; padding: 0.2em; text-align: right; text-decoration: none; }\n".
       ".ui-datepicker .ui-datepicker-buttonpane { background-image: none; margin: 0.7em 0 0 0; padding: 0 0.2em; border-left: 0; border-right: 0; border-bottom: 0; }\n".
@@ -70,7 +71,7 @@
       "getScripts(['ui.core.js', 'ui.datepicker.js'], '.date:not(.readonly)',\n".
       "  function() {\n".
       "    $(this).\n".
-      "    datepicker({ changeMonth: true, changeYear: true, duration: '', gotoCurrent: true, prevText: '<', nextText: '>', showOn: 'button', beforeShow: function(input, inst) { $(inst.dpDiv).removeClass('edit list').addClass($(input).hasClass('edit') ? 'edit' : 'list').addClass('box'); }, onClose: function(dateText, inst) { $(inst.dpDiv).removeClass('box'); }, dateFormat: '".find_datetime_format('%x', 'jquery')."' });\n".
+      "    datepicker({ changeMonth: true, changeYear: true, duration: '', gotoCurrent: true, prevText: '&larr;', nextText: '&rarr;', showOn: 'button', beforeShow: function(input, inst) { $(inst.dpDiv).removeClass('edit list').addClass($(input).hasClass('edit') ? 'edit' : 'list'); }, dateFormat: '".find_datetime_format('%x', 'jquery')."' });\n".
       "  }\n".
       ").\n";
   }

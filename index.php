@@ -1,13 +1,6 @@
 <?php
   include('functions.php');
 
-  $action = first_non_null(parameter('get', 'action'), 'login');
-
-  if ($action == 'style')
-    augment_file('style.css', 'text/css');
-  if ($action == 'script')
-    augment_file('script.js', 'text/javascript');
-
   ini_set('session.use_only_cookies', true);
   session_set_cookie_params(7 * 24 * 60 * 60);
   session_save_path('session');
@@ -18,7 +11,7 @@
   $_SESSION['logsy']   = !is_null(parameter('get', 'logsy'  )) ? parameter('get', 'logsy'  ) == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['logsy'  ] : false);
 
   addtolist('logs', 'get', 'get: '.html('div', array('class'=>'arrayshow'), array_show(parameter('get'))));
-  addtolist('logs', 'cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
+//addtolist('logs', 'cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
 
   $languagename = !parameter('get', 'language') && parameter('get', 'metabasename') ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;
 
@@ -45,6 +38,18 @@
 
   bindtextdomain('messages', './locale');
   textdomain('messages');
+
+  $action = first_non_null(parameter('get', 'action'), 'login');
+
+  /********************************************************************************************/
+
+  if ($action == 'style')
+    augment_file('style.css', 'text/css');
+
+  /********************************************************************************************/
+
+  if ($action == 'script')
+    augment_file('script.js', 'text/javascript');
 
   /********************************************************************************************/
 
