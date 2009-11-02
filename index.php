@@ -820,16 +820,17 @@
   /********************************************************************************************/
 
   if ($action == 'new_record' || $action == 'edit_record' || $action == 'show_record') {
-    $metabasename      = parameter('get', 'metabasename');
-    $databasename      = parameter('get', 'databasename');
-    $tablename         = parameter('get', 'tablename');
-    $tablenamesingular = parameter('get', 'tablenamesingular');
-    $uniquefieldname   = parameter('get', 'uniquefieldname');
-    $uniquevalue       = parameter('get', 'uniquevalue');
-    $back              = parameter('get', 'back');
+    $metabasename            = parameter('get', 'metabasename');
+    $databasename            = parameter('get', 'databasename');
+    $tablename               = parameter('get', 'tablename');
+    $tablenamesingular       = parameter('get', 'tablenamesingular');
+    $uniquefieldname         = parameter('get', 'uniquefieldname');
+    $uniquevalue             = parameter('get', 'uniquevalue');
+    $referencedfromfieldname = parameter('get', 'referencedfromfieldname');
+    $back                    = parameter('get', 'back');
 
     page($action, path($metabasename, $databasename, $tablename, $tableid, $uniquefieldname, $uniquevalue),
-      edit_record($action == 'new_record' ? 'INSERT' : ($action == 'edit_record' ? 'UPDATE' : 'SELECT'), $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $back ? $back : parameter('server', 'HTTP_REFERER'))
+      edit_record($action == 'new_record' ? 'INSERT' : ($action == 'edit_record' ? 'UPDATE' : 'SELECT'), $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $referencedfromfieldname, $back ? $back : parameter('server', 'HTTP_REFERER'))
     );
   }
 
@@ -850,13 +851,14 @@
   /********************************************************************************************/
 
   if ($action == 'update_record' || $action == 'add_record' || $action == 'add_record_and_edit') {
-    $metabasename      = parameter('get', 'metabasename');
-    $databasename      = parameter('get', 'databasename');
-    $tablename         = parameter('get', 'tablename');
-    $tablenamesingular = parameter('get', 'tablenamesingular');
-    $uniquefieldname   = parameter('get', 'uniquefieldname');
-    $uniquevalue       = parameter('get', 'uniquevalue');
-    $back              = parameter('get', 'back');
+    $metabasename            = parameter('get', 'metabasename');
+    $databasename            = parameter('get', 'databasename');
+    $tablename               = parameter('get', 'tablename');
+    $tablenamesingular       = parameter('get', 'tablenamesingular');
+    $uniquefieldname         = parameter('get', 'uniquefieldname');
+    $uniquevalue             = parameter('get', 'uniquevalue');
+    $referencedfromfieldname = parameter('get', 'referencedfromfieldname');
+    $back                    = parameter('get', 'back');
 
     $viewname = table_or_view($metabasename, $databasename, $tablename);
 
@@ -871,8 +873,14 @@
 
     $uniquevalue = insertorupdate($databasename, $viewname, $fieldnamesandvalues, $uniquefieldname, $uniquevalue);
 
+    $ajax = parameter('get', 'ajax');
+    if ($action == 'add_record' || $action == 'add_record_and_edit') {
+      if ($ajax)
+        $_POST['ajax'] = preg_replace('@\bvalue=\d+\b@', "value=$uniquevalue", $_POST['ajax']);
+      elseif ($referencedfromfieldname)
+        $_POST['back'] = preg_replace('@&back=@', "&field:$referencedfromfieldname=$uniquevalue&back=", parameter('get', 'back'));
+    }
     if ($action == 'add_record_and_edit') {
-      $ajax = parameter('get', 'ajax');
       if ($ajax)
         $_POST['ajax'] = "$ajax&uniquevalue=$uniquevalue";
       else

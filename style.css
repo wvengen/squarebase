@@ -7,7 +7,7 @@ body { margin: 0.5em; overflow-y: scroll; font-family: sans-serif !important; }
 #id ul li { list-style-type: none; }
 h1, h2 { display: block; }
 
-#content { clear: both; margin: 0.3em 0; }
+#content { clear: both; }
 .box { border: 0.1em solid #999; }
 .tableedit { padding-bottom: 0.5em; }
 .tablelist { margin-bottom: 1em; }
