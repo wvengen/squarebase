@@ -398,6 +398,13 @@
     }
 
     // pass 3: produce output for tables and fields (needs $max_in_**** and $referencesin/-out)
+    $alternative_views = array();
+    if ($metabasename) {
+      $views = query('meta', 'SELECT * FROM `<metabasename>`.views', array('metabasename'=>$metabasename));
+      while ($view = mysql_fetch_assoc($views))
+        $alternative_views[$view['viewname']] = 1;
+    }
+
     $rowsfields = array();
     foreach ($infos as $tablename=>&$table) {
       $rowsfields[] =
@@ -478,7 +485,7 @@
                 ).
                 ($table['possible_view_for_table'] 
                 ? html('input', array('type'=>'hidden', 'name'=>"$tablename:possibleviewfortable", 'value'=>$table['possible_view_for_table'])).
-                  html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:viewfortable", 'id'=>"$tablename:viewfortable", 'checked'=>'checked')).
+                  html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:viewfortable", 'id'=>"$tablename:viewfortable", 'checked'=>!$metabasename || $alternative_views[$tablename] ? 'checked' : null)).
                   html('label', array('for'=>"$tablename:viewfortable", 'class'=>'alternative'), sprintf(_('alternative for %s'), $table['possible_view_for_table']))
                 : ''
                 )
