@@ -36,7 +36,7 @@
 
     $pieces = array();
     foreach ($args as $arg)
-      $pieces = array_merge($pieces, is_array($arg) ? $arg : array($arg));
+      $pieces = array_merge($pieces, make_array($arg));
 
     return join($glue, array_filter($pieces, 'is_not_null'));
   }
@@ -97,10 +97,20 @@
     return html('a', array_merge($extra, array('href'=>is_array($parameters) ? internalurl($parameters) : $parameters)), $text);
   }
 
-  function redirect($url) {
+  function make_array($value) {
+    return is_array($value) ? $value : array($value);
+  }
+
+  function http_response($headers, $content = null) {
     session_write_close();
-    header('Location: '.$url);
+    foreach (make_array($headers) as $header)
+      header($header);
+    print $content;
     exit;
+  }
+
+  function redirect($url) {
+    http_response('Location: '.$url);
   }
 
   function internalredirect($parameters) {
@@ -312,9 +322,8 @@
 
     $error = parameter('get', 'error');
 
-    header('Content-Type: text/html; charset=utf-8');
-    header('Content-Language: '.get_locale());
-    print
+    http_response(
+      array('Content-Type: text/html; charset=utf-8', 'Content-Language: '.get_locale()),
       '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'.
       html('html', array(),
         html('head', array(),
@@ -365,8 +374,8 @@
             html('div', array('id'=>'poweredby'), externalreference('http://squarebase.org/', html('img', array('src'=>'powered_by_squarebase.png', 'alt'=>'powered by squarebase'))))
           )
         )
-      );
-    exit;
+      )
+    );
   }
 
   function form($content) {
@@ -846,9 +855,7 @@
     if ($metabasename)
       $content .= join(read_file("metabase/$metabasename.css"));
 
-    header("Content-Type: $content_type");
-    print $content;
-    exit;
+    http_response("Content-Type: $content_type", $content);
   }
 
   function change_datetime_format($value, $from, $to) {
