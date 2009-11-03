@@ -52,31 +52,69 @@
     return preg_replace(array('@^Array\s*\(\s*(.*?)\s*\)\s*$@s', '@ *\n *@s'), array('$1', "\n"), print_r($array, true));
   }
 
-  function html($tag, $parameters = array(), $text = null) {
+  function html($tag, $attributes = array(), $text = null) {
     if ($_SESSION['logsy']) {
-      static $types = array(
-        'html'=>1, 'head'=>1, 'title'=>1, 'script'=>1, 'body'=>1, 'div'=>1, 'span'=>1, 'p'=>1, 'h1'=>1, 'h2'=>1, 'ol'=>1, 'ul'=>1, 'li'=>1, 'a'=>1, 'table'=>1, 'tr'=>1, 'th'=>1, 'td'=>1, 'form'=>1, 'fieldset'=>1, 'optgroup'=>1, 'label'=>1, 'select'=>1, 'option'=>1, 'textarea'=>1, 'strong'=>1,
-        'link'=>0, 'img'=>0, 'input'=>0
+      static $types = array( // in attributes: 0=mandatory, 1=possible
+        'html'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'head'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'title'   =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'script'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'type'=>0, 'src'=>0)),
+        'body'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'div'     =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'span'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'p'       =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'h1'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'h2'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'ol'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'ul'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'li'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'a'       =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'href'=>0)),
+        'table'   =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'tr'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'th'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'colspan'=>1, 'rowspan'=>1)),
+        'td'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'colspan'=>1, 'rowspan'=>1)),
+        'form'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'action'=>0, 'enctype'=>1, 'method'=>0)),
+        'fieldset'=>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'optgroup'=>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'label'   =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'for'=>1)),
+        'select'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'name'=>0, 'readonly'=>1)),
+        'option'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'value'=>1, 'selected'=>1)),
+        'textarea'=>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'name'=>0)),
+        'strong'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'link'    =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'href'=>0, 'type'=>0, 'rel'=>0)),
+        'img'     =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'src'=>0, 'alt'=>0, 'title'=>1)),
+        'input'   =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'name'=>0, 'value'=>1, 'type'=>0, 'readonly'=>1, 'checked'=>1))
       );
       $type = $types[$tag];
-      if ($type === 1) {
+      if ($type['empty'] === false) {
         if (is_null($text))
-          $error = _('missing text for html tag %s');
+          addtolist('warnings', 'warning', sprintf(_('missing text for html tag %s'), $tag));
       }
-      elseif ($type === 0) {
+      elseif ($type['empty'] === true) {
         if (!is_null($text))
-          $error = _('text for html tag %s');
+          addtolist('warnings', 'warning', sprintf(_('text for html tag %s: %s'), $tag, $text));
       }
       else
-        $error = _('unknown html tag %s');
-      if ($error)
-        error(sprintf($error, $tag));
+        addtolist('warnings', 'warning', sprintf(_('unknown html tag %s'), $tag));
+      $possible_attributes = array();
+      foreach ($type['attributes'] as $attribute=>$value)
+        $possible_attributes[$attribute] = $value;
+      foreach ($attributes as $attribute=>$value)
+        if ($attribute) {
+          if (array_key_exists($attribute, $possible_attributes))
+            $possible_attributes[$attribute]++;
+          else
+            addtolist('warnings', 'warning', sprintf(_('unknown attribute %s for tag %s'), $attribute, $tag));
+        }
+      foreach ($possible_attributes as $attribute=>$value)
+        if ($value === 0)
+          addtolist('warnings', 'warning', sprintf(_('missing mandatory attribute %s for tag %s'), $attribute, $tag));
     }
-    $parameterlist = array();
-    foreach ($parameters as $parameter=>$value)
-      if ($parameter && !is_null($value))
-        $parameterlist[] = " $parameter=\"$value\"";
-    $starttag = $tag ? '<'.$tag.join($parameterlist).(is_null($text) ? ' /' : '').'>' : '';
+    $attributelist = array();
+    foreach ($attributes as $attribute=>$value)
+      if ($attribute && !is_null($value))
+        $attributelist[] = " $attribute=\"$value\"";
+    $starttag = $tag ? '<'.$tag.join($attributelist).(is_null($text) ? ' /' : '').'>' : '';
     $endtag = $tag ? "</$tag>" : '';
     return $starttag.(is_null($text) ? '' : (is_array($text) ? join_clean($endtag.$starttag, $text) : $text).$endtag);
   }
