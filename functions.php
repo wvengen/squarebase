@@ -165,7 +165,6 @@
       $connection = @mysql_connect($_SESSION['host'], $_SESSION['username'], $_SESSION['password']);
       if (mysql_errno())
         logout(sprintf(_('problem connecting to the databasemanager: %s'), mysql_error()));
-      $_SESSION['timesconnected'] += 1;
     }
 
     if (preg_match('@= *\'<\w+>\'@', $query))
@@ -797,7 +796,6 @@
     $_SESSION['host']     = $host;
     $_SESSION['password'] = $password;
     $_SESSION['language'] = $language;
-    $_SESSION['timesconnected'] = 0;
 
     $expire = time() + 365 * 24 * 60 * 60;
     setcookie('lastusernamesandhosts', join_clean(',', array_diff(array_unique(array_merge(array("$username@$host"), array_diff(explode(',', $_COOKIE['lastusernamesandhosts']), array("$username@$host")))), array(''))), $expire);

@@ -6,9 +6,9 @@
   session_save_path('session');
   session_start();
 
-  $_SESSION['scripty'] = !is_null(parameter('get', 'scripty')) ? parameter('get', 'scripty') == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['scripty'] : true);
-  $_SESSION['ajaxy']   = !is_null(parameter('get', 'ajaxy'  )) ? parameter('get', 'ajaxy'  ) == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['ajaxy'  ] : true);
-  $_SESSION['logsy']   = !is_null(parameter('get', 'logsy'  )) ? parameter('get', 'logsy'  ) == 'on' : ($_SESSION['timesconnected'] ? $_SESSION['logsy'  ] : false);
+  $_SESSION['scripty'] = !is_null(parameter('get', 'scripty')) ? parameter('get', 'scripty') == 'on' : (!is_null($_SESSION['scripty']) ? $_SESSION['scripty'] : true);
+  $_SESSION['ajaxy']   = !is_null(parameter('get', 'ajaxy'  )) ? parameter('get', 'ajaxy'  ) == 'on' : (!is_null($_SESSION['ajaxy'  ]) ? $_SESSION['ajaxy'  ] : true);
+  $_SESSION['logsy']   = !is_null(parameter('get', 'logsy'  )) ? parameter('get', 'logsy'  ) == 'on' : (!is_null($_SESSION['logsy'  ]) ? $_SESSION['logsy'  ] : false);
 
   addtolist('logs', 'get', html('div', array('class'=>'arrayshow'), 'get: '.array_show(parameter('get'))));
 //addtolist('logs', 'cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
@@ -54,7 +54,7 @@
   /********************************************************************************************/
 
   if ($action == 'login') {
-    if ($_SESSION['timesconnected'])
+    if ($_SESSION['username'])
       internalredirect(array('action'=>'index'));
 
     $usernameandhost = parameter('get', 'usernameandhost');
