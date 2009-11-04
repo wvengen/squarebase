@@ -53,13 +53,14 @@
   }
 
   function html($tag, $attributes = array(), $text = null) {
-    if ($_SESSION['logsy']) {
+    if ($_COOKIE['logsy']) {
       static $types = array( // in attributes: 0=mandatory, 1=possible
         'html'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'head'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'title'   =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'script'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'type'=>0, 'src'=>0)),
         'body'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'pre'     =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'div'     =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'span'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'p'       =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
@@ -192,7 +193,7 @@
   }
 
   function addtolist($list, $class, $text) {
-    if ($list == 'logs' && !$_SESSION['logsy'])
+    if ($list == 'logs' && !$_COOKIE['logsy'])
       return;
     if (!$_SESSION[$list])
       $_SESSION[$list] = array();
@@ -367,37 +368,34 @@
         html('head', array(),
           html('title', array(), $title).
           html('link', array('href'=>internalurl(array('action'=>'style', 'metabasename'=>parameter('get', 'metabasename'))), 'type'=>'text/css', 'rel'=>'stylesheet')).
-          ($_SESSION['scripty']
+          ($_COOKIE['scripty']
           ? html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>'jquery.requirescript.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>internalurl(array('action'=>'script'))), '')
           : ''
           )
         ).
-        html('body', array('class'=>join_clean(' ', preg_replace('@_@', '', $action), $_SESSION['ajaxy'] ? 'ajaxy' : null)),
+        html('body', array('class'=>join_clean(' ', preg_replace('@_@', '', $action), $_COOKIE['ajaxy'] ? 'ajaxy' : null)),
           html('div', array('id'=>'header'),
-            ($_SESSION['username']
-            ? html('div', array('id'=>'id'),
-                html('ul', array(),
-                  html('li', array(),
-                    array(
-                      preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internalreference(parameter('server', 'REQUEST_URI').'&scripty='.($_SESSION['scripty'] ? 'off' : 'on'), $_SESSION['scripty'] ? _('javascript is on') : _('javascript is off')) : ($_SESSION['scripty'] ? _('javascript is on') : _('javascript is off')),
-                      preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? ($_SESSION['scripty'] ? internalreference(parameter('server', 'REQUEST_URI').'&ajaxy='.($_SESSION['ajaxy'] ? 'off' : 'on'), $_SESSION['ajaxy'] ? _('ajax is on') : _('ajax is off')) : _('ajax is off')) : ($_SESSION['ajaxy'] ? _('ajax is on') : _('ajax is off')),
-                      preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internalreference(parameter('server', 'REQUEST_URI').'&logsy='.($_SESSION['logsy'] ? 'off' : 'on'), $_SESSION['logsy'] ? _('logging is on') : _('logging is off')) : ($_SESSION['logsy'] ? _('logging is on') : _('logging is off'))
-                    )
+            html('div', array('id'=>'id'),
+              html('ul', array(),
+                html('li', array(),
+                  array(
+                    preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internalreference(parameter('server', 'REQUEST_URI').'&scripty='.($_COOKIE['scripty'] ? 'off' : 'on'), $_COOKIE['scripty'] ? _('javascript is on') : _('javascript is off')) : ($_COOKIE['scripty'] ? _('javascript is on') : _('javascript is off')),
+                    preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? ($_COOKIE['scripty'] ? internalreference(parameter('server', 'REQUEST_URI').'&ajaxy='.($_COOKIE['ajaxy'] ? 'off' : 'on'), $_COOKIE['ajaxy'] ? _('ajax is on') : _('ajax is off')) : _('ajax is off')) : ($_COOKIE['ajaxy'] ? _('ajax is on') : _('ajax is off')),
+                    preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internalreference(parameter('server', 'REQUEST_URI').'&logsy='.($_COOKIE['logsy'] ? 'off' : 'on'), $_COOKIE['logsy'] ? _('logging is on') : _('logging is off')) : ($_COOKIE['logsy'] ? _('logging is on') : _('logging is off'))
                   )
-                ).
-                html('ul', array(),
-                  html('li', array(),
-                    array(
-                      "$_SESSION[username]@$_SESSION[host]",
-                      internalreference(array('action'=>'logout'), 'logout'),
-                      get_locale()
-                    )
+                )
+              ).
+              html('ul', array(),
+                html('li', array(),
+                  array(
+                    $_SESSION['username'] ? "$_SESSION[username]@$_SESSION[host]" : 'not logged in',
+                    $_SESSION['username'] ? internalreference(array('action'=>'logout'), 'logout') : '&nbsp;',
+                    get_locale()
                   )
                 )
               )
-            : ''
             ).
             html('h1', array('id'=>'title'), $title).
             html('h2', array(), $path ? $path : '&nbsp;')
@@ -406,7 +404,7 @@
             ($error ?  html('div', array('id'=>'error'), $error) : '').
             html('ol', array('id'=>'warnings'), join(getlist('warnings'))).
             $content.
-            ($_SESSION['logsy'] ? html('ol', array('class'=>'logs'), join(getlist('logs'))) : '')
+            ($_COOKIE['logsy'] ? html('ol', array('class'=>'logs'), join(getlist('logs'))) : '')
           ).
           html('div', array('id'=>'footer'),
             html('div', array('id'=>'poweredby'), externalreference('http://squarebase.org/', html('img', array('src'=>'powered_by_squarebase.png', 'alt'=>'powered by squarebase'))))
@@ -833,9 +831,24 @@
     );
   }
 
+  function set_cookie($name, $value) {
+    static $expire = null;
+    if (!$expire)
+      $expire = time() + 365 * 24 * 60 * 60;
+    setcookie($name, $value, $expire);
+    $_COOKIE[$name] = $value;
+  }
+
+  function set_preference($item, $default) {
+    $value = first_non_null(parameter('get', $item) == 'on' ? 1 : null, parameter('get', $item) == 'off' ? 0 : null, $_COOKIE[$item], $default);
+    if ($value !== $_COOKIE[$item]) {
+      set_cookie($item, $value);
+      redirect(preg_replace("@&$item=\w+@", '', parameter('server', 'REQUEST_URI')));
+    }
+  }
+
   function forget($usernameandhost) {
-    $expire = time() + 365 * 24 * 60 * 60;
-    setcookie('lastusernamesandhosts', join_clean(',', array_diff(explode(',', $_COOKIE['lastusernamesandhosts']), array($usernameandhost))), $expire);
+    set_cookie('lastusernamesandhosts', join_clean(',', array_diff(explode(',', $_COOKIE['lastusernamesandhosts']), array($usernameandhost))));
   }
 
   function login($username, $host, $password, $language) {
@@ -843,9 +856,7 @@
     $_SESSION['host']     = $host;
     $_SESSION['password'] = $password;
     $_SESSION['language'] = $language;
-
-    $expire = time() + 365 * 24 * 60 * 60;
-    setcookie('lastusernamesandhosts', join_clean(',', array_diff(array_unique(array_merge(array("$username@$host"), array_diff(explode(',', $_COOKIE['lastusernamesandhosts']), array("$username@$host")))), array(''))), $expire);
+    set_cookie('lastusernamesandhosts', join_clean(',', array_diff(array_unique(array_merge(array("$username@$host"), array_diff(explode(',', $_COOKIE['lastusernamesandhosts']), array("$username@$host")))), array(''))));
   }
 
   function logout($error = null) {

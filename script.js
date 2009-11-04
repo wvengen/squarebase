@@ -319,12 +319,17 @@ jQuery.fn.ajaxify = function() {
       target = referringlist;
     }
     width1 = source.find('td:first').width();
-    width2 = target.width() - width1;
 
-    target.
+    source.
+    add(target).
     find('>tbody>tr>.filler').
       remove().
-    end().
+    end();
+
+    width2 = target.find('td:nth-child(1)').width() + target.find('td:nth-child(2)').width() - width1;
+
+    source.
+    add(target).
     find('th').
       width(width1 + width2).
     end().
@@ -348,7 +353,7 @@ ready(
     $('body.ajaxy .ajax').
     ajaxify();
 
-    $('body:not(.ajaxy) form').
+    $('form').
     enhance_form();
 
     $('body.formmetabasefordatabase').

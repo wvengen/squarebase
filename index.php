@@ -6,9 +6,9 @@
   session_save_path('session');
   session_start();
 
-  $_SESSION['scripty'] = !is_null(parameter('get', 'scripty')) ? parameter('get', 'scripty') == 'on' : (!is_null($_SESSION['scripty']) ? $_SESSION['scripty'] : true);
-  $_SESSION['ajaxy']   = !is_null(parameter('get', 'ajaxy'  )) ? parameter('get', 'ajaxy'  ) == 'on' : (!is_null($_SESSION['ajaxy'  ]) ? $_SESSION['ajaxy'  ] : true);
-  $_SESSION['logsy']   = !is_null(parameter('get', 'logsy'  )) ? parameter('get', 'logsy'  ) == 'on' : (!is_null($_SESSION['logsy'  ]) ? $_SESSION['logsy'  ] : false);
+  set_preference('scripty', 1);
+  set_preference('ajaxy', 1);
+  set_preference('logsy', 0);
 
   addtolist('logs', 'get', html('div', array('class'=>'arrayshow'), 'get: '.array_show(parameter('get'))));
 //addtolist('logs', 'cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
@@ -64,7 +64,7 @@
       $lastusernamesandhosts = $_COOKIE['lastusernamesandhosts'];
       if ($lastusernamesandhosts) {
         foreach (explode(',', $lastusernamesandhosts) as $thisusernameandhost)
-          $radios[] = html('input', array('type'=>'radio', 'class'=>join_clean(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'id'=>"lastusernameandhost:$thisusernameandhost", 'value'=>$thisusernameandhost, 'checked'=>$radios ? null : 'checked'), html('label', array('for'=>"lastusernameandhost:$thisusernameandhost"), $thisusernameandhost).internalreference(array('action'=>'forget_username_and_host', 'usernameandhost'=>$thisusernameandhost), 'forget', array('class'=>'forget')));
+          $radios[] = html('input', array('type'=>'radio', 'class'=>join_clean(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'id'=>"lastusernameandhost:$thisusernameandhost", 'value'=>$thisusernameandhost, 'checked'=>$radios ? null : 'checked')).html('label', array('for'=>"lastusernameandhost:$thisusernameandhost"), $thisusernameandhost).internalreference(array('action'=>'forget_username_and_host', 'usernameandhost'=>$thisusernameandhost), 'forget', array('class'=>'forget'));
       }
       if (!$radios)
         $usernameandhost = 'root@localhost';
@@ -79,9 +79,8 @@
             array_merge(
               $radios,
               array(
-                html('input', array('type'=>'radio', 'class'=>join_clean(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'value'=>''),
-                  $usernameandhost_input
-                )
+                html('input', array('type'=>'radio', 'class'=>join_clean(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'value'=>'')).
+                $usernameandhost_input
               )
             )
           )

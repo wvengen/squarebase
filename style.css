@@ -10,7 +10,7 @@ h1, h2 { display: block; }
 #content { clear: both; }
 .box { border: 0.1em solid #999; }
 .tableedit { padding-bottom: 0.5em; }
-.tablelist { margin-bottom: 1em; }
+.referringlist.tablelist { margin-bottom: 1em; }
 .referrer { font-size: 0.8em; margin-left: 0.5em; }
 
 a { color: #00e; }
