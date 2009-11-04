@@ -211,6 +211,8 @@
     if (!$connection) {
       if (!extension_loaded('mysql'))
         logout(_('mysql module not found'));
+      if (!$_SESSION['username'])
+        internalredirect(array('action'=>'login'));
       $connection = @mysql_connect($_SESSION['host'], $_SESSION['username'], $_SESSION['password']);
       if (mysql_errno())
         logout(sprintf(_('problem connecting to the databasemanager: %s'), mysql_error()));
@@ -390,7 +392,7 @@
               html('ul', array(),
                 html('li', array(),
                   array(
-                    $_SESSION['username'] ? "$_SESSION[username]@$_SESSION[host]" : 'not logged in',
+                    $_SESSION['username'] ? "$_SESSION[username]@$_SESSION[host]" : '&nbsp;',
                     $_SESSION['username'] ? internalreference(array('action'=>'logout'), 'logout') : '&nbsp;',
                     get_locale()
                   )
@@ -401,7 +403,7 @@
             html('h2', array(), $path ? $path : '&nbsp;')
           ).
           html('div', array('id'=>'content'),
-            ($error ?  html('div', array('id'=>'error'), $error) : '').
+            ($error ?  html('div', array('class'=>'error'), $error) : '').
             html('ol', array('id'=>'warnings'), join(getlist('warnings'))).
             $content.
             ($_COOKIE['logsy'] ? html('ol', array('class'=>'logs'), join(getlist('logs'))) : '')
@@ -855,7 +857,7 @@
     $_SESSION['username'] = $username;
     $_SESSION['host']     = $host;
     $_SESSION['password'] = $password;
-    $_SESSION['language'] = $language;
+    set_cookie('language', $language);
     set_cookie('lastusernamesandhosts', join_clean(',', array_diff(array_unique(array_merge(array("$username@$host"), array_diff(explode(',', $_COOKIE['lastusernamesandhosts']), array("$username@$host")))), array(''))));
   }
 

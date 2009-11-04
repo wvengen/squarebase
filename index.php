@@ -20,17 +20,17 @@
       array('@\.[a-z][a-z0-9\-]*@', '@_([a-z]+)@ie'       ),
       array(''                    , '"-".strtolower("$1")'),
       join_clean(',',
-        preg_match('/^([^\.]+)/', parameter('get', 'language'),     $matches) ? $matches[1].';q=4.0' : null,
-        preg_match('/^([^\.]+)/', $languagename,                    $matches) ? $matches[1].';q=3.0' : null,
-        preg_match('/^([^\.]+)/', parameter('session', 'language'), $matches) ? $matches[1].';q=2.0' : null,
+        preg_match('/^([^\.]+)/', parameter('get', 'language'),    $matches) ? $matches[1].';q=4.0' : null,
+        preg_match('/^([^\.]+)/', $languagename,                   $matches) ? $matches[1].';q=3.0' : null,
+        preg_match('/^([^\.]+)/', parameter('cookie', 'language'), $matches) ? $matches[1].';q=2.0' : null,
         parameter('server', 'HTTP_ACCEPT_LANGUAGE'),
         'en;q=0.0'
       )
     ),
     join_clean(',',
-      preg_match('/\.(.*?)$/', parameter('get', 'language'),     $matches) ? $matches[1].';q=4.0' : null,
-      preg_match('/\.(.*?)$/', $languagename,                    $matches) ? $matches[1].';q=3.0' : null,
-      preg_match('/\.(.*?)$/', parameter('session', 'language'), $matches) ? $matches[1].';q=2.0' : null,
+      preg_match('/\.(.*?)$/', parameter('get', 'language'),    $matches) ? $matches[1].';q=4.0' : null,
+      preg_match('/\.(.*?)$/', $languagename,                   $matches) ? $matches[1].';q=3.0' : null,
+      preg_match('/\.(.*?)$/', parameter('cookie', 'language'), $matches) ? $matches[1].';q=2.0' : null,
       parameter('server', 'HTTP_ACCEPT_CHARSET'),
       '*;q=0.0'
     )
@@ -54,10 +54,15 @@
   /********************************************************************************************/
 
   if ($action == 'login') {
-    if ($_SESSION['username'])
+    $usernameandhost = parameter('get', 'usernameandhost');
+    $next = parameter('get', 'next');
+
+    if ($usernameandhost == "$_SESSION[username]@$_SESSION[host]")
+      redirect(first_non_null($next, httpurl(array('action'=>'index'))));
+
+    if (is_null($usernameandhost) && $_SESSION['username'])
       internalredirect(array('action'=>'index'));
 
-    $usernameandhost = parameter('get', 'usernameandhost');
     $password = parameter('get', 'password');
     if (!$usernameandhost) {
       $radios = array();
@@ -89,6 +94,7 @@
 
     page($action, null,
       form(
+        ($next ? html('input', array('type'=>'hidden', 'name'=>'next', 'value'=>$next)) : '').
         html('table', array('class'=>'box'),
           html('tr', array(),
             array(
@@ -132,7 +138,7 @@
     $language = parameter('get', 'language');
 
     login($username, $host, $password, $language);
-    internalredirect(array('action'=>'index'));
+    redirect(first_non_null(parameter('get', 'next'), httpurl(array('action'=>'index'))));
   }
 
   /********************************************************************************************/
@@ -540,7 +546,7 @@
         $metabase_input = html('select', array('name'=>'metabasename'), join($metabase_options));
       }
       // prevent reading the language for a non-existent metabase in the next action
-      $metabase_input .= html('input', array('type'=>'hidden', 'name'=>'language', 'value'=>parameter('session', 'language')));
+      $metabase_input .= html('input', array('type'=>'hidden', 'name'=>'language', 'value'=>parameter('cookie', 'language')));
     }
 
     page($action, path(null, $databasename),
