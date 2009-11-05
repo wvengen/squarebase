@@ -918,7 +918,7 @@
     if (!$value)
       return $value;
     $matches = strptime($value, $from);
-    return strftime($to, mktime($matches['tm_hour'], $matches['tm_min'], $matches['tm_sec'], $matches['tm_mon'] + 1, $matches['tm_mday'], $matches['tm_year']));
+    return strftime($to, mktime($matches['tm_hour'], $matches['tm_min'], $matches['tm_sec'], $matches['tm_mon'] + 1, $matches['tm_mday'], 1900 + $matches['tm_year']));
   }
 
   function find_datetime_format($format, $dest) {
