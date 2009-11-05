@@ -441,8 +441,8 @@
           $plural           = $tablename;
           $singular         = singularize_noun($plural);
           $title            = preg_replace(
-                                array('@(?<=[a-z])([A-Z]+)@e', '@'._('id').'$@i', "@^(.*?)\b( *(?:$singular|$plural) *)\b(.*?)$@ie"       , '@(?<=[\w ])id$@i', '@ {2,}@', '@(^ +| +$)@'),
-                                array('strtolower(" $1")'    , ' '._('id')      ,'"$1" && "$3" ? "$1 $3" : ("$1" || "$3" ? "$1$3" : "$0")', ''                , ' '      , ''           ),
+                                array('@_@', '@(?<=[a-z])([A-Z]+)@e', "@^(.*?)\b( *(?:$singular|$plural) *)\b(.*?)$@ie"       , '@(?<=[\w ])'._('id').'$@i', '@ {2,}@', '@(^ +| +$)@'),
+                                array(' '  , 'strtolower(" $1")'    , '"$1" && "$3" ? "$1 $3" : ("$1" || "$3" ? "$1$3" : "$0")', ''                        , ' '      , ''           ),
                                 $fieldname
                               );
           $intablelist      = true;
