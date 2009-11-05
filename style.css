@@ -1,11 +1,14 @@
 * { margin: 0; border: 0; padding: 0; }
 body { margin: 0.5em; overflow-y: scroll; font-family: sans-serif !important; }
 
-#header { background-color: #ddd; margin-bottom: 0.5em; padding-left: 0.5em; }
+#header { background-color: #ddd; margin-bottom: 0.5em; padding: 0 0 0.4em 0.5em; }
 #id { float: right; }
 #id ul { float: left; padding: 0; margin: 0.2em 0.5em; }
 #id ul li { list-style-type: none; }
-h1, h2 { display: block; }
+h1 { display: block; }
+#path li { margin-right: 0; }
+#path li.notfirst:before { content: '\a0\a0\bb\a0\a0'; }
+#path li a { color: #000; font-weight: bold; }
 
 #content { clear: both; }
 .box { border: 0.1em solid #999; }

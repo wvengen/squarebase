@@ -834,7 +834,7 @@
     $referencedfromfieldname = parameter('get', 'referencedfromfieldname');
     $back                    = parameter('get', 'back');
 
-    page($action, path($metabasename, $databasename, $tablename, $tableid, $uniquefieldname, $uniquevalue),
+    page($action, path($metabasename, $databasename, $tablename, $uniquefieldname, $uniquevalue),
       edit_record($action == 'new_record' ? 'INSERT' : ($action == 'edit_record' ? 'UPDATE' : 'SELECT'), $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $referencedfromfieldname, $back ? $back : parameter('server', 'HTTP_REFERER'))
     );
   }

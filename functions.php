@@ -54,7 +54,7 @@
 
   function html($tag, $attributes = array(), $text = null) {
     if ($_COOKIE['logsy']) {
-      static $types = array( // in attributes: 0=mandatory, 1=possible
+        static $types = array( // in attributes: 0=required, 1=implied
         'html'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'head'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'title'   =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
@@ -76,11 +76,11 @@
         'td'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'colspan'=>1, 'rowspan'=>1)),
         'form'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'action'=>0, 'enctype'=>1, 'method'=>0)),
         'fieldset'=>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'optgroup'=>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'optgroup'=>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'label'=>0)),
         'label'   =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'for'=>1)),
         'select'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'name'=>0, 'readonly'=>1)),
         'option'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'value'=>1, 'selected'=>1)),
-        'textarea'=>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'name'=>0)),
+        'textarea'=>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'name'=>0, 'rows'=>0, 'cols'=>0, 'readonly'=>1)),
         'strong'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'link'    =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'href'=>0, 'type'=>0, 'rel'=>0)),
         'img'     =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'src'=>0, 'alt'=>0, 'title'=>1)),
@@ -400,7 +400,7 @@
               )
             ).
             html('h1', array('id'=>'title'), $title).
-            html('h2', array(), $path ? $path : '&nbsp;')
+            ($path ? $path : '&nbsp;')
           ).
           html('div', array('id'=>'content'),
             ($error ?  html('div', array('class'=>'error'), $error) : '').
@@ -446,11 +446,16 @@
     else
       $uniquepart = null;
     return
-      join_clean(' - ',
-        !is_null($metabasename) ? $metabasename : '&hellip;',
-        !is_null($databasename) ? ($metabasename ? internalreference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'back'=>parameter('server', 'REQUEST_URI')), $databasename) : $databasename) : null,
-        !is_null($tablename)    ? ($metabasename && $databasename && $uniquefieldname ? internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename), $tablename) : $tablename) : null,
-        $uniquepart
+      html('ul', array('id'=>'path', 'class'=>'compact'),
+        html('li', array(), internalreference(array('action'=>'index'), 'index')).
+        html('li', array('class'=>'notfirst'),
+          array(
+            !is_null($metabasename) ? internalreference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename) : '&hellip;',
+            !is_null($databasename) ? ($metabasename ? internalreference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'back'=>parameter('server', 'REQUEST_URI')), $databasename) : $databasename) : null,
+            !is_null($tablename)    ? ($metabasename && $databasename && $uniquefieldname ? internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename), $tablename) : $tablename) : null,
+            $uniquepart
+          )
+        )
       );
   }
 
