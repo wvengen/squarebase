@@ -374,6 +374,30 @@ ready(
       ).
     end().
 
+    find('.alternative .checkboxedit').
+      change(
+        function() {
+          var rijen = 
+            $(this).
+            closest('table').
+            find('tr.table-' + $(this).closest('td').find('.tablename').text());
+
+          rijen.
+          filter(':first').
+            find('td:not(:first), .pluralsingular').
+              css('visibility', $(this).attr('checked') ? 'hidden' : 'visible').
+            end().
+          end().
+          filter(':not(:first)').
+            find('td').
+              css('visibility', $(this).attr('checked') ? 'hidden' : 'visible').
+            end().
+          end();
+        }
+      ).
+      change().
+    end().
+
     find('.presentationname').
       change(
         function() {

@@ -84,7 +84,7 @@
         'strong'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'link'    =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'href'=>0, 'type'=>0, 'rel'=>0)),
         'img'     =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'src'=>0, 'alt'=>0, 'title'=>1)),
-        'input'   =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'name'=>0, 'value'=>1, 'type'=>0, 'readonly'=>1, 'checked'=>1))
+        'input'   =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'name'=>0, 'value'=>1, 'type'=>0, 'readonly'=>1, 'disabled'=>1, 'checked'=>1))
       );
       $type = $types[$tag];
       if ($type['empty'] === false) {

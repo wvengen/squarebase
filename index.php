@@ -476,10 +476,18 @@
           (count($unlikelyoptions)         ? html('optgroup', array('label'=>_('unlikely')), join(array_values($unlikelyoptions))) : '');
 
         $rowsfields[] =
-          html('tr', array('class'=>join_clean(' ', ($field['fieldnr'] + 1) % 2 ? 'rowodd' : 'roweven', 'list')),
+          html('tr', array('class'=>join_clean(' ', ($field['fieldnr'] + 1) % 2 ? 'rowodd' : 'roweven', 'list', "table-$tablename")),
             ($field['fieldnr'] == 0
             ? html('td', array('class'=>'top', 'rowspan'=>count($table['fields'])),
-                $tablename.
+                html('span', array('class'=>'tablename'), $tablename).
+                ($table['possible_view_for_table'] 
+                ? html('div', array('class'=>'alternative'),
+                    html('input', array('type'=>'hidden', 'name'=>"$tablename:possibleviewfortable", 'value'=>$table['possible_view_for_table'])).
+                    html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:viewfortable", 'id'=>"$tablename:viewfortable", 'checked'=>!$metabasename || $alternative_views[$tablename] ? 'checked' : null)).
+                    html('label', array('for'=>"$tablename:viewfortable"), sprintf(_('alternative for %s'), $table['possible_view_for_table']))
+                  )
+                : ''
+                ).
                 html('ol', array('class'=>'pluralsingular'),
                   html('li', array(),
                     array(
@@ -487,12 +495,6 @@
                       html('label', array('for'=>"$tablename:plural"), '2').html('input', array('type'=>'text', 'name'=>"$tablename:plural", 'id'=>"$tablename:plural", 'value'=>$plural))
                     )
                   )
-                ).
-                ($table['possible_view_for_table'] 
-                ? html('input', array('type'=>'hidden', 'name'=>"$tablename:possibleviewfortable", 'value'=>$table['possible_view_for_table'])).
-                  html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:viewfortable", 'id'=>"$tablename:viewfortable", 'checked'=>!$metabasename || $alternative_views[$tablename] ? 'checked' : null)).
-                  html('label', array('for'=>"$tablename:viewfortable", 'class'=>'alternative'), sprintf(_('alternative for %s'), $table['possible_view_for_table']))
-                : ''
                 )
               ).
               html('td', array('class'=>join_clean(' ', 'top', 'center'), 'rowspan'=>count($table['fields'])),
@@ -507,7 +509,7 @@
             html('td', array(), $fieldname).
             html('td', array(), html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))).
             html('td', array(), $field['column_type']).
-            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'name'=>"$tablename:$fieldname:_nullallowed", 'readonly'=>'readonly', 'checked'=>$nullallowed ? 'checked' : null)).html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))).
+            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'name'=>"$tablename:$fieldname:_nullallowed", 'readonly'=>'readonly', 'disabled'=>'disabled', 'checked'=>$nullallowed ? 'checked' : null)).html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))).
             html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions)).
             html('td', array(),
               ($fieldname == $table['primarykeyfieldname']
@@ -549,7 +551,7 @@
       $metabase_input .= html('input', array('type'=>'hidden', 'name'=>'language', 'value'=>parameter('cookie', 'language')));
     }
 
-    page($action, path(null, $databasename),
+    page($action, path($metabasename, $databasename),
       $tableswithoutsinglevaluedprimarykey
       ? html('p', array(),
           html('span', array('class'=>'error'), sprintf(_('no single valued primary key for table(s) %s'), join(', ', $tableswithoutsinglevaluedprimarykey)))
