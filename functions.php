@@ -437,8 +437,9 @@
   function path($metabasename, $databasename = null, $tablename = null, $uniquefieldname = null, $uniquevalue = null) {
     if (!is_null($uniquevalue)) {
       if ($metabasename && $databasename && $tablename && $uniquefieldname) {
-        $descriptor = descriptor($metabasename, $databasename, $tablename, $tablename);
-        $uniquepart = query1field('data', "SELECT $descriptor[select] FROM `<databasename>`.`<tablename>` ".join(' ', $descriptor['joins'])."WHERE <uniquefieldname> = <uniquevalue>", array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+        $viewname = table_or_view($metabasename, $databasename, $tablename);
+        $descriptor = descriptor($metabasename, $databasename, $tablename, $viewname);
+        $uniquepart = query1field('data', "SELECT $descriptor[select] FROM `<databasename>`.`<viewname>` ".join(' ', $descriptor['joins'])."WHERE <uniquefieldname> = <uniquevalue>", array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
       }
       else
         $uniquepart = $uniquevalue;
