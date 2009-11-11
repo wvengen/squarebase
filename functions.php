@@ -439,7 +439,7 @@
       if ($metabasename && $databasename && $tablename && $uniquefieldname) {
         $viewname = table_or_view($metabasename, $databasename, $tablename);
         $descriptor = descriptor($metabasename, $databasename, $tablename, $viewname);
-        $uniquepart = query1field('data', "SELECT $descriptor[select] FROM `<databasename>`.`<viewname>` ".join(' ', $descriptor['joins'])."WHERE <uniquefieldname> = <uniquevalue>", array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+        $uniquepart = query1field('data', "SELECT $descriptor[select] FROM `<databasename>`.`<viewname>` ".join(' ', $descriptor['joins'])."WHERE `<viewname>`.<uniquefieldname> = <uniquevalue>", array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
       }
       else
         $uniquepart = $uniquevalue;
