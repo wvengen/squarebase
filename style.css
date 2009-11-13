@@ -6,9 +6,9 @@ body { margin: 0.5em; overflow-y: scroll; font-family: sans-serif !important; }
 #id ul { float: left; padding: 0; margin: 0.2em 0.5em; }
 #id ul li { list-style-type: none; }
 h1 { display: block; }
+#path, #path li a { color: #000; font-weight: bold; }
 #path li { margin-right: 0; }
 #path li.notfirst:before { content: '\a0\a0\bb\a0\a0'; }
-#path li a { color: #000; font-weight: bold; }
 
 #content { clear: both; }
 .box { border: 0.1em solid #999; }
