@@ -4,7 +4,7 @@ NLDIR=./locale/nl_NL/LC_MESSAGES/
 none:
 
 install:
-	sudo chown :www-data session
+	sudo chown :www-data session uploads
 	chmod g+w session
 	chmod a+x $(PHPFILES)
 

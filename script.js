@@ -59,11 +59,10 @@ jQuery.fn.formvalue = function() {
 }
 
 jQuery.fn.enhance_form = function() {
-  if (!$(this).length)
+  if (!$(this).length || $(this).hasClass('enhancedform'))
     return this;
 
   $(this).
-  filter(':not(.enhancedform)').
   addClass('enhancedform').
 
   find(':input').

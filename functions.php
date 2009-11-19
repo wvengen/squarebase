@@ -156,21 +156,26 @@
     redirect(httpurl($parameters));
   }
 
+  function call_function($querystring) {
+    if (!$querystring)
+      return;
+    parse_str($querystring, $parameters);
+    addtolist('logs', 'call', 'call_function: '.html('div', array('class'=>'arrayshow'), array_show($parameters)));
+    $definitions = join(read_file($parameters['presentationname'] ? "presentation/$parameters[presentationname].php" : 'functions.php'));
+    $definition = preg_match1("@\n *function +$parameters[functionname]\((.*?)\)@", $definitions);
+
+    $function_parameter_list = array();
+    if (preg_match_all('@(?:^|,) *\$(\w+)@', $definition, $function_parameter_names, PREG_SET_ORDER))
+      foreach ($function_parameter_names as $function_parameter_name)
+        $function_parameter_list[] = $parameters[$function_parameter_name[1]];
+
+    if ($parameters['presentationname'])
+      include_once("presentation/$parameters[presentationname].php");
+    page($parameters['functionname'], null, call_user_func_array($parameters['functionname'], $function_parameter_list));
+  }
+
   function back() {
-    $ajax = parameter('get', 'ajax');
-    if ($ajax) {
-      parse_str($ajax, $parameters);
-      addtolist('logs', 'ajax', 'ajax: '.html('div', array('class'=>'arrayshow'), array_show($parameters)));
-      switch ($parameters['function']) {
-        case 'list_table':
-          $output = list_table($parameters['metabasename'], $parameters['databasename'], $parameters['tablename'], $parameters['tablenamesingular'], $parameters['limit'], $parameters['offset'], $parameters['uniquefieldname'], $parameters['uniquevalue'], $parameters['orderfieldname'], $parameters['orderasc'], $parameters['foreignfieldname'], $parameters['foreignvalue'], $parameters['parenttableid'], $parameters['interactive']);
-          break;
-        case 'ajax_lookup':
-          $output = ajax_lookup($parameters['metabasename'], $parameters['databasename'], $parameters['fieldname'], $parameters['value'], $parameters['presentationname'], $parameters['foreigntablename'], $parameters['foreigntablenamesingular'], $parameters['foreignuniquefieldname'], $parameters['nullallowed'], $parameters['defaultvalue'], $parameters['readonly']);
-          break;
-      }
-      page($parameters['function'], null, $output);
-    }
+    call_function(parameter('get', 'ajax'));
     redirect(first_non_null(parameter('get', 'back'), parameter('server', 'HTTP_REFERER')));
   }
 
@@ -451,7 +456,7 @@
         html('li', array(), internalreference(array('action'=>'index'), 'index')).
         html('li', array('class'=>'notfirst'),
           array(
-            !is_null($metabasename) ? (has_grant('INSERT', $metabasename) ? internalreference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename) : $metabasename) : '&hellip;',
+            !is_null($metabasename) ? (has_grant('DROP', $metabasename) ? internalreference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename) : $metabasename) : '&hellip;',
             !is_null($databasename) ? ($metabasename ? internalreference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'back'=>parameter('server', 'REQUEST_URI')), $databasename) : $databasename) : null,
             !is_null($tablename)    ? ($metabasename && $databasename && $uniquefieldname ? internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname), $tablename) : $tablename) : null,
             $uniquepart
@@ -590,7 +595,7 @@
         );
 
     return
-      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'orderasc'=>$orderasc ? 'on' : '', 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
+      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('action'=>'call_function', 'functionname'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'orderasc'=>$orderasc ? 'on' : '', 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
         (count($rows) > 1
         ? form(
             html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).

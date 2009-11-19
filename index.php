@@ -875,7 +875,7 @@
     $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, $action == 'update_record' ? 'UPDATE' : 'INSERT');
     while ($field = mysql_fetch_assoc($fields)) {
       if ($field['inedit'])
-        $fieldnamesandvalues[$field['fieldname']] = call_user_func("formvalue_$field[presentationname]", $field);
+        $fieldnamesandvalues[$field['fieldname']] = call_user_func("formvalue_$field[presentationname]", array_merge($field, array('databasename'=>$databasename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)));
     }
 
     $uniquevalue = insertorupdate($databasename, $viewname, $fieldnamesandvalues, $uniquefieldname, $uniquevalue);
@@ -899,23 +899,8 @@
 
   /********************************************************************************************/
 
-  if ($action == 'get_image') {
-    $metabasename    = parameter('get', 'metabasename');
-    $databasename    = parameter('get', 'databasename');
-    $tablename       = parameter('get', 'tablename');
-    $uniquefieldname = parameter('get', 'uniquefieldname');
-    $uniquevalue     = parameter('get', 'uniquevalue');
-    $fieldname       = parameter('get', 'fieldname');
-
-    $image = query1field('data', 'SELECT <fieldname> FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('fieldname'=>$fieldname, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
-
-//  As of PHP 5.3, Fileinfo will be shipped with the main distribution and enabled by default.
-//  $finfo = new finfo(FILEINFO_MIME);
-//  $mimedata = finfo_file($finfo, $image);
-//  print_r($mimedata);
-
-    header('Content-type: image/jpeg');
-    print $image;
+  if ($action == 'call_function') {
+    call_function(parameter('server', 'REQUEST_URI'));
   }
 
   /********************************************************************************************/

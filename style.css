@@ -62,7 +62,6 @@ tr.roweven.closing td, tr.roweven.closing td a { background-color: #fbb !importa
 .ajaxcontainer { margin: 0 0.5em; }
 .ajaxproblem { border-color: #c00 !important; }
 .ajaxincompatible { background-color: #f90 !important; }
-.ajaxwarning { display: none; color: #c00; }
 
 .column { white-space: nowrap; }
 .thisrecord { display: none; }
