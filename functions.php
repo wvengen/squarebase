@@ -474,7 +474,7 @@
     $header = $quickadd = array();
     $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, 'SELECT', true);
     while ($field = mysql_fetch_assoc($fields)) {
-      $can_quickadd = $can_quickadd && ($field['fieldid'] == $field['uniquefieldid'] || $field['nullallowed'] || $field['defaultvalue'] || ($field['inlist'] && $field['privilege_insert']));
+      $can_quickadd = $can_quickadd && ($field['fieldid'] == $field['uniquefieldid'] || $field['nullallowed'] || $field['defaultvalue'] || ($field['inlist'] && $field['privilege_insert'])) && call_user_func("is_quickaddable_$field[presentationname]");
 
       if ($field['inlist']) {
         $selectnames[] = "$viewname.$field[fieldname] AS ${tablename}_$field[fieldname]";

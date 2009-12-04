@@ -8,6 +8,7 @@
   function in_edit_autoincrement($field) { return 1; }
 
   function is_sortable_autoincrement() { return false; }
+  function is_quickaddable_autoincrement() { return true; }
 
   function formfield_autoincrement($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', 'readonly'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>'readonly'));

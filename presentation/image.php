@@ -8,6 +8,7 @@
   function in_edit_image($field) { return 1; }
 
   function is_sortable_image() { return false; }
+  function is_quickaddable_image() { return false; }
 
   function ajax_image($metabasename, $databasename, $tablename, $fieldname, $value, $presentationname, $uniquefieldname, $uniquevalue, $nullallowed, $defaultvalue, $readonly, $extra, $newname = null) {
     $field = array('tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'fieldname'=>$fieldname);
@@ -76,7 +77,7 @@
   }
 
   function list_image($metabasename, $databasename, $field, $value) {
-    return $value ? html('img', array('src'=>internalurl(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'get_image', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$field['tablename'], 'uniquefieldname'=>$field['uniquefieldname'], 'uniquevalue'=>$field['uniquevalue'], 'fieldname'=>$field['fieldname'])), 'alt'=>_('uploaded image'), 'class'=>'listimage')) : '';
+    return $value ? html('img', array('src'=>internalurl(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'get_image', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$field['tablename'], 'uniquefieldname'=>$field['uniquefieldname'], 'uniquevalue'=>$field['uniquevalue'], 'fieldname'=>$field['fieldname'], 'forcereload'=>time())), 'alt'=>_('uploaded image'), 'class'=>'listimage')) : '';
   }
   
   function get_image() {

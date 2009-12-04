@@ -8,6 +8,7 @@
   function in_edit_date($field) { return 1; }
 
   function is_sortable_date() { return true; }
+  function is_quickaddable_date() { return true; }
 
   function formfield_date($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return 
@@ -68,7 +69,7 @@
 
   function jquery_enhance_form_date() {
     return
-      "getScripts(['ui.core.js', 'ui.datepicker.js'], '.date:not(.readonly)',\n".
+      "getScripts(['jquery.ui.core.js', 'jquery.ui.datepicker.js'], '.date:not(.readonly)',\n".
       "  function() {\n".
       "    $(this).\n".
       "    datepicker({ changeMonth: true, changeYear: true, duration: '', gotoCurrent: true, prevText: '&larr;', nextText: '&rarr;', showOn: 'button', beforeShow: function(input, inst) { $(inst.dpDiv).removeClass('edit list').addClass($(input).hasClass('edit') ? 'edit' : 'list'); }, dateFormat: '".find_datetime_format('%x', 'jquery')."' });\n".

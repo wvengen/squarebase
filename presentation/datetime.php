@@ -8,6 +8,7 @@
   function in_edit_datetime($field) { return 1; }
 
   function is_sortable_datetime() { return true; }
+  function is_quickaddable_datetime() { return true; }
 
   function formfield_datetime($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return 

@@ -8,6 +8,7 @@
   function in_edit_text($field) { return 1; }
 
   function is_sortable_text() { return true; }
+  function is_quickaddable_text() { return false; }
 
   function formfield_text($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return html('textarea', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'rows'=>10, 'cols'=>80, 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), preg_replace('@<(.*?)>@', '&lt;$1&gt;', $value));

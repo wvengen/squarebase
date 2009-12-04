@@ -41,6 +41,7 @@
   function in_edit_lookup($field) { return 1; }
 
   function is_sortable_lookup() { return true; }
+  function is_quickaddable_lookup() { return true; }
 
   function ajax_lookup($metabasename, $databasename, $fieldname, $value, $presentationname, $foreigntablename, $foreigntablenamesingular, $foreignuniquefieldname, $nullallowed, $defaultvalue, $readonly, $extra = true) {
     if (!$foreigntablename)

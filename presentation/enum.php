@@ -11,6 +11,7 @@
   function in_edit_enum($field) { return 1; }
 
   function is_sortable_enum() { return true; }
+  function is_quickaddable_enum() { return true; }
 
   function formfield_enum($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     $options = array();

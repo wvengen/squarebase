@@ -17,6 +17,7 @@
   function in_edit_url($field) { return 1; }
 
   function is_sortable_url() { return false; }
+  function is_quickaddable_url() { return true; }
 
   function formfield_url($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return

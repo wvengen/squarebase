@@ -12,6 +12,7 @@
   function in_edit_varchar($field) { return 1; }
 
   function is_sortable_varchar() { return true; }
+  function is_quickaddable_varchar() { return true; }
 
   function formfield_varchar($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null));

@@ -19,6 +19,7 @@
   function in_edit_textwithpreview($field) { return 1; }
 
   function is_sortable_textwithpreview() { return true; }
+  function is_quickaddable_textwithpreview() { return false; }
 
   function formfield_textwithpreview($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return formfield_text($metabasename, $databasename, $field, $value, $readonly, $extra);

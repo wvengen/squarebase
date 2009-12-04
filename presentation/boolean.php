@@ -11,6 +11,7 @@
   function in_edit_boolean($field) { return 1; }
 
   function is_sortable_boolean() { return true; }
+  function is_quickaddable_boolean() { return true; }
 
   function formfield_boolean($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return html('input', array('type'=>'checkbox', 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'readonly'=>$readonly ? 'readonly' : null, 'checked'=>$value ? 'checked' : null));
