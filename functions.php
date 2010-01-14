@@ -161,7 +161,7 @@
       return;
     parse_str($querystring, $parameters);
     addtolist('logs', 'call', 'call_function: '.html('div', array('class'=>'arrayshow'), array_show($parameters)));
-    $definitions = join(read_file($parameters['presentationname'] ? "presentation/$parameters[presentationname].php" : 'functions.php'));
+    $definitions = read_file($parameters['presentationname'] ? "presentation/$parameters[presentationname].php" : 'functions.php');
     $definition = preg_match1("@\n *function +$parameters[functionname]\((.*?)\)@", $definitions);
 
     $function_parameter_list = array();
@@ -474,6 +474,7 @@
     $header = $quickadd = array();
     $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, 'SELECT', true);
     while ($field = mysql_fetch_assoc($fields)) {
+      include_once("presentation/$field[presentationname].php");
       $can_quickadd = $can_quickadd && ($field['fieldid'] == $field['uniquefieldid'] || $field['nullallowed'] || $field['defaultvalue'] || ($field['inlist'] && $field['privilege_insert'])) && call_user_func("is_quickaddable_$field[presentationname]");
 
       if ($field['inlist']) {
@@ -493,7 +494,6 @@
         if (!$orderfieldname)
           $orderfieldname = $field['fieldname'];
 
-        include_once("presentation/$field[presentationname].php");
         $header[] =
           html('th', array('class'=>join_clean(' ', $field['presentationname'], !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null)),
             !is_null($foreignvalue) || !call_user_func("is_sortable_$field[presentationname]")
@@ -896,26 +896,32 @@
 
   function read_file($filename, $flags = null) {
     $content = @file($filename, $flags);
-    return $content === false ? array() : $content;
+    return $content === false ? '' : join($content);
   }
 
-  function augment_file($filename, $content_type) {
-    $content = join(read_file($filename));
+  function augment_file($filename, $extension, $content_type) {
+    $content = read_file("$filename.$extension");
 
-    if (preg_match_all('@// *(\w+)_presentation\b@', $content, $function_prefixes, PREG_SET_ORDER)) {
+    if (preg_match_all('@// *(\w+)_\* *\n@', $content, $function_prefixes, PREG_SET_ORDER)) {
       $presentationnames = get_presentationnames();
       foreach ($function_prefixes as $function_prefix) {
         $extra = array();
         foreach ($presentationnames as $presentationname)
-          $extra[] = @call_user_func("$function_prefix[1]_$presentationname");
+          $extra[] =
+            "//$function_prefix[1]_$presentationname\n".
+            @call_user_func("$function_prefix[1]_$presentationname");
 
-        $content = preg_replace("@( *)// *$function_prefix[1]_presentation\b.*\n@e", '"$1".preg_replace("@\n(?=.)@", "\n$1", join($extra))', $content);
+        $metabasename = parameter('get', 'metabasename');
+        if ($metabasename) {
+          @include_once("metabase/$metabasename.php");
+          $extra[] =
+            "//$function_prefix[1]_$metabasename\n".
+            @call_user_func("$function_prefix[1]_$metabasename");
+        }
+
+        $content = preg_replace("@( *)// *$function_prefix[1]_\* *\n@e", '"$1".preg_replace("@\n(?=.)@", "\n$1", join($extra))', $content);
       }
     }
-
-    $metabasename = parameter('get', 'metabasename');
-    if ($metabasename)
-      $content .= join(read_file("metabase/$metabasename.css"));
 
     http_response("Content-Type: $content_type", $content);
   }
