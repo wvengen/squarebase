@@ -378,7 +378,7 @@
           ($_COOKIE['scripty']
           ? html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>'jquery.requirescript.js'), '').
-            html('script', array('type'=>'text/javascript', 'src'=>internalurl(array('action'=>'script'))), '')
+            html('script', array('type'=>'text/javascript', 'src'=>internalurl(array('action'=>'script', 'metabasename'=>parameter('get', 'metabasename')))), '')
           : ''
           )
         ).
