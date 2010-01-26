@@ -546,8 +546,8 @@
         html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array(), 
             $can_update 
-            ? internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('edit'))
-            : internalreference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('show'))
+            ? internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('edit'), array('class'=>'editrecord'))
+            : internalreference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('show'), array('class'=>'showrecord'))
           ).
           join($columns)
         );
@@ -902,24 +902,24 @@
   function augment_file($filename, $extension, $content_type) {
     $content = read_file("$filename.$extension");
 
-    if (preg_match_all('@// *(\w+)_\* *\n@', $content, $function_prefixes, PREG_SET_ORDER)) {
+    if (preg_match_all('@/\* *(\w+)_\* *\*/ *\n@', $content, $function_prefixes, PREG_SET_ORDER)) {
       $presentationnames = get_presentationnames();
       foreach ($function_prefixes as $function_prefix) {
         $extra = array();
         foreach ($presentationnames as $presentationname)
           $extra[] =
-            "//$function_prefix[1]_$presentationname\n".
+            "/* $function_prefix[1]_$presentationname */\n".
             @call_user_func("$function_prefix[1]_$presentationname");
 
         $metabasename = parameter('get', 'metabasename');
         if ($metabasename) {
           @include_once("metabase/$metabasename.php");
           $extra[] =
-            "//$function_prefix[1]_$metabasename\n".
+            "/* $function_prefix[1]_$metabasename */\n".
             @call_user_func("$function_prefix[1]_$metabasename");
         }
 
-        $content = preg_replace("@( *)// *$function_prefix[1]_\* *\n@e", '"$1".preg_replace("@\n(?=.)@", "\n$1", join($extra))', $content);
+        $content = preg_replace("@( *)/\* *$function_prefix[1]_\* *\*/ *\n@e", '"$1".preg_replace("@\n(?=.)@", "\n$1", join($extra))', $content);
       }
     }
 

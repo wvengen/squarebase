@@ -85,7 +85,7 @@ jQuery.fn.enhance_form = function() {
 
   check_form().
 
-  //jquery_enhance_form_*
+  /* jquery_enhance_form_* */
 
   find(':radio+:text').
     focus(
@@ -415,6 +415,6 @@ ready(
       }
     );
 
-    //jquery_document_ready_*
+    /* jquery_document_ready_* */
   }
 );
