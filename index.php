@@ -874,8 +874,11 @@
     $fieldnamesandvalues = array();
     $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, $action == 'update_record' ? 'UPDATE' : 'INSERT');
     while ($field = mysql_fetch_assoc($fields)) {
-      if ($field['inedit'])
-        $fieldnamesandvalues[$field['fieldname']] = call_user_func("formvalue_$field[presentationname]", array_merge($field, array('databasename'=>$databasename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)));
+      if ($field['inedit']) {
+        $value = call_user_func("formvalue_$field[presentationname]", array_merge($field, array('databasename'=>$databasename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)));
+        if ($action == 'update_record' || !is_null($value))
+          $fieldnamesandvalues[$field['fieldname']] = $value;
+      }
     }
 
     $uniquevalue = insertorupdate($databasename, $viewname, $fieldnamesandvalues, $uniquefieldname, $uniquevalue);
