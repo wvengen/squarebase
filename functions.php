@@ -180,7 +180,7 @@
       return;
     parse_str($querystring, $parameters);
     addtolist('logs', 'call', 'call_function: '.html('div', array('class'=>'arrayshow'), array_show($parameters)));
-    $definitions = read_file($parameters['presentationname'] ? "presentation/$parameters[presentationname].php" : 'functions.php');
+    $definitions = join(read_file($parameters['presentationname'] ? "presentation/$parameters[presentationname].php" : 'functions.php'));
     $definition = preg_match1("@\n *function +$parameters[functionname]\((.*?)\)@", $definitions);
 
     $function_parameter_list = array();
@@ -915,11 +915,11 @@
 
   function read_file($filename, $flags = null) {
     $content = @file($filename, $flags);
-    return $content === false ? '' : join($content);
+    return $content === false ? array() : $content;
   }
 
   function augment_file($filename, $extension, $content_type) {
-    $content = read_file("$filename.$extension");
+    $content = join(read_file("$filename.$extension"));
 
     if (preg_match_all('@/\* *(\w+)_\* *\*/ *\n@', $content, $function_prefixes, PREG_SET_ORDER)) {
       $presentationnames = get_presentationnames();
