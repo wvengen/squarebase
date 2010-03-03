@@ -20,6 +20,8 @@
 
   include('functions.php');
 
+  umask(0177); // => rw-.---.---
+
   ini_set('session.use_only_cookies', true);
   session_set_cookie_params(7 * 24 * 60 * 60);
   session_save_path('session');
@@ -29,16 +31,23 @@
   set_preference('ajaxy', 1);
   set_preference('logsy', 0);
 
-  addtolist('logs', 'get', html('div', array('class'=>'arrayshow'), 'get: '.array_show(parameter('get'))));
-//addtolist('logs', 'cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
+  error_reporting($_COOKIE['logsy'] ? E_ALL : 0);
 
+  if ($_COOKIE['logsy']) {
+    if ($_GET && $_POST)
+      error(_('both get and post parameters'));
+    $parametersource = $_POST ? 'post' : 'get';
+    add_log($parametersource, $parametersource.': '.html('div', array('class'=>'arrayshow'), array_show(parameter($parametersource))));
+    add_log('cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
+  }
+ 
   $languagename = !parameter('get', 'language') && parameter('get', 'metabasename') ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;
 
   set_best_locale(
     preg_replace(
       array('@\.[a-z][a-z0-9\-]*@', '@_([a-z]+)@ie'       ),
       array(''                    , '"-".strtolower("$1")'),
-      join_clean(',',
+      join_non_null(',',
         preg_match('/^([^\.]+)/', parameter('get', 'language'),    $matches) ? $matches[1].';q=4.0' : null,
         preg_match('/^([^\.]+)/', $languagename,                   $matches) ? $matches[1].';q=3.0' : null,
         preg_match('/^([^\.]+)/', parameter('cookie', 'language'), $matches) ? $matches[1].';q=2.0' : null,
@@ -46,7 +55,7 @@
         'en;q=0.0'
       )
     ),
-    join_clean(',',
+    join_non_null(',',
       preg_match('/\.(.*?)$/', parameter('get', 'language'),    $matches) ? $matches[1].';q=4.0' : null,
       preg_match('/\.(.*?)$/', $languagename,                   $matches) ? $matches[1].';q=3.0' : null,
       preg_match('/\.(.*?)$/', parameter('cookie', 'language'), $matches) ? $matches[1].';q=2.0' : null,
@@ -58,7 +67,7 @@
   bindtextdomain('messages', './locale');
   textdomain('messages');
 
-  $action = first_non_null(parameter('get', 'action'), 'login');
+  $action = first_non_null(parameter('get_or_post', 'action'), 'login');
 
   /********************************************************************************************/
 
@@ -76,11 +85,11 @@
     $usernameandhost = parameter('get', 'usernameandhost');
     $next = parameter('get', 'next');
 
-    if ($usernameandhost == "$_SESSION[username]@$_SESSION[host]")
-      redirect(first_non_null($next, httpurl(array('action'=>'index'))));
+    if (isset($_SESSION['username']) && isset($_SESSION['host']) && $usernameandhost == "$_SESSION[username]@$_SESSION[host]")
+      internal_redirect(first_non_null(http_parse_query($next), array('action'=>'index')));
 
-    if (is_null($usernameandhost) && $_SESSION['username'])
-      internalredirect(array('action'=>'index'));
+    if (is_null($usernameandhost) && isset($_SESSION['username']))
+      internal_redirect(array('action'=>'index'));
 
     $password = parameter('get', 'password');
     if (!$usernameandhost) {
@@ -88,7 +97,7 @@
       $lastusernamesandhosts = $_COOKIE['lastusernamesandhosts'];
       if ($lastusernamesandhosts) {
         foreach (explode(',', $lastusernamesandhosts) as $thisusernameandhost)
-          $radios[] = html('input', array('type'=>'radio', 'class'=>join_clean(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'id'=>"lastusernameandhost:$thisusernameandhost", 'value'=>$thisusernameandhost, 'checked'=>$radios ? null : 'checked')).html('label', array('for'=>"lastusernameandhost:$thisusernameandhost"), $thisusernameandhost).internalreference(array('action'=>'forget_username_and_host', 'usernameandhost'=>$thisusernameandhost), 'forget', array('class'=>'forget'));
+          $radios[] = html('input', array('type'=>'radio', 'class'=>join_non_null(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'id'=>"lastusernameandhost:$thisusernameandhost", 'value'=>$thisusernameandhost, 'checked'=>$radios ? null : 'checked')).html('label', array('for'=>"lastusernameandhost:$thisusernameandhost"), $thisusernameandhost).internal_reference(array('action'=>'forget_username_and_host', 'usernameandhost'=>$thisusernameandhost), 'forget', array('class'=>'forget'));
       }
       if (!$radios)
         $usernameandhost = 'root@localhost';
@@ -97,13 +106,13 @@
     $usernameandhost_input = html('input', array('type'=>'text', 'class'=>'skipfirstfocus', 'id'=>'usernameandhost', 'name'=>'usernameandhost', 'value'=>$usernameandhost));
 
     if ($radios) {
-      $usernameandhost_input = 
+      $usernameandhost_input =
         html('ul', array('class'=>'minimal'),
           html('li', array(),
             array_merge(
               $radios,
               array(
-                html('input', array('type'=>'radio', 'class'=>join_clean(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'value'=>'')).
+                html('input', array('type'=>'radio', 'class'=>join_non_null(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'value'=>'')).
                 $usernameandhost_input
               )
             )
@@ -134,7 +143,7 @@
     $usernameandhost = parameter('get', 'usernameandhost');
 
     forget($usernameandhost);
-    internalredirect(array('action'=>'login'));
+    internal_redirect(array('action'=>'login'));
   }
 
   /********************************************************************************************/
@@ -152,12 +161,14 @@
       $host     = 'localhost';
     }
     else
-      internalredirect(array('action'=>'login', 'error'=>_('no username@host given')));
+      internal_redirect(array('action'=>'login', 'error'=>_('no username@host given')));
     $password = parameter('get', 'password');
     $language = parameter('get', 'language');
 
     login($username, $host, $password, $language);
-    redirect(first_non_null(parameter('get', 'next'), httpurl(array('action'=>'index'))));
+
+    $next = parameter('get', 'next');
+    internal_redirect(first_non_null(http_parse_query($next), array('action'=>'index')));
   }
 
   /********************************************************************************************/
@@ -179,15 +190,15 @@
         $link = array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename);
         $links[] = $link;
         $rows[] =
-          html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
+          html('tr', array('class'=>join_non_null(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
             html('td', array(),
-              internalreference($link, $databasename)
+              internal_reference($link, $databasename)
             ).
             html('td', array(),
               has_grant('DROP', $metabasename)
               ? array(
-                  internalreference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename),
-                  internalreference(array('action'=>'drop_database', 'databasename'=>$metabasename), 'drop', array('class'=>'drop'))
+                  internal_reference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename),
+                  internal_reference(array('action'=>'drop_database', 'databasename'=>$metabasename), 'drop', array('class'=>'drop'))
                 )
               : array('', '')
             )
@@ -198,14 +209,14 @@
     $can_create = has_grant('CREATE', '?');
 
     if (count($links) == 0 && $can_create)
-      internalredirect(array('action'=>'new_metabase_from_database'));
+      internal_redirect(array('action'=>'new_metabase_from_database'));
 
     if (count($links) == 1 && !$can_create)
-      internalredirect($links[0]);
+      internal_redirect($links[0]);
 
     page($action, null,
       html('table', array('class'=>'box'), join($rows)).
-      ($can_create ? internalreference(array('action'=>'new_metabase_from_database'), _('new metabase from database')) : '')
+      ($can_create ? internal_reference(array('action'=>'new_metabase_from_database'), _('new metabase from database')) : '')
     );
   }
 
@@ -220,8 +231,8 @@
       $dbs = databasenames($databasename);
       if ($dbs) {
         foreach ($dbs as $db)
-          $dblist[] = internalreference(array('action'=>'form_metabase_for_database', 'databasename'=>$db, 'metabasename'=>$databasename), $db);
-        $dblist[] = internalreference(array('action'=>'form_database_for_metabase', 'metabasename'=>$databasename), _('(add database)'));
+          $dblist[] = internal_reference(array('action'=>'form_metabase_for_database', 'databasename'=>$db, 'metabasename'=>$databasename), $db);
+        $dblist[] = internal_reference(array('action'=>'form_database_for_metabase', 'metabasename'=>$databasename), _('(add database)'));
         $contents = html('ul', array('class'=>'compact'), html('li', array(), $dblist));
       }
       else {
@@ -240,12 +251,12 @@
         }
       }
       $rows[] =
-        html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
+        html('tr', array('class'=>join_non_null(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array(),
             array(
-              internalreference(array('action'=>'language_for_database', 'databasename'=>$databasename), $databasename),
+              internal_reference(array('action'=>'language_for_database', 'databasename'=>$databasename), $databasename),
               $contents,
-              has_grant('DROP', $databasename) ? internalreference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop', array('class'=>'drop')) : ''
+              has_grant('DROP', $databasename) ? internal_reference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop', array('class'=>'drop')) : ''
             )
           )
         );
@@ -261,13 +272,14 @@
 
   if ($action == 'drop_database') {
     $databasename = parameter('get', 'databasename');
-    page($action, path(null, $databasename),
+    page($action, breadcrumbs(null, $databasename),
       form(
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>parameter('server', 'HTTP_REFERER'))).
         html('p', array(), sprintf(_('Drop database %s?'), html('strong', array(), $databasename))).
         html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'drop_database_really', 'class'=>'mainsubmit')).
-        internalreference(parameter('server', 'HTTP_REFERER'), 'cancel', array('class'=>'cancel'))
+        internal_reference(http_parse_query(parameter('server', 'HTTP_REFERER')), 'cancel', array('class'=>'cancel')),
+        'post'
       )
     );
   }
@@ -275,7 +287,7 @@
   /********************************************************************************************/
 
   if ($action == 'drop_database_really') {
-    $databasename = parameter('get', 'databasename');
+    $databasename = parameter('post', 'databasename');
     query('root', 'DROP DATABASE `<databasename>`', array('databasename'=>$databasename));
     back();
   }
@@ -294,7 +306,7 @@
       $tables = join(', ', $tablelist);
     }
 
-    page($action, path(null, $databasename),
+    page($action, breadcrumbs(null, $databasename),
       form(
         html('table', array('class'=>'box'),
           html('tr', array(),
@@ -495,11 +507,11 @@
           (count($unlikelyoptions)         ? html('optgroup', array('label'=>_('unlikely')), join(array_values($unlikelyoptions))) : '');
 
         $rowsfields[] =
-          html('tr', array('class'=>join_clean(' ', ($field['fieldnr'] + 1) % 2 ? 'rowodd' : 'roweven', 'list', "table-$tablename")),
+          html('tr', array('class'=>join_non_null(' ', ($field['fieldnr'] + 1) % 2 ? 'rowodd' : 'roweven', 'list', "table-$tablename")),
             ($field['fieldnr'] == 0
             ? html('td', array('class'=>'top', 'rowspan'=>count($table['fields'])),
                 html('span', array('class'=>'tablename'), $tablename).
-                ($table['possible_view_for_table'] 
+                ($table['possible_view_for_table']
                 ? html('div', array('class'=>'alternative'),
                     html('input', array('type'=>'hidden', 'name'=>"$tablename:possibleviewfortable", 'value'=>$table['possible_view_for_table'])).
                     html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:viewfortable", 'id'=>"$tablename:viewfortable", 'checked'=>!$metabasename || $alternative_views[$tablename] ? 'checked' : null)).
@@ -516,7 +528,7 @@
                   )
                 )
               ).
-              html('td', array('class'=>join_clean(' ', 'top', 'center'), 'rowspan'=>count($table['fields'])),
+              html('td', array('class'=>join_non_null(' ', 'top', 'center'), 'rowspan'=>count($table['fields'])),
                 html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null)).
                 html('div', array('class'=>'countreferences'),
                   html('div', array(), sprintf(_('%d in'), $referencesin[$tablename])).
@@ -542,7 +554,7 @@
               )
             ).
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null))).
-            html('td', array('class'=>join_clean(' ', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))).
+            html('td', array('class'=>join_non_null(' ', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))).
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null))).
             html('td', array(), '')
           );
@@ -570,7 +582,7 @@
       $metabase_input .= html('input', array('type'=>'hidden', 'name'=>'language', 'value'=>parameter('cookie', 'language')));
     }
 
-    page($action, path($metabasename, $databasename),
+    page($action, breadcrumbs($metabasename, $databasename),
       $tableswithoutsinglevaluedprimarykey
       ? html('p', array(),
           html('span', array('class'=>'error'), sprintf(_('no single valued primary key for table(s) %s'), join(', ', $tableswithoutsinglevaluedprimarykey)))
@@ -680,14 +692,14 @@
       array('metabasename'=>$metabasename)
     );
 
-    insertorupdate($metabasename, 'languages', array('languagename'=>parameter('get', 'language')));
+    insert_or_update($metabasename, 'languages', array('languagename'=>parameter('get', 'language')));
 
-    insertorupdate($metabasename, 'databases', array('databasename'=>$databasename));
+    insert_or_update($metabasename, 'databases', array('databasename'=>$databasename));
 
     $presentationnames = get_presentationnames();
     $presentationids = array();
     foreach ($presentationnames as $presentationname)
-      $presentationids[$presentationname] = insertorupdate($metabasename, 'presentations', array('presentationname'=>$presentationname));
+      $presentationids[$presentationname] = insert_or_update($metabasename, 'presentations', array('presentationname'=>$presentationname));
 
     $tables = query('top',
       'SELECT tb.table_name, vw.table_name AS view_name, is_updatable, view_definition '.
@@ -701,9 +713,9 @@
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table['table_name'];
       if (!parameter('get', "$tablename:viewfortable"))
-        $tableids[$tablename] = insertorupdate($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>parameter('get', "$tablename:singular"), 'plural'=>parameter('get', "$tablename:plural"), 'intablelist'=>parameter('get', "$tablename:intablelist") == 'on'));
+        $tableids[$tablename] = insert_or_update($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>parameter('get', "$tablename:singular"), 'plural'=>parameter('get', "$tablename:plural"), 'intablelist'=>parameter('get', "$tablename:intablelist") == 'on'));
       else
-        insertorupdate($metabasename, 'views', array('viewname'=>$tablename, 'tableid'=>$tableids[parameter('get', "$tablename:possibleviewfortable")]));
+        insert_or_update($metabasename, 'views', array('viewname'=>$tablename, 'tableid'=>$tableids[parameter('get', "$tablename:possibleviewfortable")]));
     }
 
     $errors = array();
@@ -729,7 +741,7 @@
           $inlist = parameter('get', "$tablename:$fieldname:inlist") ? true : false;
           $inedit = parameter('get', "$tablename:$fieldname:inedit") ? true : false;
 
-          $fieldid = insertorupdate($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'type'=>$field['column_type'], 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
+          $fieldid = insert_or_update($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'type'=>$field['column_type'], 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
 
           $indescs += $indesc;
           $inlists += $inlist;
@@ -750,7 +762,7 @@
     if ($errors)
       error(join(', ', $errors));
 
-    internalredirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
+    internal_redirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
   }
 
   /********************************************************************************************/
@@ -764,11 +776,11 @@
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['schema_name'];
       $rows[] =
-        html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
+        html('tr', array('class'=>join_non_null(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array(),
             array(
-              internalreference(array('action'=>'attach_database_to_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $databasename),
-              internalreference(array('action'=>'attach_database_to_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename), in_array($databasename, $databasenames) ? 'update' : 'add')
+              internal_reference(array('action'=>'attach_database_to_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $databasename),
+              internal_reference(array('action'=>'attach_database_to_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename), in_array($databasename, $databasenames) ? 'update' : 'add')
             )
           )
         );
@@ -783,7 +795,7 @@
           )
         )
       );
-    page($action, path($metabasename),
+    page($action, breadcrumbs($metabasename),
       form(
         html('table', array('class'=>'box'), html('tr', array(), $rows))
       )
@@ -798,7 +810,7 @@
 
     query('meta', 'INSERT IGNORE INTO `<metabasename>`.databases SET databasename = "<databasename>"', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
 
-    internalredirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
+    internal_redirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
   }
 
   /********************************************************************************************/
@@ -812,13 +824,13 @@
       $tablename = $table['tablename'];
       if (has_grant('SELECT', $databasename, table_or_view($metabasename, $databasename, $tablename), '?'))
         $rows[] =
-          html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
+          html('tr', array('class'=>join_non_null(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
             html('td', array(),
-              internalreference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$table['singular'], 'uniquefieldname'=>$table['fieldname']), $table['plural'])
+              internal_reference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$table['singular'], 'uniquefieldname'=>$table['fieldname']), $table['plural'])
             )
           );
     }
-    page($action, path($metabasename, $databasename),
+    page($action, breadcrumbs($metabasename, $databasename),
       html('div', array('class'=>'ajax'),
         html('table', array('class'=>'box'), join($rows))
       )
@@ -838,7 +850,7 @@
     $orderfieldname    = parameter('get', 'orderfieldname');
     $orderasc          = first_non_null(parameter('get', 'orderasc'), 'on') == 'on';
 
-    page($action, path($metabasename, $databasename, $tablename, $uniquefieldname),
+    page($action, breadcrumbs($metabasename, $databasename, $tablename, $uniquefieldname),
       list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, null, $orderfieldname, $orderasc, null, null, null, true)
     );
   }
@@ -855,7 +867,7 @@
     $referencedfromfieldname = parameter('get', 'referencedfromfieldname');
     $back                    = parameter('get', 'back');
 
-    page($action, path($metabasename, $databasename, $tablename, $uniquefieldname, $uniquevalue),
+    page($action, breadcrumbs($metabasename, $databasename, $tablename, $uniquefieldname, $uniquevalue),
       edit_record($action == 'new_record' ? 'INSERT' : ($action == 'edit_record' ? 'UPDATE' : 'SELECT'), $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $referencedfromfieldname, $back ? $back : parameter('server', 'HTTP_REFERER'))
     );
   }
@@ -863,11 +875,11 @@
   /********************************************************************************************/
 
   if ($action == 'delete_record') {
-    $metabasename    = parameter('get', 'metabasename');
-    $databasename    = parameter('get', 'databasename');
-    $tablename       = parameter('get', 'tablename');
-    $uniquefieldname = parameter('get', 'uniquefieldname');
-    $uniquevalue     = parameter('get', 'uniquevalue');
+    $metabasename    = parameter('post', 'metabasename');
+    $databasename    = parameter('post', 'databasename');
+    $tablename       = parameter('post', 'tablename');
+    $uniquefieldname = parameter('post', 'uniquefieldname');
+    $uniquevalue     = parameter('post', 'uniquevalue');
 
     query('data', 'DELETE FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
 
@@ -877,14 +889,14 @@
   /********************************************************************************************/
 
   if ($action == 'update_record' || $action == 'add_record' || $action == 'add_record_and_edit') {
-    $metabasename            = parameter('get', 'metabasename');
-    $databasename            = parameter('get', 'databasename');
-    $tablename               = parameter('get', 'tablename');
-    $tablenamesingular       = parameter('get', 'tablenamesingular');
-    $uniquefieldname         = parameter('get', 'uniquefieldname');
-    $uniquevalue             = parameter('get', 'uniquevalue');
-    $referencedfromfieldname = parameter('get', 'referencedfromfieldname');
-    $back                    = parameter('get', 'back');
+    $metabasename            = parameter('post', 'metabasename');
+    $databasename            = parameter('post', 'databasename');
+    $tablename               = parameter('post', 'tablename');
+    $tablenamesingular       = parameter('post', 'tablenamesingular');
+    $uniquefieldname         = parameter('post', 'uniquefieldname');
+    $uniquevalue             = parameter('post', 'uniquevalue');
+    $referencedfromfieldname = parameter('post', 'referencedfromfieldname');
+    $back                    = parameter('post', 'back');
 
     $viewname = table_or_view($metabasename, $databasename, $tablename);
 
@@ -900,20 +912,20 @@
       }
     }
 
-    $uniquevalue = insertorupdate($databasename, $viewname, $fieldnamesandvalues, $uniquefieldname, $uniquevalue);
+    $uniquevalue = insert_or_update($databasename, $viewname, $fieldnamesandvalues, $uniquefieldname, $uniquevalue);
 
-    $ajax = parameter('get', 'ajax');
+    $ajax = parameter('post', 'ajax');
     if ($action == 'add_record' || $action == 'add_record_and_edit') {
       if ($ajax)
         $_POST['ajax'] = preg_replace('@\bvalue=\d+\b@', "value=$uniquevalue", $_POST['ajax']);
       elseif ($referencedfromfieldname)
-        $_POST['back'] = preg_replace('@&back=@', "&field:$referencedfromfieldname=$uniquevalue&back=", parameter('get', 'back'));
+        $_POST['back'] = preg_replace('@&back=@', "&field:$referencedfromfieldname=$uniquevalue&back=", parameter('post', 'back'));
     }
     if ($action == 'add_record_and_edit') {
       if ($ajax)
         $_POST['ajax'] = "$ajax&uniquevalue=$uniquevalue";
       else
-        internalredirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
+        internal_redirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
     }
 
     back();
@@ -945,23 +957,16 @@
       foreach (array_keys($explanation) as $key) {
         $cells[] = is_null($explanation[$key]) ? '-' : $explanation[$key];
       }
-      $rows[] = html('tr', array('class'=>join_clean(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')), html('td', array(), $cells));
+      $rows[] = html('tr', array('class'=>join_non_null(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')), html('td', array(), $cells));
     }
 
     page($action, null,
       html('p', array(), $query).
-      html('table', array('class'=>'box'), 
+      html('table', array('class'=>'box'),
         join($rows)
       ).
-      html('p', array(), externalreference('http://dev.mysql.com/doc/refman/5.0/en/using-explain.html', 'MySQL 5.0 Reference Manual :: 7.2.1 Optimizing Queries with EXPLAIN'))
+      html('p', array(), external_reference('http://dev.mysql.com/doc/refman/5.0/en/using-explain.html', 'MySQL 5.0 Reference Manual :: 7.2.1 Optimizing Queries with EXPLAIN'))
     );
-  }
-
-  /********************************************************************************************/
-
-  if ($action == 'phpinfo') {
-    phpinfo();
-    exit;
   }
 
   /********************************************************************************************/

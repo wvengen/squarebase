@@ -11,16 +11,16 @@
   function is_quickaddable_text() { return false; }
 
   function formfield_text($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
-    return html('textarea', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'rows'=>10, 'cols'=>80, 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), preg_replace('@<(.*?)>@', '&lt;$1&gt;', $value));
+    return html('textarea', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'rows'=>10, 'cols'=>80, 'class'=>join_non_null(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), htmlentities($value));
   }
 
   function formvalue_text($field) {
-    $value = parameter('get', "field:$field[fieldname]");
-    return $value == "" ? null : $value;
+    $value = parameter('post', "field:$field[fieldname]");
+    return $value == '' ? null : $value;
   }
 
   function list_text($metabasename, $databasename, $field, $value) {
-    return $value;
+    return htmlentities($value);
   }
   
   function css_text() {

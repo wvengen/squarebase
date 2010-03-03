@@ -48,7 +48,8 @@
       error(sprintf(_('no foreigntablename for %s'), $fieldname));
     $foreignviewname = table_or_view($metabasename, $databasename, $foreigntablename);
     $descriptor = descriptor($metabasename, $databasename, $foreigntablename, $foreignviewname);
-    $references = query('data', "SELECT `$foreignviewname`.`$foreignuniquefieldname` AS _id, $descriptor[select] AS _descriptor FROM `$databasename`.`$foreignviewname` ".join(' ', $descriptor['joins']).($readonly ? ($value ? "WHERE `$foreignviewname`.`$foreignuniquefieldname` = $value" : "LIMIT 0") : "ORDER BY ".join(', ', $descriptor['orders'])));
+    $references = query('data', "SELECT `$foreignviewname`.`$foreignuniquefieldname` AS _id, $descriptor[select] AS _descriptor FROM `$databasename`.`$foreignviewname` ".join(' ', $descriptor['joins']).($readonly ? ($value ? "WHERE `$foreignviewname`.`$foreignuniquefieldname` = ".((int) $value) : "LIMIT 0") : "ORDER BY ".join(', ', $descriptor['orders'])));
+    $oneselected = false;
     $options = array();
     while ($reference = mysql_fetch_assoc($references)) {
       $selected = $value == $reference['_id'];
@@ -62,12 +63,12 @@
     return
       html('div', array('class'=>'ajax', 'id'=>http_build_query(array('function'=>'ajax_lookup', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'fieldname'=>$fieldname, 'value'=>$value, 'presentationname'=>$presentationname, 'foreigntablename'=>$foreigntablename, 'foreigntablenamesingular'=>$foreigntablenamesingular, 'foreignuniquefieldname'=>$foreignuniquefieldname, 'nullallowed'=>$nullallowed, 'defaultvalue'=>$defaultvalue, 'readonly'=>$readonly))),
         html('div', array(),
-          html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>join_clean(' ', $presentationname, $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options)).
+          html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>join_non_null(' ', $presentationname, $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options)).
           ($extra
-          ? (has_grant('INSERT', $databasename, $foreigntablename, '?') ? internalreference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'referencedfromfieldname'=>$fieldname, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablenamesingular), array('class'=>'newrecordlookup')) : '').
+          ? (has_grant('INSERT', $databasename, $foreigntablename, '?') ? internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'referencedfromfieldname'=>$fieldname, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablenamesingular), array('class'=>'newrecordlookup')) : '').
             (has_grant('UPDATE', $databasename, $foreigntablename, '?')
-            ? internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'uniquevalue'=>$value, 'referencedfromfieldname'=>$fieldname, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('edit %s %s'), $foreigntablenamesingular, $selected_descriptor), array('class'=>join_clean(' ', 'existingrecord', $value ? null : 'hidden')))
-            : internalreference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'uniquevalue'=>$value, 'referencedfromfieldname'=>$fieldname, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('show %s %s'), $foreigntablenamesingular, $selected_descriptor), array('class'=>join_clean(' ', 'existingrecord', $value ? null : 'hidden')))
+            ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'uniquevalue'=>$value, 'referencedfromfieldname'=>$fieldname, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('edit %s %s'), $foreigntablenamesingular, $selected_descriptor), array('class'=>join_non_null(' ', 'existingrecord', $value ? null : 'hidden')))
+            : internal_reference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'uniquevalue'=>$value, 'referencedfromfieldname'=>$fieldname, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('show %s %s'), $foreigntablenamesingular, $selected_descriptor), array('class'=>join_non_null(' ', 'existingrecord', $value ? null : 'hidden')))
             ).
             html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)'))
           : ''
@@ -81,8 +82,8 @@
   }
 
   function formvalue_lookup($field) {
-    $value = parameter('get', "field:$field[fieldname]");
-    return $value == "" ? null : $value;
+    $value = parameter('post', "field:$field[fieldname]");
+    return $value == '' ? null : $value;
   }
 
   function list_lookup($metabasename, $databasename, $field, $value) {
@@ -90,8 +91,8 @@
       ($field['thisrecord']
       ? $field['descriptor']
       : ($field['descriptor']
-        ? internalreference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$field['foreigntablename'], 'tablenamesingular'=>$field['foreigntablenamesingular'], 'uniquefieldname'=>$field['foreignuniquefieldname'], 'uniquevalue'=>$value, 'back'=>parameter('server', 'REQUEST_URI')), $field['descriptor']) 
-        : $value
+        ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$field['foreigntablename'], 'tablenamesingular'=>$field['foreigntablenamesingular'], 'uniquefieldname'=>$field['foreignuniquefieldname'], 'uniquevalue'=>$value, 'back'=>parameter('server', 'REQUEST_URI')), $field['descriptor']) 
+        : htmlentities($value)
         )
       );
   }

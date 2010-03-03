@@ -2,7 +2,7 @@
   function probability_currency($field) {
     if (!probability_int($field) && !probability_float($field))
       return 0;
-    if (preg_match('@('.join_clean('|', _('price'), _('currency'), _('cost'), _('bucks'), _('dollar'), _('euro')).')@', $field['column_name']))
+    if (preg_match('@('.join_non_null('|', _('price'), _('currency'), _('cost'), _('bucks'), _('dollar'), _('euro')).')@', $field['column_name']))
       return 0.5;
     return 0.2;
   }
@@ -15,16 +15,16 @@
   function is_quickaddable_currency() { return true; }
 
   function formfield_currency($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
-    return html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null));
+    return html('input', array('type'=>'text', 'class'=>join_non_null(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null));
   }
 
   function formvalue_currency($field) {
-    $value = parameter('get', "field:$field[fieldname]");
-    return $value == "" ? null : $value;
+    $value = parameter('post', "field:$field[fieldname]");
+    return $value == '' ? null : $value;
   }
 
   function list_currency($metabasename, $databasename, $field, $value) {
-    return $value;
+    return htmlentities($value);
   }
   
   function css_currency() {

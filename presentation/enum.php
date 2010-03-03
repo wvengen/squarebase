@@ -16,7 +16,7 @@
   function formfield_enum($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     $options = array();
     if ($readonly)
-      $options[] = html('option', array('value'=>$value, 'selected'=>'selected'), $value);
+      $options[] = html('option', array('value'=>$value, 'selected'=>'selected'), htmlentities($value));
     else {
       $enums = explode("','", preg_match1("@(?:enum|set)\('(.+?)'\)@", $field['type']));
       foreach ($enums as $enum) {
@@ -27,15 +27,15 @@
       if ($field['nullallowed'])
         array_unshift($options, html('option', array_merge(array('value'=>''), $oneselected ? array() : array('selected'=>'selected')), ''));
     }
-    return html('select', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options));
+    return html('select', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>join_non_null(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options));
   }
 
   function formvalue_enum($field) {
-    return parameter('get', "field:$field[fieldname]");
+    return parameter('post', "field:$field[fieldname]");
   }
 
   function list_enum($metabasename, $databasename, $field, $value) {
-    return $value;
+    return htmlentities($value);
   }
   
   function css_enum() {

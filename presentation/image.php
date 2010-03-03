@@ -17,7 +17,7 @@
         html('div', array(),
           $readonly
           ? list_image($metabasename, $databasename, $field, $value)
-          : html($extra ? 'fieldset' : 'div', array('class'=>join_clean(' ', $presentationname, $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty')),
+          : html($extra ? 'fieldset' : 'div', array('class'=>join_non_null(' ', $presentationname, $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty')),
               html('ul', array('class'=>'minimal'),
                 html('li', array(),
                   array(
@@ -34,7 +34,7 @@
                     ? html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:new:$fieldname", 'value'=>'new', 'checked'=>'checked')).
                       html('label', array('for'=>"radio:new:$fieldname"),
                         html('span', array('class'=>'filesource'), _('new')).
-                        html('img', array('src'=>internalurl(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'new_image', 'newname'=>$newname)), 'alt'=>_('new image'), 'class'=>'listimage')).
+                        html('img', array('src'=>internal_url(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'new_image', 'newname'=>$newname)), 'alt'=>_('new image'), 'class'=>'listimage')).
                         html('input', array('type'=>'hidden', 'name'=>"field:new:$fieldname", 'value'=>$newname))
                       )
                     : null
@@ -42,7 +42,7 @@
                     html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:upload:$fieldname", 'value'=>'upload')).
                     html('label', array('for'=>"radio:upload:$fieldname"),
                       html('span', array('class'=>'filesource'), _('upload')).
-                      html('input', array('type'=>'file', 'class'=>join_clean(' ', $presentationname, $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'id'=>"field:$fieldname", 'name'=>"field:$fieldname", 'readonly'=>$readonly ? 'readonly' : null))
+                      html('input', array('type'=>'file', 'class'=>join_non_null(' ', $presentationname, $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'id'=>"field:$fieldname", 'name'=>"field:$fieldname", 'readonly'=>$readonly ? 'readonly' : null))
                     )
                   )
                 )
@@ -57,14 +57,14 @@
   }
 
   function formvalue_image($field) {
-    $choice = parameter('get', "radio:$field[fieldname]");
+    $choice = parameter('post', "radio:$field[fieldname]");
     switch ($choice) {
     case 'original':
       return query1field('data', 'SELECT <fieldname> FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('fieldname'=>$field['fieldname'], 'databasename'=>$field['databasename'], 'tablename'=>$field['tablename'], 'uniquefieldname'=>$field['uniquefieldname'], 'uniquevalue'=>$field['uniquevalue']));
     case 'none':
       return null;
     case 'new':
-      $newname = parameter('get', "field:new:$field[fieldname]");
+      $newname = directorypart(parameter('post', "field:new:$field[fieldname]"));
       $file = "./uploads/$newname";
       $image = file_get_contents($file);
       unlink($file);
@@ -77,7 +77,7 @@
   }
 
   function list_image($metabasename, $databasename, $field, $value) {
-    return $value ? html('img', array('src'=>internalurl(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'get_image', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$field['tablename'], 'uniquefieldname'=>$field['uniquefieldname'], 'uniquevalue'=>$field['uniquevalue'], 'fieldname'=>$field['fieldname'], 'forcereload'=>time())), 'alt'=>_('uploaded image'), 'class'=>'listimage')) : '';
+    return $value ? html('img', array('src'=>internal_url(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'get_image', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$field['tablename'], 'uniquefieldname'=>$field['uniquefieldname'], 'uniquevalue'=>$field['uniquevalue'], 'fieldname'=>$field['fieldname'], 'forcereload'=>time())), 'alt'=>_('uploaded image'), 'class'=>'listimage')) : '';
   }
   
   function get_image() {
@@ -93,7 +93,7 @@
   }
 
   function new_image() {
-    $newname = parameter('get', 'newname');
+    $newname = directorypart(parameter('get', 'newname'));
 
     $image = file_get_contents("./uploads/$newname");
     http_response('Content-type: image/jpeg', $image);
@@ -127,8 +127,8 @@
       $file = $_FILES[$names[0]];
       if ($file['error'] == UPLOAD_ERR_OK) {
         if ($file['type'] == 'image/jpeg') {
-          if (preg_match('@\.jpe?g$@i', $file['name'])) {
-            $newname = strftime('%Y-%m-%d-%H-%M-%S').'_'.basename($file['name']);
+          if (preg_match('@^\w+\.jpe?g$@i', $file['name'])) {
+            $newname = strftime('%Y_%m_%d_%H_%M_%S').'_'.directorypart($file['name']);
             if (move_uploaded_file($file['tmp_name'], "./uploads/$newname"))
               $ajax = preg_replace('@\bnewname=[^&]*@', "newname=$newname", $ajax);
           }
@@ -144,7 +144,7 @@
     else
       $warning = sprintf(_('not 1 file uploaded but %d'), count($_FILES));
     if ($warning)
-      addtolist('warnings', 'warning', $warning);
+      add_log('warnings', 'warning', $warning);
     call_function($ajax);
   }
 

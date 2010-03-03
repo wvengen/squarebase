@@ -35,8 +35,8 @@
 
   function test_inflection_singular_plural() {
     $current_locale = preg_replace('/\..*/', '', setlocale(LC_ALL, 0));
-    $rules = read_file("locale/$current_locale/rules_singular_plural.txt", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
-    $tests = read_file("locale/$current_locale/tests_singular_plural.txt", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
+    $rules = read_file(array('locale', $current_locale, 'rules_singular_plural.txt'), FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
+    $tests = read_file(array('locale', $current_locale, 'tests_singular_plural.txt'), FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
     return array_merge(
       test_lines_internal($rules, $rules),
       test_lines_internal($tests, $rules)
@@ -54,7 +54,7 @@
 
   function inflect_noun_verbose_internal($noun, $fromquantity, $forbiddenrule = null) {
     $current_locale = preg_replace('/\..*/', '', setlocale(LC_ALL, 0));
-    $rules = read_file("locale/$current_locale/rules_singular_plural.txt", FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
+    $rules = read_file(array('locale', $current_locale, 'rules_singular_plural.txt'), FILE_IGNORE_NEW_LINES + FILE_SKIP_EMPTY_LINES);
     foreach ($rules as $rule) {
       if ($rule && $rule[0] != '#' && $rule != $forbiddenrule) {
         list($body, $suffixsingular, $suffixplural) = explode('/', $rule);

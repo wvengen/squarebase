@@ -14,11 +14,11 @@
   function is_quickaddable_boolean() { return true; }
 
   function formfield_boolean($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
-    return html('input', array('type'=>'checkbox', 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'readonly'=>$readonly ? 'readonly' : null, 'checked'=>$value ? 'checked' : null));
+    return html('input', array('type'=>'checkbox', 'class'=>join_non_null(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'readonly'=>$readonly ? 'readonly' : null, 'checked'=>$value ? 'checked' : null));
   }
 
   function formvalue_boolean($field) {
-    return parameter('get', "field:$field[fieldname]") ? 1 : 0;
+    return parameter('post', "field:$field[fieldname]") ? 1 : 0;
   }
 
   function list_boolean($metabasename, $databasename, $field, $value) {

@@ -12,7 +12,7 @@
 
   function formfield_datetime($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return 
-      html('input', array('type'=>'text', 'class'=>join_clean(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>datetime2local($value), 'readonly'=>$readonly ? 'readonly' : null)).
+      html('input', array('type'=>'text', 'class'=>join_non_null(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>datetime2local($value), 'readonly'=>$readonly ? 'readonly' : null)).
       ($extra ? html('span', array('class'=>'help'), find_datetime_format('%X', 'text')) : '');
   }
 
@@ -21,12 +21,12 @@
   }
 
   function formvalue_datetime($field) {
-    $value = parameter('get', "field:$field[fieldname]");
-    return $value == "" ? null : local2datetime($value);
+    $value = parameter('post', "field:$field[fieldname]");
+    return $value == '' ? null : local2datetime($value);
   }
 
   function list_datetime($metabasename, $databasename, $field, $value) {
-    return datetime2local($value);
+    return htmlentities(datetime2local($value));
   }
 
   function datetime2local($value) {
