@@ -122,9 +122,10 @@
 
   function upload_image() {
     $ajax = parameter('get', 'ajax');
-    if (count($_FILES) == 1) {
-      $names = array_keys($_FILES);
-      $file = $_FILES[$names[0]];
+    $files = parameter('files');
+    if (count($files) == 1) {
+      $names = array_keys($files);
+      $file = $files[$names[0]];
       if ($file['error'] == UPLOAD_ERR_OK) {
         if ($file['type'] == 'image/jpeg') {
           if (preg_match('@^\w+\.jpe?g$@i', $file['name'])) {
@@ -142,7 +143,7 @@
         $warning = file_upload_error_message($file['error']);
     }
     else
-      $warning = sprintf(_('not 1 file uploaded but %d'), count($_FILES));
+      $warning = sprintf(_('not 1 file uploaded but %d'), count($files));
     if ($warning)
       add_log('warnings', 'warning', $warning);
     call_function($ajax);

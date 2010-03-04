@@ -20,7 +20,32 @@
 
   include('inflection.php');
 
-  function parameter($type, $name = null) {
+  umask(0177); // => rw-.---.---
+
+  ini_set('session.use_only_cookies', true);
+  session_set_cookie_params(7 * 24 * 60 * 60);
+  session_save_path('session');
+  session_start();
+
+  set_preference('scripty', 1);
+  set_preference('ajaxy', 1);
+  set_preference('logsy', 0);
+
+  error_reporting(parameter('cookie', 'logsy') ? E_ALL : 0);
+
+  if (parameter('cookie', 'logsy')) {
+    if (parameter('get') && parameter('post'))
+      error(_('both get and post parameters'));
+    $parametersource = parameter('post') ? 'post' : 'get';
+    add_log($parametersource, $parametersource.': '.html('div', array('class'=>'arrayshow'), array_show(parameter($parametersource))));
+    add_log('cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show(parameter('cookie'))));
+  }
+ 
+  function is_local() {
+    return parameter('server', 'HTTP_HOST') == 'localhost';
+  }
+
+  function parameter($type, $name = null, $new_value = null, $default = null) {
     static $arrays = null;
     if (!$arrays)
       $arrays = array(
@@ -29,13 +54,19 @@
         'get_or_post'=>array_merge($_GET, $_POST),
         'server'=>$_SERVER,
         'files'=>$_FILES,
-        'session'=>$_SESSION
+        'session'=>$_SESSION,
+        'cookie'=>$_COOKIE
       );
     $array = isset($arrays[$type]) ? $arrays[$type] : array();
-    if (!$name)
+    if (is_null($name)) {
+      if (!is_null($new_value))
+        $arrays[$type] = $new_value;
       return $array;
+    }
+    if (!is_null($new_value))
+      $arrays[$type][$name] = $new_value;
     $value = isset($array[$name]) ? $array[$name] : null;
-    return is_null($value) ? null : str_replace(array('\\"', '\\\''), array('"', '\''), $value);
+    return is_null($value) ? $default : str_replace(array('\\"', '\\\''), array('"', '\''), $value);
   }
 
   function is_non_null($var) {
@@ -74,7 +105,7 @@
 
   /* all atribute names and values will be encoded using htmlentities; the text however won't, because it may contain other HTML code from previous calls to this function */
   function html($tag, $attributes = array(), $text = null) {
-    if ($_COOKIE['logsy']) {
+    if (parameter('cookie', 'logsy')) {
       static $types = array( // in attributes: 0=required, 1=optional
         'html'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'head'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
@@ -200,7 +231,7 @@
     if (!$querystring)
       return;
     $parameters = http_parse_query($querystring);
-    if ($_COOKIE['logsy'])
+    if (parameter('cookie', 'logsy'))
       add_log('call', 'call_function: '.html('div', array('class'=>'arrayshow'), array_show($parameters)));
     $definitions = join(read_file($parameters['presentationname'] ? array('presentation', $parameters['presentationname'].'.php') : array('functions.php')));
     $definition = preg_match1("@\n *function +$parameters[functionname]\((.*?)\)@", $definitions);
@@ -221,7 +252,7 @@
   }
 
   function error($error) {
-    if ($_COOKIE['logsy']) {
+    if (parameter('cookie', 'logsy')) {
       $stack = debug_backtrace();
       $mainpath = preg_match1('@^.*/@', $stack[0]['file']);
       $traces = array();
@@ -243,34 +274,28 @@
 
   function add_log($class, $text) {
     $list = $class == 'warning' ? 'warnings' : 'logs';
-    if (!isset($_SESSION[$list]))
-      $_SESSION[$list] = array();
-    $_SESSION[$list][] = html('li', array('class'=>$class), $text);
+    parameter('session', $list, array_merge(parameter('session', $list) ? parameter('session', $list) : array(), array(html('li', array('class'=>$class), $text))));
   }
 
   function get_logs($list) {
-    if (!isset($_SESSION[$list]))
-      return array();
-    $result = $_SESSION[$list];
-    unset($_SESSION[$list]);
-    return $result;
+    return parameter('session', $list, array(), array());
   }
 
-  function query($metaordata, $query, $arguments = array()) {
-    static $connection = null;
+  function query($metaordata, $query, $arguments = array(), $connection = null) {
+    static $session_connection = null;
     if (!$connection) {
-      if (!extension_loaded('mysql'))
-        logout(_('mysql module not found'));
-      if (!isset($_SESSION['username']))
-        internal_redirect(array('action'=>'login'));
-      $connection = @mysql_connect($_SESSION['host'], $_SESSION['username'], $_SESSION['password']);
-      if (mysql_errno())
-        logout(sprintf(_('problem connecting to the databasemanager: %s'), mysql_error()));
+      if (!$session_connection) {
+        if (!extension_loaded('mysql'))
+          error(_('mysql module not found'));
+        if (!parameter('session', 'username'))
+          internal_redirect(array('action'=>'login'));
+        $session_connection = @mysql_connect(parameter('session', 'host'), parameter('session', 'username'), parameter('session', 'password'));
+        if (mysql_errno())
+          logout(sprintf(_('problem connecting to the database manager: %s'), mysql_error()));
+      }
+      $connection = $session_connection;
     }
-    return run_query($connection, $metaordata, $query, $arguments);
-  }
 
-  function run_query($connection, $metaordata, $query, $arguments = array()) {
     if (preg_match('@= *\'<\w+>\'@', $query))
       add_log('warning', sprintf(_('wrong single quotes around value in query: %s'), $query));
 
@@ -295,7 +320,7 @@
       $resultlist = array();
       for (mysql_data_reset($result); $resultrow = mysql_fetch_assoc($result); ) {
         if (count($resultlist) == 10 - 1 && $numresults > 10) {
-          $resultlist[] = html('li', array(), "&hellip; $numresults.");
+          $resultlist[] = html('li', array('class'=>'arrayshow'), "&hellip; $numresults.");
           break;
         }
         $resultlist[] = html('li', array('class'=>'arrayshow'), array_show($resultrow));
@@ -303,7 +328,7 @@
       mysql_data_reset($result);
     }
 
-    if ($_COOKIE['logsy']) {
+    if (parameter('cookie', 'logsy')) {
       $stack = debug_backtrace();
       $traces = array();
       foreach ($stack as $element) {
@@ -380,12 +405,12 @@
         add_log('warning', $warning ? $warning : $error);
         return null;
       default:
-        error(_('problem while querying the databasemanager').html('p', array('class'=>'error'), "$errno: ".mysql_error()).$fullquery);
+        error(_('problem while querying the database manager').html('p', array('class'=>'error'), "$errno: ".mysql_error()).$fullquery);
     }
   }
 
-  function query01($metaordata, $query, $arguments = array()) {
-    $results = query($metaordata, $query, $arguments);
+  function query01($metaordata, $query, $arguments = array(), $connection = null) {
+    $results = query($metaordata, $query, $arguments, $connection);
     if (!$results || mysql_num_rows($results) == 0)
       return null;
     if (mysql_num_rows($results) == 1)
@@ -393,15 +418,15 @@
     error(sprintf(_('problem because there are %s results'), mysql_num_rows($results)).html('p', array(), htmlentities($query)));
   }
 
-  function query1($metaordata, $query, $arguments = array()) {
-    $results = query($metaordata, $query, $arguments);
+  function query1($metaordata, $query, $arguments = array(), $connection = null) {
+    $results = query($metaordata, $query, $arguments, $connection);
     if ($results && mysql_num_rows($results) == 1)
       return mysql_fetch_assoc($results);
     error(sprintf(_('problem because there are %s results'), $results ? mysql_num_rows($results) : 'no').html('p', array(), htmlentities($query)));
   }
 
-  function query1field($metaordata, $query, $arguments = array(), $field = null) {
-    $result = query1($metaordata, $query, $arguments);
+  function query1field($metaordata, $query, $arguments = array(), $field = null, $connection = null) {
+    $result = query1($metaordata, $query, $arguments, $connection);
     return is_null($field) ? (count($result) == 1 ? array_shift(array_values($result)) : error(sprintf(_('problem retrieving 1 field, because there are %s fields'), count($result)))) : $result[$field];
   }
 
@@ -421,32 +446,35 @@
         html('head', array(),
           html('title', array(), $title).
           html('link', array('href'=>internal_url(array('action'=>'style', 'metabasename'=>parameter('get', 'metabasename'))), 'type'=>'text/css', 'rel'=>'stylesheet')).
-          ($_COOKIE['scripty']
+          (parameter('cookie', 'scripty')
           ? html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>'jquery.requirescript.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>internal_url(array('action'=>'script', 'metabasename'=>parameter('get', 'metabasename')))), '')
           : ''
           )
         ).
-        html('body', array('class'=>join_non_null(' ', preg_replace('@_@', '', $action), $_COOKIE['ajaxy'] ? 'ajaxy' : null)),
+        html('body', array('class'=>join_non_null(' ', preg_replace('@_@', '', $action), parameter('cookie', 'ajaxy') ? 'ajaxy' : null)),
           html('div', array('id'=>'header'),
             html('div', array('id'=>'id'),
-              html('ul', array(),
-                html('li', array('id'=>'switchscripty'),
-                  preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internal_reference(array_merge(parameter('get'), array('scripty'=>$_COOKIE['scripty'] ? 'off' : 'on')), $_COOKIE['scripty'] ? _('javascript is on') : _('javascript is off')) : ($_COOKIE['scripty'] ? _('javascript is on') : _('javascript is off'))
-                ).
-                html('li', array('id'=>'switchajaxy'),
-                  preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? ($_COOKIE['scripty'] ? internal_reference(array_merge(parameter('get'), array('ajaxy'=>$_COOKIE['ajaxy'] ? 'off' : 'on')), $_COOKIE['ajaxy'] ? _('ajax is on') : _('ajax is off')) : _('ajax is off')) : ($_COOKIE['ajaxy'] ? _('ajax is on') : _('ajax is off'))
-                ).
-                html('li', array('id'=>'switchlogsy'),
-                  preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internal_reference(array_merge(parameter('get'), array('logsy'=>$_COOKIE['logsy'] ? 'off' : 'on')), $_COOKIE['logsy'] ? _('logging is on') : _('logging is off')) : ($_COOKIE['logsy'] ? _('logging is on') : _('logging is off'))
+              (is_local()
+              ? html('ul', array(),
+                  html('li', array('id'=>'switchscripty'),
+                    preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internal_reference(array_merge(parameter('get'), array('scripty'=>parameter('cookie', 'scripty') ? 'off' : 'on')), parameter('cookie', 'scripty') ? _('javascript is on') : _('javascript is off')) : (parameter('cookie', 'scripty') ? _('javascript is on') : _('javascript is off'))
+                  ).
+                  html('li', array('id'=>'switchajaxy'),
+                    preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? (parameter('cookie', 'scripty') ? internal_reference(array_merge(parameter('get'), array('ajaxy'=>parameter('cookie', 'ajaxy') ? 'off' : 'on')), parameter('cookie', 'ajaxy') ? _('ajax is on') : _('ajax is off')) : _('ajax is off')) : (parameter('cookie', 'ajaxy') ? _('ajax is on') : _('ajax is off'))
+                  ).
+                  html('li', array('id'=>'switchlogsy'),
+                    preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internal_reference(array_merge(parameter('get'), array('logsy'=>parameter('cookie', 'logsy') ? 'off' : 'on')), parameter('cookie', 'logsy') ? _('logging is on') : _('logging is off')) : (parameter('cookie', 'logsy') ? _('logging is on') : _('logging is off'))
+                  )
                 )
+              : ''
               ).
               html('ul', array(),
                 html('li', array(),
                   array(
-                    isset($_SESSION['username']) ? "$_SESSION[username]@$_SESSION[host]" : '&nbsp;',
-                    isset($_SESSION['username']) ? internal_reference(array('action'=>'logout'), 'logout') : '&nbsp;',
+                    parameter('session', 'username') ? parameter('session', 'username').'@'.parameter('session', 'host') : '&nbsp;',
+                    parameter('session', 'username') ? internal_reference(array('action'=>'logout'), 'logout') : '&nbsp;',
                     get_locale()
                   )
                 )
@@ -459,7 +487,7 @@
             ($error ?  html('div', array('class'=>'error'), $error) : '').
             html('ol', array('id'=>'warnings'), join(get_logs('warnings'))).
             $content.
-            ($_COOKIE['logsy'] ? html('ol', array('class'=>'logs'), join(get_logs('logs'))) : '')
+            (parameter('cookie', 'logsy') ? html('ol', array('class'=>'logs'), join(get_logs('logs'))) : '')
           ).
           html('div', array('id'=>'footer'),
             html('div', array('id'=>'poweredby'), external_reference('http://squarebase.org/', html('img', array('src'=>'powered_by_squarebase.png', 'alt'=>'powered by squarebase'))))
@@ -853,7 +881,7 @@
         ($viewname == $tablename ? '' : 'AND vw.viewname = "<viewname>" ').
         'AND '.$wherepart.
       'ORDER BY fld.fieldid',
-      array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'viewname'=>$viewname, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'])
+      array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'viewname'=>$viewname, 'username'=>parameter('session', 'username'), 'host'=>parameter('session', 'host'))
     );
   }
 
@@ -899,31 +927,32 @@
     if (!$expire)
       $expire = time() + 365 * 24 * 60 * 60;
     setcookie($name, $value, $expire);
-    $_COOKIE[$name] = $value;
+    parameter('cookie', $name, $value);
   }
 
   function set_preference($item, $default) {
-    $value = first_non_null(parameter('get', $item) == 'on' ? 1 : null, parameter('get', $item) == 'off' ? 0 : null, $_COOKIE[$item], $default);
-    if ($value !== $_COOKIE[$item]) {
+    $value = first_non_null(is_local() ? null : $default, parameter('get', $item) == 'on' ? 1 : null, parameter('get', $item) == 'off' ? 0 : null, parameter('cookie', $item), $default);
+    if ($value !== parameter('cookie', $item)) {
       set_cookie($item, $value);
+      print_r(parameter('server', 'REQUEST_URI'));
       internal_redirect(http_parse_query(preg_replace("@&$item=\w+@", '', parameter('server', 'REQUEST_URI'))));
     }
   }
 
   function forget($usernameandhost) {
-    set_cookie('lastusernamesandhosts', join_non_null(',', array_diff(explode(',', $_COOKIE['lastusernamesandhosts']), array($usernameandhost))));
+    set_cookie('lastusernamesandhosts', join_non_null(',', array_diff(explode(',', parameter('cookie', 'lastusernamesandhosts')), array($usernameandhost))));
   }
 
   function login($username, $host, $password, $language) {
-    $_SESSION['username'] = $username;
-    $_SESSION['host']     = $host;
-    $_SESSION['password'] = $password;
+    parameter('session', 'username', $username);
+    parameter('session', 'host'    , $host);
+    parameter('session', 'password', $password);
     set_cookie('language', $language);
-    set_cookie('lastusernamesandhosts', join_non_null(',', array_diff(array_unique(array_merge(array("$username@$host"), array_diff(explode(',', $_COOKIE['lastusernamesandhosts']), array("$username@$host")))), array(''))));
+    set_cookie('lastusernamesandhosts', join_non_null(',', array_diff(array_unique(array_merge(array("$username@$host"), array_diff(explode(',', parameter('cookie', 'lastusernamesandhosts')), array("$username@$host")))), array(''))));
   }
 
   function logout($error = null) {
-    $_SESSION = array();
+    parameter('session', null, array());
     session_destroy();
     internal_redirect(array('action'=>'login', 'error'=>$error));
   }
@@ -1085,7 +1114,7 @@
         ($fieldname    == '*' ? '' : 'LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES cp ON cp.privilege_type = "<privilege>" AND cp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND cp.table_schema = "<databasename>" AND cp.table_name = "<tablename>" '.($fieldname == '?' ? '' : 'AND cp.column_name = "<fieldname>" ')).
         'WHERE '.($databasename == '?' || $databasename == '*' ? '' : 'sc.schema_name = "<databasename>" AND ').'(up.privilege_type IS NOT NULL OR sp.privilege_type IS NOT NULL '.($tablename == '*' ? '' : 'OR tp.privilege_type IS NOT NULL ').($fieldname == '*' ? '' : 'OR cp.privilege_type IS NOT NULL').') '.
         'LIMIT 1',
-        array('databasename'=>$databasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname, 'username'=>$_SESSION['username'], 'host'=>$_SESSION['host'], 'privilege'=>$privilege)
+        array('databasename'=>$databasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname, 'username'=>parameter('session', 'username'), 'host'=>parameter('session', 'host'), 'privilege'=>$privilege)
       )
     ) > 0;
   }
@@ -1107,7 +1136,7 @@
         'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
         'WHERE table_schema NOT IN ("mysql", "information_schema") AND sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
       ')',
-      array('username'=>$_SESSION['username'], 'host'=>$_SESSION['host'], 'privilege'=>$privilege)
+      array('username'=>parameter('session', 'username'), 'host'=>parameter('session', 'host'), 'privilege'=>$privilege)
     );
     $databases = array();
     while ($grant = mysql_fetch_assoc($grants)) {

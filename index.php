@@ -20,27 +20,6 @@
 
   include('functions.php');
 
-  umask(0177); // => rw-.---.---
-
-  ini_set('session.use_only_cookies', true);
-  session_set_cookie_params(7 * 24 * 60 * 60);
-  session_save_path('session');
-  session_start();
-
-  set_preference('scripty', 1);
-  set_preference('ajaxy', 1);
-  set_preference('logsy', 0);
-
-  error_reporting($_COOKIE['logsy'] ? E_ALL : 0);
-
-  if ($_COOKIE['logsy']) {
-    if ($_GET && $_POST)
-      error(_('both get and post parameters'));
-    $parametersource = $_POST ? 'post' : 'get';
-    add_log($parametersource, $parametersource.': '.html('div', array('class'=>'arrayshow'), array_show(parameter($parametersource))));
-    add_log('cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
-  }
- 
   $languagename = !parameter('get', 'language') && parameter('get', 'metabasename') ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;
 
   set_best_locale(
@@ -85,16 +64,16 @@
     $usernameandhost = parameter('get', 'usernameandhost');
     $next = parameter('get', 'next');
 
-    if (isset($_SESSION['username']) && isset($_SESSION['host']) && $usernameandhost == "$_SESSION[username]@$_SESSION[host]")
+    if (parameter('session', 'username') && parameter('session', 'host') && $usernameandhost == parameter('get', 'username').'@'.parameter('get', 'host'))
       internal_redirect(first_non_null(http_parse_query($next), array('action'=>'index')));
 
-    if (is_null($usernameandhost) && isset($_SESSION['username']))
+    if (is_null($usernameandhost) && parameter('session', 'username'))
       internal_redirect(array('action'=>'index'));
 
     $password = parameter('get', 'password');
     if (!$usernameandhost) {
       $radios = array();
-      $lastusernamesandhosts = $_COOKIE['lastusernamesandhosts'];
+      $lastusernamesandhosts = parameter('cookie', 'lastusernamesandhosts');
       if ($lastusernamesandhosts) {
         foreach (explode(',', $lastusernamesandhosts) as $thisusernameandhost)
           $radios[] = html('input', array('type'=>'radio', 'class'=>join_non_null(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'id'=>"lastusernameandhost:$thisusernameandhost", 'value'=>$thisusernameandhost, 'checked'=>$radios ? null : 'checked')).html('label', array('for'=>"lastusernameandhost:$thisusernameandhost"), $thisusernameandhost).internal_reference(array('action'=>'forget_username_and_host', 'usernameandhost'=>$thisusernameandhost), 'forget', array('class'=>'forget'));
@@ -917,13 +896,13 @@
     $ajax = parameter('post', 'ajax');
     if ($action == 'add_record' || $action == 'add_record_and_edit') {
       if ($ajax)
-        $_POST['ajax'] = preg_replace('@\bvalue=\d+\b@', "value=$uniquevalue", $_POST['ajax']);
+        parameter('post', 'ajax', preg_replace('@\bvalue=\d+\b@', "value=$uniquevalue", parameter('post', 'ajax')));
       elseif ($referencedfromfieldname)
-        $_POST['back'] = preg_replace('@&back=@', "&field:$referencedfromfieldname=$uniquevalue&back=", parameter('post', 'back'));
+        parameter('post', 'back', preg_replace('@&back=@', "&field:$referencedfromfieldname=$uniquevalue&back=", parameter('post', 'back')));
     }
     if ($action == 'add_record_and_edit') {
       if ($ajax)
-        $_POST['ajax'] = "$ajax&uniquevalue=$uniquevalue";
+        parameter('post', 'ajax', "$ajax&uniquevalue=$uniquevalue");
       else
         internal_redirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
     }
