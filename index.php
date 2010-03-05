@@ -84,7 +84,7 @@
 
     $usernameandhost_input = html('input', array('type'=>'text', 'class'=>'skipfirstfocus', 'id'=>'usernameandhost', 'name'=>'usernameandhost', 'value'=>$usernameandhost));
 
-    if ($radios) {
+    if (isset($radios)) {
       $usernameandhost_input =
         html('ul', array('class'=>'minimal'),
           html('li', array(),
