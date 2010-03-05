@@ -49,13 +49,13 @@
     static $arrays = null;
     if (!$arrays)
       $arrays = array(
-        'get'=>$_GET,
-        'post'=>$_POST,
-        'get_or_post'=>array_merge($_GET, $_POST),
-        'server'=>$_SERVER,
-        'files'=>$_FILES,
-        'session'=>$_SESSION,
-        'cookie'=>$_COOKIE
+        'get'=>&$_GET,
+        'post'=>&$_POST,
+        'get_or_post'=>$_GET ? $_GET : $_POST,
+        'server'=>&$_SERVER,
+        'files'=>&$_FILES,
+        'session'=>&$_SESSION,
+        'cookie'=>&$_COOKIE
       );
     $array = isset($arrays[$type]) ? $arrays[$type] : array();
     if (is_null($name)) {
@@ -934,7 +934,6 @@
     $value = first_non_null(is_local() ? null : $default, parameter('get', $item) == 'on' ? 1 : null, parameter('get', $item) == 'off' ? 0 : null, parameter('cookie', $item), $default);
     if ($value !== parameter('cookie', $item)) {
       set_cookie($item, $value);
-      print_r(parameter('server', 'REQUEST_URI'));
       internal_redirect(http_parse_query(preg_replace("@&$item=\w+@", '', parameter('server', 'REQUEST_URI'))));
     }
   }
