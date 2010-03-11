@@ -63,8 +63,11 @@
         $arrays[$type] = $new_value;
       return $array;
     }
-    if (!is_null($new_value))
+    if (!is_null($new_value)) {
       $arrays[$type][$name] = $new_value;
+      if ($type == 'cookie')
+        setcookie($name, $new_value, time() + 365 * 24 * 60 * 60);
+    }
     $value = isset($array[$name]) ? $array[$name] : null;
     return is_null($value) ? $default : str_replace(array('\\"', '\\\''), array('"', '\''), $value);
   }
@@ -166,8 +169,8 @@
     $attributelist = array();
     foreach ($attributes as $attribute=>$value)
       if ($attribute && !is_null($value))
-        $attributelist[] = ' '.htmlentities($attribute).'="'.htmlentities($value).'"';
-    $starttag = $tag ? '<'.$tag.join($attributelist).(is_null($text) ? ' /' : '').'>' : '';
+        $attributelist[] = htmlentities($attribute).'="'.htmlentities($value).'"';
+    $starttag = $tag ? '<'.$tag.($attributelist ? ' '.join(' ', $attributelist) : '').(is_null($text) ? ' /' : '').'>' : '';
     $endtag = $tag ? "</$tag>" : '';
     return $starttag.(is_null($text) ? '' : (is_array($text) ? join_non_null($endtag.$starttag, $text) : $text).$endtag);
   }
@@ -458,14 +461,12 @@
             html('div', array('id'=>'id'),
               (is_local()
               ? html('ul', array(),
-                  html('li', array('id'=>'switchscripty'),
-                    preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internal_reference(array_merge(parameter('get'), array('scripty'=>parameter('cookie', 'scripty') ? 'off' : 'on')), parameter('cookie', 'scripty') ? _('javascript is on') : _('javascript is off')) : (parameter('cookie', 'scripty') ? _('javascript is on') : _('javascript is off'))
-                  ).
-                  html('li', array('id'=>'switchajaxy'),
-                    preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? (parameter('cookie', 'scripty') ? internal_reference(array_merge(parameter('get'), array('ajaxy'=>parameter('cookie', 'ajaxy') ? 'off' : 'on')), parameter('cookie', 'ajaxy') ? _('ajax is on') : _('ajax is off')) : _('ajax is off')) : (parameter('cookie', 'ajaxy') ? _('ajax is on') : _('ajax is off'))
-                  ).
-                  html('li', array('id'=>'switchlogsy'),
-                    preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internal_reference(array_merge(parameter('get'), array('logsy'=>parameter('cookie', 'logsy') ? 'off' : 'on')), parameter('cookie', 'logsy') ? _('logging is on') : _('logging is off')) : (parameter('cookie', 'logsy') ? _('logging is on') : _('logging is off'))
+                  html('li', array(),
+                    array(
+                      preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internal_reference(array_merge(parameter('get'), array('scripty'=>parameter('cookie', 'scripty') ? 'off' : 'on')), parameter('cookie', 'scripty') ? _('javascript is on') : _('javascript is off')) : (parameter('cookie', 'scripty') ? _('javascript is on') : _('javascript is off')),
+                      preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? (parameter('cookie', 'scripty') ? internal_reference(array_merge(parameter('get'), array('ajaxy'=>parameter('cookie', 'ajaxy') ? 'off' : 'on')), parameter('cookie', 'ajaxy') ? _('ajax is on') : _('ajax is off')) : _('ajax is off')) : (parameter('cookie', 'ajaxy') ? _('ajax is on') : _('ajax is off')),
+                      preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internal_reference(array_merge(parameter('get'), array('logsy'=>parameter('cookie', 'logsy') ? 'off' : 'on')), parameter('cookie', 'logsy') ? _('logging is on') : _('logging is off')) : (parameter('cookie', 'logsy') ? _('logging is on') : _('logging is off'))
+                    )
                   )
                 )
               : ''
@@ -922,32 +923,25 @@
     );
   }
 
-  function set_cookie($name, $value) {
-    static $expire = null;
-    if (!$expire)
-      $expire = time() + 365 * 24 * 60 * 60;
-    setcookie($name, $value, $expire);
-    parameter('cookie', $name, $value);
-  }
-
   function set_preference($item, $default) {
     $value = first_non_null(is_local() ? null : $default, parameter('get', $item) == 'on' ? 1 : null, parameter('get', $item) == 'off' ? 0 : null, parameter('cookie', $item), $default);
     if ($value !== parameter('cookie', $item)) {
-      set_cookie($item, $value);
-      internal_redirect(http_parse_query(preg_replace("@&$item=\w+@", '', parameter('server', 'REQUEST_URI'))));
+      parameter('cookie', $item, $value);
+      if (is_local())
+        internal_redirect(http_parse_query(preg_replace("@&$item=\w+@", '', parameter('server', 'REQUEST_URI'))));
     }
   }
 
   function forget($usernameandhost) {
-    set_cookie('lastusernamesandhosts', join_non_null(',', array_diff(explode(',', parameter('cookie', 'lastusernamesandhosts')), array($usernameandhost))));
+    parameter('cookie', 'lastusernamesandhosts', join_non_null(',', array_diff(explode(',', parameter('cookie', 'lastusernamesandhosts')), array($usernameandhost))));
   }
 
   function login($username, $host, $password, $language) {
     parameter('session', 'username', $username);
     parameter('session', 'host'    , $host);
     parameter('session', 'password', $password);
-    set_cookie('language', $language);
-    set_cookie('lastusernamesandhosts', join_non_null(',', array_diff(array_unique(array_merge(array("$username@$host"), array_diff(explode(',', parameter('cookie', 'lastusernamesandhosts')), array("$username@$host")))), array(''))));
+    parameter('cookie', 'language', $language);
+    parameter('cookie', 'lastusernamesandhosts', join_non_null(',', array_diff(array_unique(array_merge(array("$username@$host"), array_diff(explode(',', parameter('cookie', 'lastusernamesandhosts')), array("$username@$host")))), array(''))));
   }
 
   function logout($error = null) {
