@@ -362,7 +362,6 @@
 
     // pass 2: find presentation and in_desc, in_list and in_edit (needs $alltablenames and $infos)
     $presentationnames = get_presentationnames();
-    $referencesin = $referencesout = array();
     foreach ($infos as $tablename=>&$table) {
       $max_in_desc = $max_in_list = $max_in_edit = 0;
       if (!$table['table_name']) {
@@ -404,15 +403,11 @@
 
         if ($metabasename)
           $field['original'] = query01('meta', 'SELECT tbl.singular, tbl.plural, tbl.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, ftbl.tablename AS foreigntablename FROM `<metabasename>`.tables AS tbl LEFT JOIN `<metabasename>`.fields AS fld ON fld.tableid = tbl.tableid LEFT JOIN `<metabasename>`.presentations pst ON pst.presentationid = fld.presentationid LEFT JOIN `<metabasename>`.tables AS ftbl ON fld.foreigntableid = ftbl.tableid WHERE tbl.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname));
-        $field['linkedtable'] = $field['original'] ? $field['original']['foreigntablename'] : @call_user_func("linkedtable_$bestpresentationname", $tablename, $fieldname);
-        if ($field['linkedtable']) {
-          $referencesout[$tablename]++;
-          $referencesin[$field['linkedtable']]++;
-        }
+        $field['linkedtable'] = isset($field['original']) ? $field['original']['foreigntablename'] : @call_user_func("linkedtable_$bestpresentationname", $tablename, $fieldname);
       }
     }
 
-    // pass 3: produce output for tables and fields (needs $max_in_**** and $referencesin/-out)
+    // pass 3: produce output for tables and fields (needs $max_in_****)
     $alternative_views = array();
     if ($metabasename) {
       $views = query('meta', 'SELECT * FROM `<metabasename>`.views', array('metabasename'=>$metabasename));
@@ -436,7 +431,7 @@
         $fieldname = $field['column_name'];
 
         $inlistforquickadd = $field['column_name'] != $table['primarykeyfieldname'] && $field['is_nullable'] == 'NO' && !$field['column_default'];
-        if ($field['original']) {
+        if (isset($field['original'])) {
           $plural           = $field['original']['plural'];
           $singular         = $field['original']['singular'];
           $title            = $field['original']['title'];
@@ -490,7 +485,7 @@
             ($field['fieldnr'] == 0
             ? html('td', array('class'=>'top', 'rowspan'=>count($table['fields'])),
                 html('span', array('class'=>'tablename'), $tablename).
-                ($table['possible_view_for_table']
+                (isset($table['possible_view_for_table'])
                 ? html('div', array('class'=>'alternative'),
                     html('input', array('type'=>'hidden', 'name'=>"$tablename:possibleviewfortable", 'value'=>$table['possible_view_for_table'])).
                     html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:viewfortable", 'id'=>"$tablename:viewfortable", 'checked'=>!$metabasename || $alternative_views[$tablename] ? 'checked' : null)).
@@ -508,11 +503,7 @@
                 )
               ).
               html('td', array('class'=>join_non_null(' ', 'top', 'center'), 'rowspan'=>count($table['fields'])),
-                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null)).
-                html('div', array('class'=>'countreferences'),
-                  html('div', array(), sprintf(_('%d in'), $referencesin[$tablename])).
-                  html('div', array(), sprintf(_('%d out'), $referencesout[$tablename]))
-                )
+                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
               )
             : ''
             ).
@@ -703,7 +694,7 @@
       if (!parameter('get', "$tablename:viewfortable")) {
         $tableid = $tableids[$tablename];
 
-        $descs = $sorts = $lists = $edits = 0;
+        $indescs = $inlists = $inedits = 0;
         $fields = query('top',
           'SELECT c.table_schema, c.table_name, c.column_name, column_key, column_type, is_nullable, column_default, referenced_table_name '.
           'FROM INFORMATION_SCHEMA.COLUMNS c '.

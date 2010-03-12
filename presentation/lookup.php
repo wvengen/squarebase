@@ -1,7 +1,7 @@
 <?php
   function linkedtable_lookup($tablename, $fieldname, $foreigntablename = null, $alltablenames = null, $primarykeyfieldname = null) {
     static $linkedtables = array();
-    if (is_null($linkedtables["$tablename:$fieldname"])) {
+    if (!isset($linkedtables["$tablename:$fieldname"])) {
       if (is_null($foreigntablename)) {
         $likeness = array();
         $fieldname_lower = strtolower($fieldname);

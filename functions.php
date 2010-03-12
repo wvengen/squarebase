@@ -139,7 +139,7 @@
         'strong'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'link'    =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'href'=>0, 'type'=>0, 'rel'=>0)),
         'img'     =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'src'=>0, 'alt'=>0, 'title'=>1)),
-        'input'   =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'name'=>0, 'value'=>1, 'type'=>0, 'readonly'=>1, 'disabled'=>1, 'checked'=>1))
+        'input'   =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'name'=>0, 'value'=>1, 'type'=>0, 'readonly'=>1, 'disabled'=>1, 'checked'=>1, 'title'=>1))
       );
       $type = $types[$tag];
       if ($type['empty'] === false) {
@@ -461,23 +461,27 @@
             html('div', array('id'=>'id'),
               (is_local()
               ? html('ul', array(),
-                  html('li', array(),
-                    array(
-                      preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internal_reference(array_merge(parameter('get'), array('scripty'=>parameter('cookie', 'scripty') ? 'off' : 'on')), parameter('cookie', 'scripty') ? _('javascript is on') : _('javascript is off')) : (parameter('cookie', 'scripty') ? _('javascript is on') : _('javascript is off')),
-                      preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? (parameter('cookie', 'scripty') ? internal_reference(array_merge(parameter('get'), array('ajaxy'=>parameter('cookie', 'ajaxy') ? 'off' : 'on')), parameter('cookie', 'ajaxy') ? _('ajax is on') : _('ajax is off')) : _('ajax is off')) : (parameter('cookie', 'ajaxy') ? _('ajax is on') : _('ajax is off')),
-                      preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internal_reference(array_merge(parameter('get'), array('logsy'=>parameter('cookie', 'logsy') ? 'off' : 'on')), parameter('cookie', 'logsy') ? _('logging is on') : _('logging is off')) : (parameter('cookie', 'logsy') ? _('logging is on') : _('logging is off'))
-                    )
+                  html('li', array('id'=>'togglescripty'),
+                    preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internal_reference(array_merge(parameter('get'), array('scripty'=>parameter('cookie', 'scripty') ? 'off' : 'on')), parameter('cookie', 'scripty') ? _('javascript is on') : _('javascript is off')) : (parameter('cookie', 'scripty') ? _('javascript is on') : _('javascript is off'))
+                  ).
+                  html('li', array('id'=>'toggleajaxy'),
+                    preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? (parameter('cookie', 'scripty') ? internal_reference(array_merge(parameter('get'), array('ajaxy'=>parameter('cookie', 'ajaxy') ? 'off' : 'on')), parameter('cookie', 'ajaxy') ? _('ajax is on') : _('ajax is off')) : _('ajax is off')) : (parameter('cookie', 'ajaxy') ? _('ajax is on') : _('ajax is off'))
+                  ).
+                  html('li', array('id'=>'togglelogsy'),
+                    preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internal_reference(array_merge(parameter('get'), array('logsy'=>parameter('cookie', 'logsy') ? 'off' : 'on')), parameter('cookie', 'logsy') ? _('logging is on') : _('logging is off')) : (parameter('cookie', 'logsy') ? _('logging is on') : _('logging is off'))
                   )
                 )
               : ''
               ).
               html('ul', array(),
-                html('li', array(),
-                  array(
-                    parameter('session', 'username') ? parameter('session', 'username').'@'.parameter('session', 'host') : '&nbsp;',
-                    parameter('session', 'username') ? internal_reference(array('action'=>'logout'), 'logout') : '&nbsp;',
-                    get_locale()
-                  )
+                html('li', array('id'=>'usernameandhost'),
+                  parameter('session', 'username') ? parameter('session', 'username').'@'.parameter('session', 'host') : '&nbsp;'
+                ).
+                html('li', array('id'=>'logout'),
+                  parameter('session', 'username') ? internal_reference(array('action'=>'logout'), 'logout') : '&nbsp;'
+                ).
+                html('li', array('id'=>'locale'),
+                  get_locale()
                 )
               )
             ).
