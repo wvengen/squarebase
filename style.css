@@ -21,12 +21,14 @@ a { color: #00e; }
 p { margin: 0.5em 0; }
 
 table { width: 100%; border-collapse: collapse; background-color: #fff; }
-th, td { padding: 0.1em; vertical-align: top; white-space: nowrap; width: 1%; }
+th, td { padding: 0.1em; vertical-align: top; width: 1%; }
 th { text-align: left; background-color: #fff; font-weight: normal; font-style: italic; }
 th.heading { font-weight: bold; font-style: normal; }
 tr.rowodd { background-color: #ddd; }
-tr.roweven { background-color: #eee; }
+tr.rowodd td.top, tr.roweven { background-color: #eee; }
 tr.list:hover { background-color: #ffc; }
+tr.list:hover td.top { background-color: #eee; }
+tr.list td.top:hover { background-color: #ffc; }
 td.description { width: 0.1em; height: 1.5em; }
 td.number { text-align: right; }
 th.center, td.center { text-align: center; }

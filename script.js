@@ -383,14 +383,18 @@ ready(
 
           rijen.
           filter(':first').
-            find('td:not(:first), .pluralsingular').
-              css('visibility', $(this).attr('checked') ? 'hidden' : 'visible').
+            children('td:first').
+              attr('rowspan', $(this).attr('checked') ? 1 : rijen.length).
+              find('.pluralsingular').
+                css('display', $(this).attr('checked') ? 'none' : 'block').
+              end().
+            end().
+            find('td:not(:first)').
+              css('display', $(this).attr('checked') ? 'none' : 'table-cell').
             end().
           end().
           filter(':not(:first)').
-            find('td').
-              css('visibility', $(this).attr('checked') ? 'hidden' : 'visible').
-            end().
+            css('display', $(this).attr('checked') ? 'none' : 'table-row').
           end();
         }
       ).

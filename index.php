@@ -421,7 +421,7 @@
         html('tr', array(),
           html('th', array(),
             array(
-              _('table'), _('top'), _('field'), _('title'), _('type'), _('null'), _('presentation'), _('key'), _('desc'), _('list'), _('edit')
+              _('table'), _('desc'), _('list'), _('edit'), _('field'), _('title'), _('type'), _('null'), _('presentation'), _('key')
             )
           ).
           html('th', array('class'=>'filler'), '')
@@ -484,11 +484,15 @@
           html('tr', array('class'=>join_non_null(' ', ($field['fieldnr'] + 1) % 2 ? 'rowodd' : 'roweven', 'list', "table-$tablename")),
             ($field['fieldnr'] == 0
             ? html('td', array('class'=>'top', 'rowspan'=>count($table['fields'])),
-                html('span', array('class'=>'tablename'), $tablename).
+                html('div', array('class'=>'tablename'), $tablename).
+                html('div', array(),
+                  html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null)).
+                  html('label', array('for'=>"$tablename:intablelist"), _('on toplevel'))
+                ).
                 (isset($table['possible_view_for_table'])
                 ? html('div', array('class'=>'alternative'),
                     html('input', array('type'=>'hidden', 'name'=>"$tablename:possibleviewfortable", 'value'=>$table['possible_view_for_table'])).
-                    html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:viewfortable", 'id'=>"$tablename:viewfortable", 'checked'=>!$metabasename || $alternative_views[$tablename] ? 'checked' : null)).
+                    html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:viewfortable", 'id'=>"$tablename:viewfortable", 'checked'=>!$metabasename || isset($alternative_views[$tablename]) ? 'checked' : null)).
                     html('label', array('for'=>"$tablename:viewfortable"), sprintf(_('alternative for %s'), $table['possible_view_for_table']))
                   )
                 : ''
@@ -501,13 +505,13 @@
                     )
                   )
                 )
-              ).
-              html('td', array('class'=>join_non_null(' ', 'top', 'center'), 'rowspan'=>count($table['fields'])),
-                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
               )
             : ''
             ).
-            html('td', array(), $fieldname).
+            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null))).
+            html('td', array('class'=>join_non_null(' ', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))).
+            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null))).
+            html('td', array('class'=>'field'), $fieldname).
             html('td', array(), html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))).
             html('td', array(), $field['column_type']).
             html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'name'=>"$tablename:$fieldname:_nullallowed", 'readonly'=>'readonly', 'disabled'=>'disabled', 'checked'=>$nullallowed ? 'checked' : null)).html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))).
@@ -523,10 +527,7 @@
                 )
               )
             ).
-            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null))).
-            html('td', array('class'=>join_non_null(' ', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))).
-            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null))).
-            html('td', array(), '')
+            html('td', array('class'=>'filler'), '')
           );
       }
     }
@@ -572,7 +573,8 @@
           ).
           html('p', array(),
             html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract_structure_from_database_to_metabase', 'class'=>'mainsubmit'))
-          )
+          ),
+          'post'
         )
     );
   }
@@ -580,8 +582,8 @@
   /********************************************************************************************/
 
   if ($action == 'extract_structure_from_database_to_metabase') {
-    $databasename = parameter('get', 'databasename');
-    $metabasename = parameter('get', 'metabasename');
+    $databasename = parameter('post', 'databasename');
+    $metabasename = parameter('post', 'metabasename');
     if (!$metabasename)
       error(_('no name given for the metabase'));
 
@@ -662,7 +664,7 @@
       array('metabasename'=>$metabasename)
     );
 
-    insert_or_update($metabasename, 'languages', array('languagename'=>parameter('get', 'language')));
+    insert_or_update($metabasename, 'languages', array('languagename'=>parameter('post', 'language')));
 
     insert_or_update($metabasename, 'databases', array('databasename'=>$databasename));
 
@@ -682,16 +684,16 @@
     $tableids = array();
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table['table_name'];
-      if (!parameter('get', "$tablename:viewfortable"))
-        $tableids[$tablename] = insert_or_update($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>parameter('get', "$tablename:singular"), 'plural'=>parameter('get', "$tablename:plural"), 'intablelist'=>parameter('get', "$tablename:intablelist") == 'on'));
+      if (!parameter('post', "$tablename:viewfortable"))
+        $tableids[$tablename] = insert_or_update($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>parameter('post', "$tablename:singular"), 'plural'=>parameter('post', "$tablename:plural"), 'intablelist'=>parameter('post', "$tablename:intablelist") == 'on'));
       else
-        insert_or_update($metabasename, 'views', array('viewname'=>$tablename, 'tableid'=>$tableids[parameter('get', "$tablename:possibleviewfortable")]));
+        insert_or_update($metabasename, 'views', array('viewname'=>$tablename, 'tableid'=>$tableids[parameter('post', "$tablename:possibleviewfortable")]));
     }
 
     $errors = array();
     for (mysql_data_reset($tables); $table = mysql_fetch_assoc($tables); ) {
       $tablename = $table['table_name'];
-      if (!parameter('get', "$tablename:viewfortable")) {
+      if (!parameter('post', "$tablename:viewfortable")) {
         $tableid = $tableids[$tablename];
 
         $indescs = $inlists = $inedits = 0;
@@ -705,19 +707,19 @@
         while ($field = mysql_fetch_assoc($fields)) {
           $fieldname = $field['column_name'];
 
-          $foreigntablename = parameter('get', "$tablename:$fieldname:foreigntablename");
+          $foreigntablename = parameter('post', "$tablename:$fieldname:foreigntablename");
 
-          $indesc = parameter('get', "$tablename:$fieldname:indesc") ? true : false;
-          $inlist = parameter('get', "$tablename:$fieldname:inlist") ? true : false;
-          $inedit = parameter('get', "$tablename:$fieldname:inedit") ? true : false;
+          $indesc = parameter('post', "$tablename:$fieldname:indesc") ? true : false;
+          $inlist = parameter('post', "$tablename:$fieldname:inlist") ? true : false;
+          $inedit = parameter('post', "$tablename:$fieldname:inedit") ? true : false;
 
-          $fieldid = insert_or_update($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('get', "$tablename:$fieldname:title"), 'type'=>$field['column_type'], 'presentationid'=>$presentationids[parameter('get', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
+          $fieldid = insert_or_update($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('post', "$tablename:$fieldname:title"), 'type'=>$field['column_type'], 'presentationid'=>$presentationids[parameter('post', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
 
           $indescs += $indesc;
           $inlists += $inlist;
           $inedits += $inedit;
 
-          if (parameter('get', "$tablename:primary") == $fieldname)
+          if (parameter('post', "$tablename:primary") == $fieldname)
             query('meta', 'UPDATE `<metabasename>`.tables SET uniquefieldid = <fieldid> WHERE tableid = <tableid>', array('metabasename'=>$metabasename, 'fieldid'=>$fieldid, 'tableid'=>$tableid));
         }
         if (!$indescs)
