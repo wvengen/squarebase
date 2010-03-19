@@ -18,6 +18,11 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
+  ini_set('session.use_only_cookies', true);
+  session_set_cookie_params(7 * 24 * 60 * 60);
+  session_save_path('session');
+  session_start();
+
   include('functions.php');
 
   $languagename = !parameter('get', 'language') && parameter('get', 'metabasename') ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;

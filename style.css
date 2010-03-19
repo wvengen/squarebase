@@ -14,6 +14,7 @@ h1 { display: block; }
 #content { clear: both; }
 .box { border: 0.1em solid #999; }
 .tableedit { padding-bottom: 0.5em; }
+.tableedit td { white-space: nowrap; }
 .referringlist.tablelist { margin-bottom: 1em; }
 .referrer { font-size: 0.8em; margin-left: 0.5em; }
 
@@ -87,7 +88,7 @@ tr.roweven.closing td, tr.roweven.closing td a { background-color: #fbb !importa
 
 #warnings { padding: 0; }
 #warnings li { list-style-type: none; }
-div.error, .problem, .warning { font-weight: bold; color: #f00; }
+#error, .problem, .warning { font-weight: bold; color: #f00; }
 .help { color: #999; margin-left: 0.5em; }
 
 .trace { white-space: nowrap; }

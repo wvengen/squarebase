@@ -20,18 +20,13 @@
 
   include('inflection.php');
 
-  umask(0177); // => rw-.---.---
-
-  ini_set('session.use_only_cookies', true);
-  session_set_cookie_params(7 * 24 * 60 * 60);
-  session_save_path('session');
-  session_start();
+  umask(0177); // => maximum = rw-.---.---
 
   set_preference('scripty', 1);
   set_preference('ajaxy', 1);
   set_preference('logsy', 0);
 
-  error_reporting(parameter('cookie', 'logsy') ? E_ALL : 0);
+  error_reporting(is_local() || parameter('cookie', 'logsy') ? E_ALL : 0);
 
   if (parameter('cookie', 'logsy')) {
     if (parameter('get') && parameter('post'))
@@ -269,7 +264,7 @@
       }
     }
     page('error', null,
-      html('p', array('class'=>'error'), $error).
+      html('div', array('id'=>'error'), $error).
       ($traces ? html('p', array('class'=>'trace'), html('ol', array(), html('li', array(), $traces))) : '')
     );
     exit;
@@ -304,18 +299,12 @@
 
     $fullquery = preg_replace('@(["`])?<(\w+)>(["`])?@e', '(is_null($arguments["$2"]) ? "NULL" : (is_bool($arguments["$2"]) ? ($arguments["$2"] ? "TRUE" : "FALSE") : (is_numeric($arguments["$2"]) ? (int) $arguments["$2"] : "$1".mysql_escape_string($arguments["$2"])."$3")))', $query);
 
-    static $cache = array();
-    $fromcache = isset($cache[$fullquery]);
-    if ($fromcache)
-      $result = $cache[$fullquery];
-    else {
-      $before = microtime();
-      $result = $cache[$fullquery] = mysql_query($fullquery);
-      $after = microtime();
-      list($beforemsec, $beforesec) = explode(' ', $before);
-      list($aftermsec, $aftersec) = explode(' ', $after);
-      $errno = mysql_errno();
-    }
+    $before = microtime();
+    $result = mysql_query($fullquery);
+    $after = microtime();
+    list($beforemsec, $beforesec) = explode(' ', $before);
+    list($aftermsec, $aftersec) = explode(' ', $after);
+    $errno = mysql_errno();
 
     $sqlcommand = preg_match1('@^[^A-Z]*([A-Z]+) @i', $fullquery);
     $numresults = preg_match('@^(EXPLAIN|SELECT|SHOW)$@i', $sqlcommand) && $result ? mysql_num_rows($result) : null;
@@ -345,11 +334,7 @@
             array('&lt;', '&gt;', '&amp; '),
             $fullquery
           ).
-          ' '.
-          ($fromcache
-          ? '['._('from cache').']'
-          : '['.sprintf(_('%.2f sec'), ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).']'
-          ).
+          ' '.'['.sprintf(_('%.2f sec'), ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).']'.
           ' '.internal_reference(array('action'=>'explain_query', 'query'=>$fullquery), _('explain')).
           ' '.html('span', array('class'=>'traces'), join(' ', array_reverse($traces)))
         ).
@@ -408,7 +393,7 @@
         add_log('warning', $warning ? $warning : $error);
         return null;
       default:
-        error(_('problem while querying the database manager').html('p', array('class'=>'error'), "$errno: ".mysql_error()).$fullquery);
+        error(_('problem while querying the database manager').html('p', array(), "$errno: ".mysql_error()).$fullquery);
     }
   }
 
@@ -474,11 +459,11 @@
               : ''
               ).
               html('ul', array(),
-                html('li', array('id'=>'usernameandhost'),
-                  parameter('session', 'username') ? parameter('session', 'username').'@'.parameter('session', 'host') : '&nbsp;'
+                html('li', array('id'=>'currentusernameandhost'),
+                  parameter('session', 'username') ? parameter('session', 'username').'@'.parameter('session', 'host') : ''
                 ).
                 html('li', array('id'=>'logout'),
-                  parameter('session', 'username') ? internal_reference(array('action'=>'logout'), 'logout') : '&nbsp;'
+                  parameter('session', 'username') ? internal_reference(array('action'=>'logout'), 'logout') : ''
                 ).
                 html('li', array('id'=>'locale'),
                   get_locale()
@@ -489,7 +474,7 @@
             ($breadcrumbs ? $breadcrumbs : '&nbsp;')
           ).
           html('div', array('id'=>'content'),
-            ($error ?  html('div', array('class'=>'error'), $error) : '').
+            ($error ?  html('div', array('id'=>'error'), $error) : '').
             html('ol', array('id'=>'warnings'), join(get_logs('warnings'))).
             $content.
             (parameter('cookie', 'logsy') ? html('ol', array('class'=>'logs'), join(get_logs('logs'))) : '')
@@ -721,7 +706,7 @@
 
     $lines[] =
       html('td', array('class'=>'description'), '').
-      html('td', array(),
+      html('td', array('class'=>'field'),
         (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$privilege == 'UPDATE' ? 'update_record' : 'add_record', 'class'=>'mainsubmit')) : '').
         ($privilege == 'INSERT' && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
         (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $viewname) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_non_null(' ', 'mainsubmit', 'delete'))) : '')
