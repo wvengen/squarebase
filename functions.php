@@ -44,24 +44,29 @@
     static $arrays = null;
     if (!$arrays)
       $arrays = array(
-        'get'=>&$_GET,
-        'post'=>&$_POST,
+        'get'=>$_GET,
+        'post'=>$_POST,
         'get_or_post'=>$_GET ? $_GET : $_POST,
-        'server'=>&$_SERVER,
-        'files'=>&$_FILES,
-        'session'=>&$_SESSION,
-        'cookie'=>&$_COOKIE
+        'server'=>$_SERVER,
+        'files'=>$_FILES,
+        'session'=>$_SESSION,
+        'cookie'=>$_COOKIE
       );
     $array = isset($arrays[$type]) ? $arrays[$type] : array();
     if (is_null($name)) {
-      if (!is_null($new_value))
+      if (!is_null($new_value)) {
         $arrays[$type] = $new_value;
+        if ($type == 'session')
+          $_SESSION = $new_value;
+      }
       return $array;
     }
     if (!is_null($new_value)) {
       $arrays[$type][$name] = $new_value;
       if ($type == 'cookie')
         setcookie($name, $new_value, time() + 365 * 24 * 60 * 60);
+      if ($type == 'session')
+        $_SESSION[$name] = $new_value;
     }
     $value = isset($array[$name]) ? $array[$name] : null;
     return is_null($value) ? $default : str_replace(array('\\"', '\\\''), array('"', '\''), $value);
