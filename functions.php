@@ -26,7 +26,7 @@
   set_preference('ajaxy', 1);
   set_preference('logsy', 0);
 
-  error_reporting(is_local() || parameter('cookie', 'logsy') ? E_ALL : 0);
+  error_reporting(php_sapi_name() == 'cli' || parameter('cookie', 'logsy') ? E_ALL : 0);
 
   if (parameter('cookie', 'logsy')) {
     if (parameter('get') && parameter('post'))
@@ -570,7 +570,7 @@
                 array('class'=>'ajaxreload')
               )
           );
-        $quickadd[] = html('td', array('class'=>!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? $foreignvalue : $field['defaultvalue'], (!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname) || !$field['privilege_insert'], false));
+        $quickadd[] = html('td', array('class'=>join_non_null(' ', 'quickadd', !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null)), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? $foreignvalue : $field['defaultvalue'], (!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname) || !$field['privilege_insert'], false));
       }
     }
     $header[] = html('th', array('class'=>'filler'), '');

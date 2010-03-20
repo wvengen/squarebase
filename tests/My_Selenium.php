@@ -6,8 +6,14 @@
       return $this->isElementPresent($locator) ? $this->getText($locator) : null;
     }
 
-    public function waitForAjaxToLoad($timeout) {
-      return $this->waitForCondition('selenium.browserbot.getCurrentWindow().jQuery.active == 0', $timeout);
+    public function clickAndWaitForPageToLoad($locator) {
+      $this->click($locator);
+      $this->waitForPageToLoad(5000);
+    }
+
+    public function clickAndWaitForAjaxToLoad($locator) {
+      $this->click($locator);
+      $this->waitForCondition('selenium.browserbot.getCurrentWindow().jQuery.active == 0', 5000);
     }
   }
 ?>
