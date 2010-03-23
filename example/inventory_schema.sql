@@ -5,16 +5,14 @@ DROP DATABASE IF EXISTS inventory;
 
 CREATE DATABASE inventory;
 
-USE inventory;
-
-CREATE TABLE computers (
+CREATE TABLE inventory.computers (
    computerID   INT(11)      NOT NULL AUTO_INCREMENT,
    description  VARCHAR(80)  NOT NULL,
    PRIMARY KEY (computerID),
    UNIQUE KEY (description)
 );
 
-CREATE TABLE employees (
+CREATE TABLE inventory.employees (
    employeeID   INT(11)      NOT NULL AUTO_INCREMENT,
    firstName    VARCHAR(20)  NOT NULL,
    lastName     VARCHAR(20)  NOT NULL,
@@ -22,7 +20,7 @@ CREATE TABLE employees (
    UNIQUE KEY (firstName, lastName)
 );
 
-CREATE TABLE usage (
+CREATE TABLE inventory.usages (
    usageID      INT(11)      NOT NULL AUTO_INCREMENT,
    dateAcquired DATE         NOT NULL,
    computerID   INT(11)      NOT NULL,

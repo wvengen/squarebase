@@ -369,9 +369,6 @@
     $presentationnames = get_presentationnames();
     foreach ($infos as $tablename=>&$table) {
       $max_in_desc = $max_in_list = $max_in_edit = 0;
-      if (!$table['table_name']) {
-        print html('div', array(), array_show($table));
-      }
       foreach ($table['fields'] as &$field) {
         $fieldname = $field['column_name'];
 

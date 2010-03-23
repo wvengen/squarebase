@@ -1,5 +1,5 @@
 <?php
-  require_once('../functions.php');
+  require_once('functions.php');
   require_once('My_Selenium.php');
 
   //global variables
@@ -50,6 +50,8 @@
     return $database;
   }
 
+  progress(0);
+
   //make a test database
   $connection = mysql_connect('localhost', 'sqbase', 'sqbase');
   query('data', 'DROP DATABASE IF EXISTS inventory', array(), $connection);
@@ -76,7 +78,7 @@
     $connection
   );
   query('data',
-    'CREATE TABLE inventory.usage ('.
+    'CREATE TABLE inventory.usages ('.
       'usageID      INT(11)      NOT NULL AUTO_INCREMENT,'.
       'dateAcquired DATE         NOT NULL,'.
       'computerID   INT(11)      NOT NULL,'.
@@ -93,11 +95,10 @@
   query('meta', 'DROP DATABASE IF EXISTS inventory_metabase', array(), $connection);
 
   //check the database
-  $database = array('computers'=>array(), 'employees'=>array(), 'usage'=>array());
+  $database = array('computers'=>array(), 'employees'=>array(), 'usages'=>array());
   equal(readDatabase($connection), $database);
 
-  //start
-  progress(0);
+  //start selenium
   $selenium = new My_Selenium('*firefox', 'http://localhost/');
   $selenium->start();
 
@@ -132,14 +133,14 @@
 
   //quickadd computer
   $selenium->type('field:description', 'Dell Optiplex');
-  $selenium->clickAndWaitForAjaxToLoad('action');
+  $selenium->clickAndWaitForAjaxToLoad('quickadd_record_computer');
 
   $database['computers'][] = array('computerID'=>1, 'description'=>'Dell Optiplex');
   equal(readDatabase($connection), $database);
 
   //quickadd computer
   $selenium->type('field:description', 'Dell Inspiron');
-  $selenium->clickAndWaitForAjaxToLoad('action');
+  $selenium->clickAndWaitForAjaxToLoad('quickadd_record_computer');
 
   $database['computers'][] = array('computerID'=>2, 'description'=>'Dell Inspiron');
   equal(readDatabase($connection), $database);
@@ -147,14 +148,14 @@
   //full record computer
   $selenium->clickAndWaitForAjaxToLoad('link=full record');
   $selenium->type('document.forms[1].elements["field:description"]', 'Dell Dimension');
-  $selenium->clickAndWaitForAjaxToLoad('document.forms[1].elements["action"][0]');
+  $selenium->clickAndWaitForAjaxToLoad('add_record_computer');
 
   $database['computers'][] = array('computerID'=>3, 'description'=>'Dell Dimension');
   equal(readDatabase($connection), $database);
 
   //quickadd computer
   $selenium->type('field:description', 'iMac');
-  $selenium->clickAndWaitForAjaxToLoad('action');
+  $selenium->clickAndWaitForAjaxToLoad('quickadd_record_computer');
 
   $database['computers'][] = array('computerID'=>4, 'description'=>'iMac');
   equal(readDatabase($connection), $database);
@@ -168,7 +169,7 @@
   //quickadd employee
   $selenium->type('field:firstName', 'John');
   $selenium->type('field:lastName', 'Doe');
-  $selenium->clickAndWaitForAjaxToLoad('action');
+  $selenium->clickAndWaitForAjaxToLoad('quickadd_record_employee');
 
   $database['employees'][] = array('employeeID'=>1, 'firstName'=>'John', 'lastName'=>'Doe');
   equal(readDatabase($connection), $database);
@@ -176,7 +177,7 @@
   //quickadd employee
   $selenium->type('field:firstName', 'Daffy');
   $selenium->type('field:lastName', 'Duck');
-  $selenium->clickAndWaitForAjaxToLoad('action');
+  $selenium->clickAndWaitForAjaxToLoad('quickadd_record_employee');
 
   $database['employees'][] = array('employeeID'=>2, 'firstName'=>'Daffy', 'lastName'=>'Duck');
   equal(readDatabase($connection), $database);
@@ -184,25 +185,33 @@
   //quickadd employee
   $selenium->type('field:firstName', 'Mickey');
   $selenium->type('field:lastName', 'Mouse');
-  $selenium->clickAndWaitForAjaxToLoad('action');
+  $selenium->clickAndWaitForAjaxToLoad('quickadd_record_employee');
 
   $database['employees'][] = array('employeeID'=>3, 'firstName'=>'Mickey', 'lastName'=>'Mouse');
+  equal(readDatabase($connection), $database);
+
+  //quickadd employee
+  $selenium->type('field:firstName', 'Minnie');
+  $selenium->type('field:lastName', 'Mouse');
+  $selenium->clickAndWaitForAjaxToLoad('quickadd_record_employee');
+
+  $database['employees'][] = array('employeeID'=>4, 'firstName'=>'Minnie', 'lastName'=>'Mouse');
   equal(readDatabase($connection), $database);
 
   //close table employees
   $selenium->clickAndWaitForAjaxToLoad('link=employees');
 
-  //show table usage
-  $selenium->clickAndWaitForAjaxToLoad('link=usage');
+  //show table usages
+  $selenium->clickAndWaitForAjaxToLoad('link=usages');
 
   //quickadd usage
   $selenium->type('field:dateAcquired', '06/03/1999');
   $selenium->select('field:computerID', 'label=iMac');
   $selenium->select('field:employeeID', 'label=Mickey Mouse');
   $selenium->type('field:comments', 'the purple one');
-  $selenium->clickAndWaitForAjaxToLoad('action');
+  $selenium->clickAndWaitForAjaxToLoad('quickadd_record_usage');
 
-  $database['usage'][] = array('usageID'=>1, 'dateAcquired'=>'1999-06-03', 'computerID'=>4, 'employeeID'=>3, 'comments'=>'the purple one');
+  $database['usages'][] = array('usageID'=>1, 'dateAcquired'=>'1999-06-03', 'computerID'=>4, 'employeeID'=>3, 'comments'=>'the purple one');
   equal(readDatabase($connection), $database);
 
   //quickadd usage
@@ -210,13 +219,50 @@
   $selenium->select('field:computerID', 'label=Dell Inspiron');
   $selenium->select('field:employeeID', 'label=John Doe');
   $selenium->type('field:comments', 'for home use');
-  $selenium->clickAndWaitForAjaxToLoad('action');
+  $selenium->clickAndWaitForAjaxToLoad('quickadd_record_usage');
 
-  $database['usage'][] = array('usageID'=>2, 'dateAcquired'=>'2000-09-15', 'computerID'=>2, 'employeeID'=>1, 'comments'=>'for home use');
+  $database['usages'][] = array('usageID'=>2, 'dateAcquired'=>'2000-09-15', 'computerID'=>2, 'employeeID'=>1, 'comments'=>'for home use');
   equal(readDatabase($connection), $database);
 
+  //close table usages
+  $selenium->clickAndWaitForAjaxToLoad('link=usages');
+
+  //show table employees
+  $selenium->clickAndWaitForAjaxToLoad('link=employees');
+
+  //quickadd_and_edit employee
+  $selenium->type('field:firstName', 'Ronald');
+  $selenium->type('field:lastName', 'McDonald');
+  $selenium->clickAndWaitForAjaxToLoad('quickadd_record_and_edit_employee');
+
+  $database['employees'][] = array('employeeID'=>5, 'firstName'=>'Ronald', 'lastName'=>'McDonald');
+  equal(readDatabase($connection), $database);
+
+  //add usage
+  $selenium->type('field:dateAcquired', '10/02/1999');
+  $selenium->select('field:computerID', 'label=Dell Optiplex');
+  $selenium->type('field:comments', 'on temporary loan');
+  $selenium->clickAndWaitForAjaxToLoad('quickadd_record_usage');
+
+  $database['usages'][] = array('usageID'=>3, 'dateAcquired'=>'1999-10-02', 'computerID'=>1, 'employeeID'=>5, 'comments'=>'on temporary loan');
+  equal(readDatabase($connection), $database);
+
+  $selenium->clickAndWaitForAjaxToLoad('link=cancel');
+
+  //edit employee
+  $selenium->clickAndWaitForAjaxToLoad('edit_record_employee_4');
+
+  //delete employee
+  $selenium->clickAndWaitForAjaxToLoad('delete_record_employee');
+
+  unset($database['employees'][3]);
+  $database['employees'] = array_values($database['employees']); //renumber the array
+  equal(readDatabase($connection), $database);
+
+  //stop selenium
   $selenium->stop();
+
   clear_progress();
 
-  exit($unequals == 0 ? 0 : 1);
+  exit($unequals ? 1 : 0);
 ?>

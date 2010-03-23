@@ -21,7 +21,7 @@ Notes:
    $ make install
 
 4. There is a demo database named inventory
-   $ mysql < example/inventory.sql
+   $ make inventory
 
 5. Conventions
    a. Table names are plural (e.g. orders instead of order)

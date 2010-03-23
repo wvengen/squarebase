@@ -1,6 +1,6 @@
 #: functions.php:131
 msgid "mysql module not found"
-msgstr ""
+msgstr "mysql module niet gevonden"
 
 #: functions.php:134
 #, php-format
@@ -29,11 +29,11 @@ msgstr ""
 #: functions.php:355 presentation/lookup.php:53
 #, php-format
 msgid "new %s"
-msgstr ""
+msgstr "nieuw(e) %s"
 
 #: functions.php:356 presentation/lookup.php:53
 msgid "(changes to form fields are lost)"
-msgstr ""
+msgstr "(veranderingen in formuliervelden gaan weg)"
 
 #: functions.php:496
 msgid "dd"
@@ -81,7 +81,7 @@ msgstr ""
 
 #: index.php:50
 msgid "username"
-msgstr ""
+msgstr "gebruikersnaam"
 
 #: index.php:51
 msgid "host"
@@ -89,11 +89,11 @@ msgstr ""
 
 #: index.php:52
 msgid "password"
-msgstr ""
+msgstr "wachtwoord"
 
 #: index.php:53 index.php:214 index.php:437
 msgid "language"
-msgstr ""
+msgstr "taal"
 
 #: index.php:84
 msgid "metabase"
@@ -123,7 +123,7 @@ msgstr ""
 #: index.php:175
 #, php-format
 msgid "Drop database %s?"
-msgstr ""
+msgstr "Verwijderen database %s?"
 
 #: index.php:209 index.php:436
 msgid "databasename"
@@ -131,15 +131,15 @@ msgstr ""
 
 #: index.php:280
 msgid "table"
-msgstr ""
+msgstr "tabel"
 
 #: index.php:280
 msgid "list"
-msgstr ""
+msgstr "lijst"
 
 #: index.php:280
 msgid "field"
-msgstr ""
+msgstr "veld"
 
 #: index.php:280
 msgid "type"
@@ -187,7 +187,7 @@ msgstr ""
 
 #: index.php:280
 msgid "edit"
-msgstr ""
+msgstr "wijzig"
 
 #: index.php:413
 msgid "primary"
@@ -256,28 +256,28 @@ msgstr ""
 
 #: presentation/varchar.php:3
 msgid "name"
-msgstr ""
+msgstr "naam"
 
 #: presentation/varchar.php:3
 msgid "title"
-msgstr ""
+msgstr "titel"
 
 #: presentation/varchar.php:3
 msgid "description"
-msgstr ""
+msgstr "omschrijving"
 
 #: presentation/varchar.php:3
 msgid "acronym"
-msgstr ""
+msgstr "acronym"
 
 #: presentation/varchar.php:3
 msgid "abbr"
-msgstr ""
+msgstr "afk"
 
 #: presentation/varchar.php:3
 msgid "abbreviation"
-msgstr ""
+msgstr "afkorting"
 
 #: presentation/varchar.php:3
 msgid "value"
-msgstr ""
+msgstr "waarde"

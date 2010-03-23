@@ -67,6 +67,10 @@
         setcookie($name, $new_value, time() + 365 * 24 * 60 * 60);
       if ($type == 'session')
         $_SESSION[$name] = $new_value;
+      if ($type == 'get' || $type == 'post')
+        $arrays['get_or_post'][$name] = $new_value;
+      if ($type == 'get_or_post')
+        $arrays[$_GET ? 'get' : 'post'][$name] = $new_value;
     }
     $value = isset($array[$name]) ? $array[$name] : null;
     return is_null($value) ? $default : str_replace(array('\\"', '\\\''), array('"', '\''), $value);
@@ -617,8 +621,8 @@
         html('tr', array('class'=>join_non_null(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array(),
             $can_update
-            ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('edit'), array('class'=>'editrecord'))
-            : internal_reference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('show'), array('class'=>'showrecord'))
+            ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('edit'), array('class'=>'editrecord', 'id'=>"edit_record_${tablenamesingular}_${row[$uniquefieldname]}"))
+            : internal_reference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('show'), array('class'=>'showrecord', 'id'=>"show_record_${tablenamesingular}_${row[$uniquefieldname]}"))
           ).
           join($columns)
         );
@@ -630,8 +634,8 @@
           html('td', array(), '').
           html('td', array('colspan'=>count($quickadd) - 1),
             html('div', array(),
-              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'class'=>'mainsubmit')).
-              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')).
+              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'id'=>"quickadd_record_$tablenamesingular", 'class'=>'mainsubmit')).
+              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'id'=>"quickadd_record_and_edit_$tablenamesingular", 'class'=>'minorsubmit')).
               internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('full record')).
               (is_null($foreignvalue) ? '' : html('span', array('class'=>'changeslost'), _('(changes to form fields are lost)')))
             ).
@@ -709,12 +713,14 @@
           html('td', array('class'=>'filler'), '');
     }
 
+    $mainaction = $privilege == 'UPDATE' ? 'update_record' : 'add_record';
+
     $lines[] =
       html('td', array('class'=>'description'), '').
       html('td', array('class'=>'field'),
-        (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$privilege == 'UPDATE' ? 'update_record' : 'add_record', 'class'=>'mainsubmit')) : '').
-        ($privilege == 'INSERT' && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'class'=>'minorsubmit')) : '').
-        (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $viewname) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'class'=>join_non_null(' ', 'mainsubmit', 'delete'))) : '')
+        (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$mainaction, 'id'=>"${mainaction}_$tablenamesingular", 'class'=>'mainsubmit')) : '').
+        ($privilege == 'INSERT' && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'id'=>"add_record_and_edit_$tablenamesingular", 'class'=>'minorsubmit')) : '').
+        (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $viewname) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'id'=>"delete_record_$tablenamesingular", 'class'=>join_non_null(' ', 'mainsubmit', 'delete'))) : '')
       ).
       html('td', array('class'=>'filler'), '');
 

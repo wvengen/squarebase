@@ -1,9 +1,7 @@
 # From http://www.itc.virginia.edu/desktop/web/database/mysql_instructions.html
 # Enhanced by Squarebase
 
-USE inventory;
-
-INSERT INTO computers (computerID, description) VALUES
+INSERT INTO inventory.computers (computerID, description) VALUES
 ( 1, 'Dell Optiplex'),
 ( 2, 'Dell Inspiron'),
 ( 3, 'Dell Dimension'),
@@ -24,7 +22,7 @@ INSERT INTO computers (computerID, description) VALUES
 (32, 'Atari'),
 (36, 'Beowolf Cluster II');
 
-INSERT INTO employees (employeeID, firstName, lastName) VALUES
+INSERT INTO inventory.employees (employeeID, firstName, lastName) VALUES
 ( 1, 'John', 'Doe'),
 ( 2, 'Daffy', 'Duck'),
 ( 3, 'Mickey', 'Mouse'),
@@ -41,7 +39,7 @@ INSERT INTO employees (employeeID, firstName, lastName) VALUES
 (16, 'Billy', 'Bob'),
 (17, 'Monty', 'Python');
 
-INSERT INTO usage (usageID, dateAcquired, computerID, employeeID, comments) VALUES
+INSERT INTO inventory.usages (usageID, dateAcquired, computerID, employeeID, comments) VALUES
 ( 1, '1999-06-03',  4,  3, 'the purple one'),
 ( 2, '2000-09-15',  2,  1, 'for home use'),
 ( 3, '1999-10-02',  1,  5, 'on temporary loan'),
