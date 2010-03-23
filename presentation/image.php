@@ -10,7 +10,7 @@
   function is_sortable_image() { return false; }
   function is_quickaddable_image() { return false; }
 
-  function ajax_image($metabasename, $databasename, $tablename, $fieldname, $value, $presentationname, $uniquefieldname, $uniquevalue, $nullallowed, $defaultvalue, $readonly, $extra, $newname = null) {
+  function ajax_image($metabasename, $databasename, $tablename, $fieldname, $value, $presentationname, $uniquefieldname, $uniquevalue, $nullallowed, $defaultvalue, $readonly, $extra, $newname = null) { //is_callable
     $field = array('tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'fieldname'=>$fieldname);
     return
       html('div', array('class'=>'ajax', 'id'=>http_build_query(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'ajax_image', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname, 'value'=>$value ? 1 : 0, 'presentationname'=>$presentationname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'nullallowed'=>$nullallowed, 'defaultvalue'=>$defaultvalue, 'readonly'=>$readonly, 'extra'=>$extra ? 1 : 0, 'newname'=>$newname ? $newname : ''))),
@@ -80,7 +80,7 @@
     return $value ? html('img', array('src'=>internal_url(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'get_image', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$field['tablename'], 'uniquefieldname'=>$field['uniquefieldname'], 'uniquevalue'=>$field['uniquevalue'], 'fieldname'=>$field['fieldname'], 'forcereload'=>time())), 'alt'=>_('uploaded image'), 'class'=>'listimage')) : '';
   }
   
-  function get_image() {
+  function get_image() { //is_callable
     $metabasename    = parameter('get', 'metabasename');
     $databasename    = parameter('get', 'databasename');
     $tablename       = parameter('get', 'tablename');
@@ -92,7 +92,7 @@
     http_response('Content-type: image/jpeg', $image);
   }
 
-  function new_image() {
+  function new_image() { //is_callable
     $newname = directorypart(parameter('get', 'newname'));
 
     $image = file_get_contents("./uploads/$newname");
@@ -120,7 +120,7 @@
     }
   } 
 
-  function upload_image() {
+  function upload_image() { //is_callable
     $ajax = parameter('get', 'ajax');
     $files = parameter('files');
     if (count($files) == 1) {

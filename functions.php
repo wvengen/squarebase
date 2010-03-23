@@ -63,14 +63,21 @@
     }
     if (!is_null($new_value)) {
       $arrays[$type][$name] = $new_value;
-      if ($type == 'cookie')
+      switch ($type) {
+      case 'cookie':
         setcookie($name, $new_value, time() + 365 * 24 * 60 * 60);
-      if ($type == 'session')
+        break;
+      case 'session':
         $_SESSION[$name] = $new_value;
-      if ($type == 'get' || $type == 'post')
+        break;
+      case 'get':
+      case 'post':
         $arrays['get_or_post'][$name] = $new_value;
-      if ($type == 'get_or_post')
+        break;
+      case 'get_or_post':
         $arrays[$_GET ? 'get' : 'post'][$name] = $new_value;
+        break;
+      }
     }
     $value = isset($array[$name]) ? $array[$name] : null;
     return is_null($value) ? $default : str_replace(array('\\"', '\\\''), array('"', '\''), $value);
@@ -234,6 +241,7 @@
     include_phpfile(array('presentation', "$presentationname.php"));
   }
 
+  //calls the function in the query string with parameters from the query string if the function is explicitly labeled is_callable
   function call_function($querystring) {
     if (!$querystring)
       return;
@@ -241,7 +249,7 @@
     if (parameter('cookie', 'logsy'))
       add_log('call', 'call_function: '.html('div', array('class'=>'arrayshow'), array_show($parameters)));
     $definitions = join(read_file($parameters['presentationname'] ? array('presentation', $parameters['presentationname'].'.php') : array('functions.php')));
-    $definition = preg_match1("@\n *function +$parameters[functionname]\((.*?)\)@", $definitions);
+    $definition = preg_match1("@\n *function +$parameters[functionname]\((.*?)\) *{ *// *is_callable *\n@", $definitions);
 
     $function_parameter_list = array();
     if (preg_match_all('@(?:^|,) *\$(\w+)@', $definition, $function_parameter_names, PREG_SET_ORDER))
@@ -540,7 +548,7 @@
       );
   }
 
-  function list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, $uniquevalue, $orderfieldname, $orderasc = true, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = true) {
+  function list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, $uniquevalue, $orderfieldname, $orderasc = true, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = true) { //is_callable
     $viewname = table_or_view($metabasename, $databasename, $tablename);
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();
