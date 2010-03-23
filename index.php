@@ -367,9 +367,9 @@
 
     // pass 2: find presentation and in_desc, in_list and in_edit (needs $alltablenames and $infos)
     $presentationnames = get_presentationnames();
-    foreach ($infos as $tablename=>&$table) {
+    foreach ($infos as $tablename=>$table) {
       $max_in_desc = $max_in_list = $max_in_edit = 0;
-      foreach ($table['fields'] as &$field) {
+      foreach ($table['fields'] as $index=>$field) {
         $fieldname = $field['column_name'];
 
         $augmentedfield =
@@ -378,7 +378,6 @@
             array(
               'alltablenames'=>$alltablenames,
               'primarykeyfieldname'=>$table['primarykeyfieldname'],
-              'fieldnr'=>$field['fieldnr'],
               'numfields'=>count($table['fields'])
             )
           );
@@ -392,20 +391,20 @@
           }
         }
 
-        $field['presentationprobabilities'] = $probabilities;
-        $field['presentationname'] = $bestpresentationname;
+        $infos[$tablename]['fields'][$index]['presentationprobabilities'] = $probabilities;
+        $infos[$tablename]['fields'][$index]['presentationname'] = $bestpresentationname;
 
-        $field['in_desc'] = call_user_func("in_desc_$bestpresentationname", $augmentedfield);
-        $field['in_list'] = call_user_func("in_list_$bestpresentationname", $augmentedfield);
-        $field['in_edit'] = call_user_func("in_edit_$bestpresentationname", $augmentedfield);
+        $infos[$tablename]['fields'][$index]['in_desc'] = call_user_func("in_desc_$bestpresentationname", $augmentedfield);
+        $infos[$tablename]['fields'][$index]['in_list'] = call_user_func("in_list_$bestpresentationname", $augmentedfield);
+        $infos[$tablename]['fields'][$index]['in_edit'] = call_user_func("in_edit_$bestpresentationname", $augmentedfield);
 
-        $max_in_desc = max($max_in_desc, $field['in_desc']);
-        $max_in_list = max($max_in_list, $field['in_list']);
-        $max_in_edit = max($max_in_edit, $field['in_edit']);
+        $max_in_desc = max($max_in_desc, $infos[$tablename]['fields'][$index]['in_desc']);
+        $max_in_list = max($max_in_list, $infos[$tablename]['fields'][$index]['in_list']);
+        $max_in_edit = max($max_in_edit, $infos[$tablename]['fields'][$index]['in_edit']);
 
         if ($metabasename)
-          $field['original'] = query01('meta', 'SELECT tbl.singular, tbl.plural, tbl.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, ftbl.tablename AS foreigntablename FROM `<metabasename>`.tables AS tbl LEFT JOIN `<metabasename>`.fields AS fld ON fld.tableid = tbl.tableid LEFT JOIN `<metabasename>`.presentations pst ON pst.presentationid = fld.presentationid LEFT JOIN `<metabasename>`.tables AS ftbl ON fld.foreigntableid = ftbl.tableid WHERE tbl.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname));
-        $field['linkedtable'] = isset($field['original']) ? $field['original']['foreigntablename'] : @call_user_func("linkedtable_$bestpresentationname", $tablename, $fieldname);
+          $infos[$tablename]['fields'][$index]['original'] = query01('meta', 'SELECT tbl.singular, tbl.plural, tbl.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, ftbl.tablename AS foreigntablename FROM `<metabasename>`.tables AS tbl LEFT JOIN `<metabasename>`.fields AS fld ON fld.tableid = tbl.tableid LEFT JOIN `<metabasename>`.presentations pst ON pst.presentationid = fld.presentationid LEFT JOIN `<metabasename>`.tables AS ftbl ON fld.foreigntableid = ftbl.tableid WHERE tbl.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname));
+        $infos[$tablename]['fields'][$index]['linkedtable'] = isset($field['original']) ? $field['original']['foreigntablename'] : @call_user_func("linkedtable_$bestpresentationname", $tablename, $fieldname);
       }
     }
 
@@ -418,7 +417,7 @@
     }
 
     $rowsfields = array();
-    foreach ($infos as $tablename=>&$table) {
+    foreach ($infos as $tablename=>$table) {
       $rowsfields[] =
         html('tr', array(),
           html('th', array(),
@@ -429,7 +428,7 @@
           html('th', array('class'=>'filler'), '')
         );
 
-      foreach ($table['fields'] as &$field) {
+      foreach ($table['fields'] as $field) {
         $fieldname = $field['column_name'];
 
         $inlistforquickadd = $field['column_name'] != $table['primarykeyfieldname'] && $field['is_nullable'] == 'NO' && !$field['column_default'];
