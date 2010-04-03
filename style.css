@@ -14,7 +14,8 @@ h1 { display: block; }
 #content { clear: both; }
 .box { border: 0.1em solid #999; }
 .tableedit { padding-bottom: 0.5em; }
-.tableedit td, .tablelist th, .tablelist td.quickadd { white-space: nowrap; }
+.tableedit td, .tablelist th, .tablelist tr.quickadd td { white-space: nowrap; }
+tr.quickadd label { font-size: 0.8em; display: block; font-style: italic; }
 .referringlist.tablelist { margin-bottom: 1em; }
 .referrer { font-size: 0.8em; margin-left: 0.5em; }
 
@@ -58,7 +59,6 @@ input.mainsubmit.delete { margin-left: 5em; }
 input.mainsubmit.delete:hover, .cancel:hover, .drop:hover, .forget:hover, .close:hover { background-color: #f00 !important; color: #fff !important; }
 .cancel, .close, .forget { padding: 0.1em 0.5em; }
 .inlistforquickadd { background-color: #fda; }
-.countreferences { font-size: 0.6em; }
 
 .closing { background-color: #fcc !important; }
 tr.rowodd.closing td, tr.rowodd.closing td a { background-color: #faa !important; }

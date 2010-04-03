@@ -31,6 +31,7 @@
       clear_progress();
       print sprintf("%3d: %s == %s != %s\n", $trace[0]['line'], preg_replace('@\$selenium->@', '', preg_match1('@^\s*equal\((.+),.+?\);\s+$@', $source[$trace[0]['line'] - 1])), value($found), value($expected));
       $unequals++;
+      exit(1);
     }
     progress($trace[0]['line']);
   }
@@ -154,10 +155,18 @@
   equal(readDatabase($connection), $database);
 
   //quickadd computer
-  $selenium->type('field:description', 'iMac');
+  $selenium->type('field:description', 'iMcDonalds');
   $selenium->clickAndWaitForAjaxToLoad('quickadd_record_computer');
 
-  $database['computers'][] = array('computerID'=>4, 'description'=>'iMac');
+  $database['computers'][] = array('computerID'=>4, 'description'=>'iMcDonalds');
+  equal(readDatabase($connection), $database);
+
+  //edit computer
+  $selenium->clickAndWaitForAjaxToLoad('edit_record_computer_4');
+  $selenium->type('field:description', 'iMac');
+  $selenium->clickAndWaitForAjaxToLoad('update_record_computer');
+
+  $database['computers'][3]['description'] = 'iMac';
   equal(readDatabase($connection), $database);
 
   //close table computers

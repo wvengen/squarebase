@@ -250,6 +250,8 @@
       add_log('call', 'call_function: '.html('div', array('class'=>'arrayshow'), array_show($parameters)));
     $definitions = join(read_file($parameters['presentationname'] ? array('presentation', $parameters['presentationname'].'.php') : array('functions.php')));
     $definition = preg_match1("@\n *function +$parameters[functionname]\((.*?)\) *{ *// *is_callable *\n@", $definitions);
+    if (is_null($definition))
+      error(sprintf(_('function %s is not callable'), $parameters['functionname']));
 
     $function_parameter_list = array();
     if (preg_match_all('@(?:^|,) *\$(\w+)@', $definition, $function_parameter_names, PREG_SET_ORDER))
@@ -587,15 +589,25 @@
                 array('class'=>'ajaxreload')
               )
           );
-        $quickadd[] = html('td', array('class'=>join_non_null(' ', 'quickadd', !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null)), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? $foreignvalue : $field['defaultvalue'], (!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname) || !$field['privilege_insert'], false));
+        $quickadd[]    =
+          html('td', array('class'=>join_non_null(' ', $field['presentationname'], !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null)),
+            html('label', array('for'=>"field:$field[fieldname]"), $field['title']).
+            call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? $foreignvalue : $field['defaultvalue'], (!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname) || !$field['privilege_insert'], false)
+          );
       }
     }
-    $header[] = html('th', array('class'=>'filler'), '');
-    array_unshift($header, html('th', array(), ''));
-    $quickadd[] = html('td', array('class'=>'filler'), '');
-    array_unshift($quickadd, html('td', array(), $can_insert ? 'add' : ''));
+    $header = array_merge(
+      array(html('th', array(), '')),
+      $header,
+      array(html('th', array('class'=>'filler'), ''))
+    );
+    $quickadd = array_merge(
+      array(html('td', array(), '')),
+      $quickadd, 
+      array(html('td', array('class'=>'filler'), ''))
+    );
     if ($ordernames)
-      $ordernames[0] = $ordernames[0].' '.($orderasc ? 'ASC' : 'DESC');
+      $ordernames[0] .= ' '.($orderasc ? 'ASC' : 'DESC');
     $records = query('data',
       "SELECT ".
       ($limit ? "SQL_CALC_FOUND_ROWS " : "").
@@ -609,7 +621,7 @@
     );
     $foundrecords = $limit ? query1field('data', 'SELECT FOUND_ROWS()') : null;
 
-    $rows = array(html('tr', array(), join($header)));
+    $rows = mysql_num_rows($records) > 0 ? array(html('tr', array(), join($header))) : array();
     while ($row = mysql_fetch_assoc($records)) {
       $columns = array();
       for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
@@ -637,7 +649,7 @@
     }
     if ($interactive && ($can_quickadd || $can_insert)) {
       $rows[] = $can_quickadd
-      ? html('tr', array(), join($quickadd)).
+      ? html('tr', array('class'=>'quickadd'), join($quickadd)).
         html('tr', array(),
           html('td', array(), '').
           html('td', array('colspan'=>count($quickadd) - 1),
@@ -679,7 +691,7 @@
 
     return
       html('div', array('class'=>'ajax', 'id'=>http_build_query(array('action'=>'call_function', 'functionname'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'orderasc'=>$orderasc ? 'on' : '', 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
-        (count($rows) > 1
+        (count($rows) > 0
         ? form(
             html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
             html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).

@@ -28,6 +28,8 @@
   }
   
   function css_varchar() {
-    return ".varchar.edit { width: 20em; }\n";
+    return
+      ".varchar.edit { width: 20em; }\n".
+      ".varchar.list { width: 10em; }\n";
   }
 ?>
