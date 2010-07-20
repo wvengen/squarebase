@@ -10,7 +10,7 @@ install:
 	chmod a+x $(PHPFILES)
 
 test:
-	java -jar ~/bin/selenium-server.jar 1>/dev/null & echo $$!>$(PIDFILE)
+	java -jar ~/bin/selenium-server.jar 1>/dev/null 2>/dev/null & echo $$!>$(PIDFILE)
 	sleep 10
 	php tests/test.php
 	kill `cat $(PIDFILE)`

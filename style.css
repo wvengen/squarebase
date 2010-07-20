@@ -15,7 +15,7 @@ h1 { display: block; }
 .box { border: 0.1em solid #999; }
 .tableedit { padding-bottom: 0.5em; }
 .tableedit td, .tablelist th, .tablelist tr.quickadd td { white-space: nowrap; }
-tr.quickadd label { font-size: 0.8em; display: block; font-style: italic; }
+tr.quickadd label { display: block; font-style: italic; }
 .referringlist.tablelist { margin-bottom: 1em; }
 .referrer { font-size: 0.8em; margin-left: 0.5em; }
 

@@ -10,7 +10,7 @@ msgstr ""
 #: functions.php:190
 #, php-format
 msgid "%s with %s = %s already exists"
-msgstr ""
+msgstr "%s met %s = %s bestaat al"
 
 #: functions.php:195
 msgid "problem while querying the databasemanager"
@@ -33,7 +33,7 @@ msgstr "nieuw(e) %s"
 
 #: functions.php:356 presentation/lookup.php:53
 msgid "(changes to form fields are lost)"
-msgstr "(veranderingen in formuliervelden gaan weg)"
+msgstr "(veranderingen in formuliervelden gaan verloren)"
 
 #: functions.php:496
 msgid "dd"
