@@ -2,6 +2,8 @@ PHPFILES=*.php presentation/*.php
 NLDIR=./locale/nl_NL/LC_MESSAGES/
 PIDFILE=/tmp/SELENIUM_SERVER_PID
 
+.PHONY: none install test testbegin testmiddle testend commit inventory locales
+
 none:
 
 install:
@@ -9,11 +11,17 @@ install:
 	chmod g+w session
 	chmod a+x $(PHPFILES)
 
-test:
+test: testbegin testmiddle testend
+
+testbegin:
 	java -jar ~/bin/selenium-server.jar 1>/dev/null 2>/dev/null & echo $$!>$(PIDFILE)
 	sleep 10
+
+testmiddle:
 	php tests/test.php
-	kill `cat $(PIDFILE)`
+
+testend:
+	-kill `cat $(PIDFILE)`
 
 commit: test
 	svn commit

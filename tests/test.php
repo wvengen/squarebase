@@ -268,6 +268,24 @@
   $database['employees'] = array_values($database['employees']); //renumber the array
   equal(readDatabase($connection), $database);
 
+  //show table usages
+  $selenium->clickAndWaitForAjaxToLoad('link=usages');
+
+  //edit usage
+  $selenium->clickAndWaitForAjaxToLoad('edit_record_usage_1');
+
+  //subadd computer
+  $selenium->clickAndWaitForAjaxToLoad('link=new computer');
+  $selenium->type('field:description', 'iPhone');
+  $selenium->clickAndWaitForAjaxToLoad('add_record_computer');
+
+  //update usage
+  $selenium->clickAndWaitForAjaxToLoad('update_record_usage');
+
+  $database['computers'][] = array('computerID'=>5, 'description'=>'iPhone');
+  $database['usages'][0]['computerID'] = 5;
+  equal(readDatabase($connection), $database);
+
   //stop selenium
   $selenium->stop();
 
