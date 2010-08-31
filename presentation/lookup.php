@@ -43,7 +43,9 @@
   function is_sortable_lookup() { return true; }
   function is_quickaddable_lookup() { return true; }
 
-  function ajax_lookup($metabasename, $databasename, $fieldname, $value, $presentationname, $foreigntablename, $foreigntablenamesingular, $foreignuniquefieldname, $nullallowed, $defaultvalue, $readonly, $extra = true) { //is_callable
+  callable_function('ajax_lookup', array('metabasename', 'databasename', 'fieldname', 'value', 'presentationname', 'foreigntablename', 'foreigntablenamesingular', 'foreignuniquefieldname', 'nullallowed', 'defaultvalue', 'readonly', 'extra'));
+
+  function ajax_lookup($metabasename, $databasename, $fieldname, $value, $presentationname, $foreigntablename, $foreigntablenamesingular, $foreignuniquefieldname, $nullallowed, $defaultvalue, $readonly, $extra = true) {
     if (!$foreigntablename)
       error(sprintf(_('no foreigntablename for %s'), $fieldname));
     $foreignviewname = table_or_view($metabasename, $databasename, $foreigntablename);

@@ -241,26 +241,33 @@
     include_phpfile(array('presentation', "$presentationname.php"));
   }
 
-  //calls the function in the query string with parameters from the query string if the function is explicitly labeled is_callable
+  function callable_function($functionname, $parameternames = null) {
+    static $callable_functions = array();
+    if (is_null($parameternames)) {
+      if (!array_key_exists($functionname, $callable_functions))
+        error(sprintf(_('function %s is not callable'), $functionname));
+      return $callable_functions[$functionname];
+    }
+    $callable_functions[$functionname] = $parameternames;
+  }
+
+  //calls the function in the query string with parameters from the query string if the function is explicitly set callable
   function call_function($querystring) {
     if (!$querystring)
       return;
     $parameters = http_parse_query($querystring);
     if (parameter('cookie', 'logsy'))
       add_log('call', 'call_function: '.html('div', array('class'=>'arrayshow'), array_show($parameters)));
-    $definitions = join(read_file($parameters['presentationname'] ? array('presentation', $parameters['presentationname'].'.php') : array('functions.php')));
-    $definition = preg_match1("@\n *function +$parameters[functionname]\((.*?)\) *{ *// *is_callable *\n@", $definitions);
-    if (is_null($definition))
-      error(sprintf(_('function %s is not callable'), $parameters['functionname']));
-
-    $function_parameter_list = array();
-    if (preg_match_all('@(?:^|,) *\$(\w+)@', $definition, $function_parameter_names, PREG_SET_ORDER))
-      foreach ($function_parameter_names as $function_parameter_name)
-        $function_parameter_list[] = $parameters[$function_parameter_name[1]];
 
     if ($parameters['presentationname'])
       include_presentation($parameters['presentationname']);
-    page($parameters['functionname'], null, call_user_func_array($parameters['functionname'], $function_parameter_list));
+
+    $parameternames = callable_function($parameters['functionname']);
+    $parameterlist = array();
+    foreach ($parameternames as $parametername)
+      $parameterlist[] = $parameters[$parametername];
+
+    page($parameters['functionname'], null, call_user_func_array($parameters['functionname'], $parameterlist));
   }
 
   function back() {
@@ -550,7 +557,9 @@
       );
   }
 
-  function list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, $uniquevalue, $orderfieldname, $orderasc = true, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = true) { //is_callable
+  callable_function('list_table', array('metabasename', 'databasename', 'tablename', 'tablenamesingular', 'limit', 'offset', 'uniquefieldname', 'uniquevalue', 'orderfieldname', 'orderasc', 'foreignfieldname', 'foreignvalue', 'parenttablename', 'interactive'));
+
+  function list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, $uniquevalue, $orderfieldname, $orderasc = true, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = true) {
     $viewname = table_or_view($metabasename, $databasename, $tablename);
     $originalorderfieldname = $orderfieldname;
     $joins = $selectnames = $ordernames = array();

@@ -10,10 +10,12 @@
   function is_sortable_image() { return false; }
   function is_quickaddable_image() { return false; }
 
-  function ajax_image($metabasename, $databasename, $tablename, $fieldname, $value, $presentationname, $uniquefieldname, $uniquevalue, $nullallowed, $defaultvalue, $readonly, $extra, $newname = null) { //is_callable
+  callable_function('ajax_image', array('metabasename', 'databasename', 'tablename', 'fieldname', 'value', 'presentationname', 'uniquefieldname', 'uniquevalue', 'nullallowed', 'defaultvalue', 'readonly', 'extra', 'newname'));
+
+  function ajax_image($metabasename, $databasename, $tablename, $fieldname, $value, $presentationname, $uniquefieldname, $uniquevalue, $nullallowed, $defaultvalue, $readonly, $extra, $newname = null) {
     $field = array('tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'fieldname'=>$fieldname);
     return
-      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'ajax_image', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname, 'value'=>$value ? 1 : 0, 'presentationname'=>$presentationname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'nullallowed'=>$nullallowed, 'defaultvalue'=>$defaultvalue, 'readonly'=>$readonly, 'extra'=>$extra ? 1 : 0, 'newname'=>$newname ? $newname : ''))),
+      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'ajax_image', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname, 'value'=>$value ? 1 : 0, 'presentationname'=>$presentationname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'nullallowed'=>$nullallowed, 'defaultvalue'=>$defaultvalue ? $defaultvalue : '', 'readonly'=>$readonly, 'extra'=>$extra ? 1 : 0, 'newname'=>$newname ? $newname : ''))),
         html('div', array(),
           $readonly
           ? list_image($metabasename, $databasename, $field, $value)
@@ -64,7 +66,7 @@
     case 'none':
       return null;
     case 'new':
-      $newname = directorypart(parameter('post', "field:new:$field[fieldname]"));
+      $newname = directory_part(parameter('post', "field:new:$field[fieldname]"));
       $file = "./uploads/$newname";
       $image = file_get_contents($file);
       unlink($file);
@@ -80,7 +82,9 @@
     return $value ? html('img', array('src'=>internal_url(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'get_image', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$field['tablename'], 'uniquefieldname'=>$field['uniquefieldname'], 'uniquevalue'=>$field['uniquevalue'], 'fieldname'=>$field['fieldname'], 'forcereload'=>time())), 'alt'=>_('uploaded image'), 'class'=>'listimage')) : '';
   }
   
-  function get_image() { //is_callable
+  callable_function('get_image', array());
+
+  function get_image() {
     $metabasename    = parameter('get', 'metabasename');
     $databasename    = parameter('get', 'databasename');
     $tablename       = parameter('get', 'tablename');
@@ -92,8 +96,10 @@
     http_response('Content-type: image/jpeg', $image);
   }
 
-  function new_image() { //is_callable
-    $newname = directorypart(parameter('get', 'newname'));
+  callable_function('new_image', array());
+
+  function new_image() {
+    $newname = directory_part(parameter('get', 'newname'));
 
     $image = file_get_contents("./uploads/$newname");
     http_response('Content-type: image/jpeg', $image);
@@ -120,7 +126,9 @@
     }
   } 
 
-  function upload_image() { //is_callable
+  callable_function('upload_image', array());
+
+  function upload_image() {
     $ajax = parameter('get', 'ajax');
     $files = parameter('files');
     if (count($files) == 1) {
@@ -128,13 +136,17 @@
       $file = $files[$names[0]];
       if ($file['error'] == UPLOAD_ERR_OK) {
         if ($file['type'] == 'image/jpeg') {
-          if (preg_match('@^\w+\.jpe?g$@i', $file['name'])) {
-            $newname = strftime('%Y_%m_%d_%H_%M_%S').'_'.directorypart($file['name']);
-            if (move_uploaded_file($file['tmp_name'], "./uploads/$newname"))
-              $ajax = preg_replace('@\bnewname=[^&]*@', "newname=$newname", $ajax);
+          if (preg_match('@^\w+\.\w+$@i', $file['name'])) {
+            if (preg_match('@\.jpe?g$@i', $file['name'])) {
+              $newname = strftime('%Y_%m_%d_%H_%M_%S').'_'.directory_part($file['name']);
+              if (move_uploaded_file($file['tmp_name'], "./uploads/$newname"))
+                $ajax = preg_replace('@\bnewname=[^&]*@', "newname=$newname", $ajax);
+            }
+            else
+              $warning = sprintf(_('invalid extension: %s'), $file['name']);
           }
           else
-            $warning = sprintf(_('invalid file extension: %s'), $file['name']);
+            $warning = sprintf(_('invalid characters in file name: %s'), $file['name']);
         }
         else
           $warning = sprintf(_('invalid mime type: %s'), $file['type']);
@@ -145,7 +157,8 @@
     else
       $warning = sprintf(_('not 1 file uploaded but %d'), count($files));
     if ($warning)
-      add_log('warnings', 'warning', $warning);
+      add_log('warning', $warning);
+//  page('abc', null, 'hallo '.$_GET);
     call_function($ajax);
   }
 
