@@ -72,6 +72,7 @@
       'employeeID   INT(11)      NOT NULL AUTO_INCREMENT,'.
       'firstName    VARCHAR(20)  NOT NULL,'.
       'lastName     VARCHAR(20)  NOT NULL,'.
+      'picture      BLOB,'.
       'PRIMARY KEY (employeeID),'.
       'UNIQUE KEY (firstName, lastName)'.
     ')',
@@ -180,7 +181,7 @@
   $selenium->type('field:lastName', 'Doe');
   $selenium->clickAndWaitForAjaxToLoad('quickadd_record_employee');
 
-  $database['employees'][] = array('employeeID'=>1, 'firstName'=>'John', 'lastName'=>'Doe');
+  $database['employees'][] = array('employeeID'=>1, 'firstName'=>'John', 'lastName'=>'Doe', 'picture'=>null);
   equal(readDatabase($connection), $database);
 
   //quickadd employee
@@ -188,15 +189,19 @@
   $selenium->type('field:lastName', 'Duck');
   $selenium->clickAndWaitForAjaxToLoad('quickadd_record_employee');
 
-  $database['employees'][] = array('employeeID'=>2, 'firstName'=>'Daffy', 'lastName'=>'Duck');
+  $database['employees'][] = array('employeeID'=>2, 'firstName'=>'Daffy', 'lastName'=>'Duck', 'picture'=>null);
   equal(readDatabase($connection), $database);
 
-  //quickadd employee
-  $selenium->type('field:firstName', 'Mickey');
-  $selenium->type('field:lastName', 'Mouse');
-  $selenium->clickAndWaitForAjaxToLoad('quickadd_record_employee');
+  //full record employee
+  $selenium->clickAndWaitForAjaxToLoad('link=full record');
+  $selenium->type('document.forms[1].elements["field:firstName"]', 'Mickey');
+  $selenium->type('document.forms[1].elements["field:lastName"]', 'Mouse');
+  copy(dirname(__FILE__).'/mickeymouse.jpg', '/tmp/mickeymouse.jpg');
+  $selenium->type('document.forms[1].elements["field:picture"]', '/tmp/mickeymouse.jpg');
+  sleep(2);
+  $selenium->clickAndWaitForAjaxToLoad('add_record_employee');
 
-  $database['employees'][] = array('employeeID'=>3, 'firstName'=>'Mickey', 'lastName'=>'Mouse');
+  $database['employees'][] = array('employeeID'=>3, 'firstName'=>'Mickey', 'lastName'=>'Mouse', 'picture'=>file_get_contents('/tmp/mickeymouse.jpg'));
   equal(readDatabase($connection), $database);
 
   //quickadd employee
@@ -204,7 +209,7 @@
   $selenium->type('field:lastName', 'Mouse');
   $selenium->clickAndWaitForAjaxToLoad('quickadd_record_employee');
 
-  $database['employees'][] = array('employeeID'=>4, 'firstName'=>'Minnie', 'lastName'=>'Mouse');
+  $database['employees'][] = array('employeeID'=>4, 'firstName'=>'Minnie', 'lastName'=>'Mouse', 'picture'=>null);
   equal(readDatabase($connection), $database);
 
   //close table employees
@@ -244,7 +249,7 @@
   $selenium->type('field:lastName', 'McDonald');
   $selenium->clickAndWaitForAjaxToLoad('quickadd_record_and_edit_employee');
 
-  $database['employees'][] = array('employeeID'=>5, 'firstName'=>'Ronald', 'lastName'=>'McDonald');
+  $database['employees'][] = array('employeeID'=>5, 'firstName'=>'Ronald', 'lastName'=>'McDonald', 'picture'=>null);
   equal(readDatabase($connection), $database);
 
   //add usage

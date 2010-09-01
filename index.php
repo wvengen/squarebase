@@ -352,7 +352,7 @@
       if ($tableinfo['is_view']) {
         if ($table['is_updatable'] == 'YES') {
           $tableinfo['possible_view_for_table'] = preg_match1('@ from `.*?`\.`(.*?)`@', $table['view_definition']);
-          $tableinfo['primarykeyfieldname'] = $infos[$tableinfo['possible_view_for_table']]['primarykeyfieldname'];
+          $tableinfo['primarykeyfieldname'] = $tableinfo['possible_view_for_table'] ? $infos[$tableinfo['possible_view_for_table']]['primarykeyfieldname'] : null;
         }
       }
       else {

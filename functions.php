@@ -569,7 +569,7 @@
     $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, 'SELECT', true);
     while ($field = mysql_fetch_assoc($fields)) {
       include_presentation($field['presentationname']);
-      $can_quickadd = $can_quickadd && ($field['fieldid'] == $field['uniquefieldid'] || $field['nullallowed'] || $field['defaultvalue'] || ($field['inlist'] && $field['privilege_insert'])) && call_user_func("is_quickaddable_$field[presentationname]");
+      $can_quickadd = $can_quickadd && ($field['fieldid'] == $field['uniquefieldid'] || $field['nullallowed'] || $field['defaultvalue'] || ($field['inlist'] && $field['privilege_insert'] && call_user_func("is_quickaddable_$field[presentationname]")));
 
       if ($field['inlist']) {
         $selectnames[] = "$viewname.$field[fieldname] AS ${tablename}_$field[fieldname]";
@@ -598,11 +598,12 @@
                 array('class'=>'ajaxreload')
               )
           );
-        $quickadd[]    =
-          html('td', array('class'=>join_non_null(' ', $field['presentationname'], !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null)),
-            html('label', array('for'=>"field:$field[fieldname]"), $field['title']).
-            call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? $foreignvalue : $field['defaultvalue'], (!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname) || !$field['privilege_insert'], false)
-          );
+        if (call_user_func("is_quickaddable_$field[presentationname]"))
+          $quickadd[] =
+            html('td', array('class'=>join_non_null(' ', $field['presentationname'], !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null)),
+              html('label', array('for'=>"field:$field[fieldname]"), $field['title']).
+              call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? $foreignvalue : $field['defaultvalue'], (!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname) || !$field['privilege_insert'], false)
+            );
       }
     }
     $header = array_merge(
