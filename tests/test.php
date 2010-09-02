@@ -20,20 +20,37 @@
 
   //returns a nicely formatted value
   function value($value) {
-    return is_null($value) ? 'null' : (is_bool($value) ? ($value ? 'true' : 'false') : (is_numeric($value) ? $value : (is_array($value) ? preg_replace(array('@^Array\n\(\n *@', '@ => Array\s*\(\s*@s', '@\n *\)\n *@s', '@\n +@', '@\[(.*?)\] *=> *@'), array('(', '=>(', ')', ',', '$1=>'), print_r($value, true)) : '"'.$value.'"')));
+    return
+      (is_null($value)
+      ? 'null'
+      : (is_bool($value)
+        ? ($value ? 'true' : 'false')
+        : (is_numeric($value)
+          ? $value
+          : (is_array($value)
+            ? preg_replace(array('@^Array\n\(\n *@', '@ => Array\s*\(\s*@s', '@\n *\)\n *@s', '@\n +@', '@\[(.*?)\] *=> *@'), array('(', '=>(', ')', ',', '$1=>'), print_r($value, true))
+            : (preg_match('@[\x00-\x1f\x7f-\xff]@', $value)
+              ? 'md5='.md5($value)
+              : '"'.$value.'"'
+              )
+            )
+          )
+        )
+      );
   }       
 
   //tests the equality of its parameters and updates the progress
   function equal($found, $expected) {
     global $source, $unequals;
     $trace = debug_backtrace();
+    $linenumber = $trace[0]['line'];
     if ($found != $expected) {
       clear_progress();
-      print sprintf("%3d: %s == %s != %s\n", $trace[0]['line'], preg_replace('@\$selenium->@', '', preg_match1('@^\s*equal\((.+),.+?\);\s+$@', $source[$trace[0]['line'] - 1])), value($found), value($expected));
+      print sprintf("%3d: %s == %s != %s\n", $linenumber, preg_replace('@\$selenium->@', '', preg_match1('@^\s*equal\((.+),.+?\);\s+$@', $source[$linenumber - 1])), value($found), value($expected));
       $unequals++;
       exit(1);
     }
-    progress($trace[0]['line']);
+    progress($linenumber);
   }
 
   //return the database in an array
@@ -167,7 +184,7 @@
   $selenium->type('field:description', 'iMac');
   $selenium->clickAndWaitForAjaxToLoad('update_record_computer');
 
-  $database['computers'][3]['description'] = 'iMac';
+  $database['computers'][4 - 1]['description'] = 'iMac';
   equal(readDatabase($connection), $database);
 
   //close table computers
@@ -192,16 +209,43 @@
   $database['employees'][] = array('employeeID'=>2, 'firstName'=>'Daffy', 'lastName'=>'Duck', 'picture'=>null);
   equal(readDatabase($connection), $database);
 
-  //full record employee
+  //full record employee, upload image 1
   $selenium->clickAndWaitForAjaxToLoad('link=full record');
   $selenium->type('document.forms[1].elements["field:firstName"]', 'Mickey');
   $selenium->type('document.forms[1].elements["field:lastName"]', 'Mouse');
-  copy(dirname(__FILE__).'/mickeymouse.jpg', '/tmp/mickeymouse.jpg');
-  $selenium->type('document.forms[1].elements["field:picture"]', '/tmp/mickeymouse.jpg');
-  sleep(2);
+  $filename1 = dirname(__FILE__).'/mickeymouse1.jpg';
+  $selenium->type('document.forms[1].elements["field:picture"]', $filename1);
+  sleep(2); //because TypeAndWaitForAjaxToLoad doesn't exist
   $selenium->clickAndWaitForAjaxToLoad('add_record_employee');
 
-  $database['employees'][] = array('employeeID'=>3, 'firstName'=>'Mickey', 'lastName'=>'Mouse', 'picture'=>file_get_contents('/tmp/mickeymouse.jpg'));
+  $database['employees'][] = array('employeeID'=>3, 'firstName'=>'Mickey', 'lastName'=>'Mouse', 'picture'=>file_get_contents($filename1));
+  equal(readDatabase($connection), $database);
+
+  //edit employee, remove image 1
+  $selenium->clickAndWaitForAjaxToLoad('edit_record_employee_3');
+  $selenium->check('radio:none:picture');
+  $selenium->clickAndWaitForAjaxToLoad('update_record_employee');
+
+  $database['employees'][3 - 1]['picture'] = null;
+  equal(readDatabase($connection), $database);
+
+  //edit employee, upload image 2
+  $selenium->clickAndWaitForAjaxToLoad('edit_record_employee_3');
+  $filename2 = dirname(__FILE__).'/mickeymouse2.jpg';
+  $selenium->type('document.forms[1].elements["field:picture"]', $filename2);
+  sleep(2); //because TypeAndWaitForAjaxToLoad doesn't exist
+  $selenium->clickAndWaitForAjaxToLoad('update_record_employee');
+
+  $database['employees'][3 - 1]['picture'] = file_get_contents($filename2);
+  equal(readDatabase($connection), $database);
+
+  //edit employee, upload image 1 to replace image 2
+  $selenium->clickAndWaitForAjaxToLoad('edit_record_employee_3');
+  $selenium->type('document.forms[1].elements["field:picture"]', $filename1);
+  sleep(2); //because TypeAndWaitForAjaxToLoad doesn't exist
+  $selenium->clickAndWaitForAjaxToLoad('update_record_employee');
+
+  $database['employees'][3 - 1]['picture'] = file_get_contents($filename1);
   equal(readDatabase($connection), $database);
 
   //quickadd employee
@@ -269,7 +313,7 @@
   //delete employee
   $selenium->clickAndWaitForAjaxToLoad('delete_record_employee');
 
-  unset($database['employees'][3]);
+  unset($database['employees'][4 - 1]);
   $database['employees'] = array_values($database['employees']); //renumber the array
   equal(readDatabase($connection), $database);
 
@@ -296,5 +340,5 @@
 
   clear_progress();
 
-  exit($unequals ? 1 : 0);
+  exit($unequals);
 ?>
