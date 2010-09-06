@@ -11,7 +11,7 @@ install:
 	chmod g+w session
 	chmod a+x $(PHPFILES)
 
-test: testbegin testmiddle testend
+test: testend testbegin testmiddle testend
 
 testbegin:
 	java -jar ~/bin/selenium-server.jar 1>/dev/null 2>/dev/null & echo $$!>$(PIDFILE)

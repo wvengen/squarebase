@@ -890,9 +890,9 @@
     $ajax = parameter('post', 'ajax');
     if ($action == 'add_record' || $action == 'add_record_and_edit') {
       if ($ajax)
-        parameter('post', 'ajax', preg_replace('@\bvalue=\d+\b@', "value=$uniquevalue", parameter('post', 'ajax')));
+        parameter('post', 'ajax', preg_replace('@\bvalue=\d+\b@', '', parameter('post', 'ajax'))."&value=$uniquevalue");
       elseif ($referencedfromfieldname)
-        parameter('post', 'back', preg_replace('@&back=@', "&field:$referencedfromfieldname=$uniquevalue&back=", parameter('post', 'back')));
+        parameter('post', 'back', preg_replace('@\bback=@', "field:$referencedfromfieldname=$uniquevalue&back=", parameter('post', 'back')));
     }
     if ($action == 'add_record_and_edit') {
       if ($ajax)
