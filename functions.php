@@ -128,7 +128,7 @@
         'body'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'pre'     =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'div'     =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'span'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'span'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1)),
         'p'       =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'h1'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
         'h2'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),

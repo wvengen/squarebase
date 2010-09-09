@@ -1,35 +1,31 @@
 <?php
-  function linkedtable_lookup($tablename, $fieldname, $foreigntablename = null, $alltablenames = null, $primarykeyfieldname = null) {
+  function linkedtable_lookup($tablename, $fieldname, $foreigntablename = null, $alltablenames = null) {
     static $linkedtables = array();
     if (!isset($linkedtables["$tablename:$fieldname"])) {
       if (is_null($foreigntablename)) {
         $likeness = array();
-        $fieldname_lower = strtolower($fieldname);
-        foreach ($alltablenames as $onetablename) {
-          $onetablename_lower = strtolower($onetablename);
+        foreach ($alltablenames as $onetablename=>$oneprimarykeyfieldname) {
           $likeness[$onetablename] =
-            ($fieldname_lower == singularize_noun($onetablename_lower) ? 10 : 0) +
-            (substr($fieldname_lower, -strlen($primarykeyfieldname[$onetablename])) == $primarykeyfieldname[$onetablename] ? 5 : 0) +
-            (strpos($fieldname_lower, singularize_noun($onetablename_lower)) !== false ? 5 : 0) -
-            levenshtein($fieldname_lower, $onetablename_lower);
+            (preg_match("@$oneprimarykeyfieldname$@i", $fieldname) ? 200 + strlen($oneprimarykeyfieldname) : null)
+          + (preg_match("@$onetablename$@i", $fieldname) ? 100 + strlen($onetablename) : null);
         }
         arsort($likeness);
         reset($likeness);
         list($table1, $likeness1) = each($likeness);
         list($table2, $likeness2) = each($likeness);
-        $linkedtables["$tablename:$fieldname"] = $likeness1 < 0 || $likeness1 == $likeness2 ? '' : $table1;
+        $linkedtables["$tablename:$fieldname"] = is_null($likeness1) || $likeness1 === $likeness2 ? '' : $table1;
       }
       else
         $linkedtables["$tablename:$fieldname"] = $foreigntablename;
     }
-    return $linkedtables["$tablename:$fieldname"] ? $linkedtables["$tablename:$fieldname"] : null;
+    return array_key_exists("$tablename:$fieldname", $linkedtables) ? $linkedtables["$tablename:$fieldname"] : null;
   }
 
   function probability_lookup($field) {
     return 
       ($field['referenced_table_name'] && linkedtable_lookup($field['table_name'], $field['column_name'], $field['referenced_table_name'])
       ? 1.0
-      : (preg_match('@^(int|integer)\b@', $field['column_type']) && linkedtable_lookup($field['table_name'], $field['column_name'], null, $field['alltablenames'], $field['primarykeyfieldname'])
+      : (preg_match('@^(int|integer)\b@', $field['column_type']) && linkedtable_lookup($field['table_name'], $field['column_name'], null, $field['alltablenames'])
         ? 0.6
         : 0
         )

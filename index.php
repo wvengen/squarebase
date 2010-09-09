@@ -229,9 +229,9 @@
           $fulllist = null;
           if (count($tablelist) > 5) {
             $fulllist = join(' ', array_slice($tablelist, 4));
-            array_splice($tablelist, 4);
+            array_splice($tablelist, 4, count($tablelist), html('span', array('title'=>$fulllist), '&hellip;'));
           }
-          $contents = html('ul', array('class'=>'compact'), html('li', array(), $tablelist).($fulllist ? html('li', array('title'=>$fulllist), '&hellip;') : ''));
+          $contents = html('ul', array('class'=>'compact'), html('li', array(), $tablelist));
         }
       }
       $rows[] =
@@ -330,7 +330,6 @@
     );
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table['table_name'];
-      $alltablenames[] = $tablename;
       $tableinfo = array('table_name'=>$tablename, 'fields'=>array(), 'is_view'=>!is_null($table['view_name']));
 
       $allprimarykeyfieldnames = array();
@@ -349,6 +348,7 @@
         if ($field['column_key'] == 'PRI')
           $allprimarykeyfieldnames[] = $field['column_name'];
       }
+      $tableinfo['primarykeyfieldname'] = null;
       if ($tableinfo['is_view']) {
         if ($table['is_updatable'] == 'YES') {
           $tableinfo['possible_view_for_table'] = preg_match1('@ from `.*?`\.`(.*?)`@', $table['view_definition']);
@@ -361,6 +361,7 @@
         else
           $tableswithoutsinglevaluedprimarykey[] = $tablename;
       }
+      $alltablenames[$tablename] = $tableinfo['primarykeyfieldname'];
       $infos[$tablename] = $tableinfo;
     }
     ksort($infos);
@@ -422,7 +423,7 @@
         html('tr', array(),
           html('th', array(),
             array(
-              _('table'), _('desc'), _('list'), _('edit'), _('field'), _('title'), _('type'), _('null'), _('presentation'), _('key')
+              _('table'), _('singular').' / '._('plural'), _('top'), _('desc'), _('list'), _('edit'), _('title').' / '._('field'), _('presentation').' / '._('type')
             )
           ).
           html('th', array('class'=>'filler'), '')
@@ -460,7 +461,7 @@
         }
 
         $tableoptions = array(html('option', array('value'=>'', 'selected'=>!$field['linkedtable'] ? 'selected' : null), ''));
-        foreach ($alltablenames as $onetablename)
+        foreach ($alltablenames as $onetablename=>$oneprimarykeyfieldname)
           $tableoptions[] = html('option', array('value'=>$onetablename, 'selected'=>$onetablename == $field['linkedtable'] ? 'selected' : null), $onetablename);
 
         $mostlikelyoption = null;
@@ -485,10 +486,9 @@
           html('tr', array('class'=>join_non_null(' ', ($field['fieldnr'] + 1) % 2 ? 'rowodd' : 'roweven', 'list', "table-$tablename")),
             ($field['fieldnr'] == 0
             ? html('td', array('class'=>'top', 'rowspan'=>count($table['fields'])),
-                html('div', array('class'=>'tablename'), $tablename).
-                html('div', array(),
-                  html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null)).
-                  html('label', array('for'=>"$tablename:intablelist"), _('on toplevel'))
+                html('div', array('class'=>'tablename'),
+                  $tablename.
+                  html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$table['primarykeyfieldname']))
                 ).
                 (isset($table['possible_view_for_table'])
                 ? html('div', array('class'=>'alternative'),
@@ -497,34 +497,50 @@
                     html('label', array('for'=>"$tablename:viewfortable"), sprintf(_('alternative for %s'), $table['possible_view_for_table']))
                   )
                 : ''
-                ).
-                html('ol', array('class'=>'pluralsingular'),
-                  html('li', array(),
-                    array(
-                      html('label', array('for'=>"$tablename:singular"), '1').html('input', array('type'=>'text', 'name'=>"$tablename:singular", 'id'=>"$tablename:singular", 'value'=>$singular)),
-                      html('label', array('for'=>"$tablename:plural"), '2').html('input', array('type'=>'text', 'name'=>"$tablename:plural", 'id'=>"$tablename:plural", 'value'=>$plural))
-                    )
+                )
+              ).
+              html('td', array('class'=>join_non_null(' ', 'top', 'pluralsingular'), 'rowspan'=>count($table['fields'])),
+                html('div', array(),
+                  array(
+                    html('input', array('type'=>'text', 'name'=>"$tablename:singular", 'value'=>$singular)),
+                    html('input', array('type'=>'text', 'name'=>"$tablename:plural", 'value'=>$plural))
                   )
                 )
+              ).
+              html('td', array('class'=>join_non_null(' ', 'top', 'center'), 'rowspan'=>count($table['fields'])),
+                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
               )
             : ''
             ).
-            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null))).
-            html('td', array('class'=>join_non_null(' ', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))).
-            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null))).
-            html('td', array('class'=>'field'), $fieldname).
-            html('td', array(), html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))).
-            html('td', array(), $field['column_type']).
-            html('td', array('class'=>'center'), html('input', array('type'=>'checkbox', 'name'=>"$tablename:$fieldname:_nullallowed", 'readonly'=>'readonly', 'disabled'=>'disabled', 'checked'=>$nullallowed ? 'checked' : null)).html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))).
-            html('td', array(), html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions)).
+            html('td', array('class'=>'center'),
+              html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null))
+            ).
+            html('td', array('class'=>join_non_null(' ', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)),
+              html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))
+            ).
+            html('td', array('class'=>'center'),
+              html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null))
+            ).
             html('td', array(),
-              ($fieldname == $table['primarykeyfieldname']
-              ? _('primary').html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$fieldname))
-              : (preg_match('@^(tiny|small|medium|big)?int(eger)?\b@', $field['column_type'])
-                ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename", 'class'=>'foreigntablename'),
-                    join($tableoptions)
-                  )
-                : ''
+              html('div', array(),
+                array(
+                  html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title)),
+                  $fieldname
+                )
+              )
+            ).
+            html('td', array(),
+              html('div', array(),
+                array(
+                  html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions).
+                  ($fieldname != $table['primarykeyfieldname'] && preg_match('@^(tiny|small|medium|big)?int(eger)?\b@', $field['column_type'])
+                  ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename", 'class'=>'foreigntablename'),
+                      join($tableoptions)
+                    )
+                  : ''
+                  ),
+                  join_non_null(' ', $field['column_type'], $nullallowed ? null : 'not null', $fieldname == $table['primarykeyfieldname'] ? 'auto_increment' : null).
+                  html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))
                 )
               )
             ).
