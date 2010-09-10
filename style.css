@@ -6,7 +6,7 @@ body { margin: 0.5em; overflow-y: scroll; font-family: sans-serif !important; }
 #id ul { float: left; padding: 0; margin: 0.2em 0.5em; }
 #id ul li { list-style-type: none; }
 h1 { display: block; }
-#breadcrumbs { font-size: 0.8em; }
+#breadcrumbs { font-size: small; }
 #breadcrumbs li a { color: #000; }
 #breadcrumbs li { margin-right: 0; }
 #breadcrumbs li.notfirst:before { content: '\a0\a0\bb\a0\a0'; }
@@ -17,7 +17,7 @@ h1 { display: block; }
 .tableedit td, .tablelist th, .tablelist tr.quickadd td { white-space: nowrap; }
 tr.quickadd label { display: block; font-style: italic; }
 .referringlist.tablelist { margin-bottom: 1em; }
-.referrer { font-size: 0.8em; margin-left: 0.5em; }
+.referrer { font-size: small; margin-left: 0.5em; }
 
 a { color: #00e; }
 p { margin: 0.5em 0; }
@@ -36,13 +36,14 @@ td.number { text-align: right; }
 th.center, td.center { text-align: center; }
 th.filler, td.filler { width: 99%; }
 td div { white-space: nowrap; }
+td div.secondrow { font-size: x-small; color: #666; }
 
 ul, ol { padding: 0.5em 2.5em; }
 ul.compact { margin: 0; padding: 0; overflow: hidden; }
 ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 
 fieldset { border: 0.1em solid #ccc; padding: 0.2em; }
-input, textarea, select, option { font-size: 1em; font-family: sans-serif !important; }
+input, textarea, select, option { font-size: medium; font-family: sans-serif !important; }
 input, textarea, option { padding: 0 0.2em; }
 input, textarea, select { background-color: #ffe; border: 0.1em solid #999; }
 input:focus, select:focus, textarea:focus { background-color: #ffc; }

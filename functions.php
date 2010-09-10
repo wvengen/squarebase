@@ -486,10 +486,10 @@
               ).
               html('ul', array(),
                 html('li', array('id'=>'currentusernameandhost'),
-                  parameter('session', 'username') ? parameter('session', 'username').'@'.parameter('session', 'host') : ''
+                  parameter('session', 'username') ? parameter('session', 'username').'@'.parameter('session', 'host') : '&nbsp;'
                 ).
                 html('li', array('id'=>'logout'),
-                  parameter('session', 'username') ? internal_reference(array('action'=>'logout'), 'logout') : ''
+                  parameter('session', 'username') ? internal_reference(array('action'=>'logout'), 'logout') : '&nbsp;'
                 ).
                 html('li', array('id'=>'locale'),
                   get_locale()
