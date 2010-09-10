@@ -209,8 +209,8 @@
     return http_url($parameters);
   }
 
-  function external_reference($url, $text) {
-    return html('a', array('href'=>$url), $text);
+  function external_reference($url, $text, $extra = array()) {
+    return html('a', array_merge($extra, array('href'=>$url)), $text);
   }
 
   function internal_reference($parameters, $text, $extra = array()) {
@@ -496,7 +496,10 @@
                 )
               )
             ).
-            html('h1', array('id'=>'title'), $title).
+            html('div', array(),
+              html('h1', array('id'=>'title'), $title).
+              external_reference('http://squarebase.org/wiki/'.preg_replace('@(?:^|_)(\w)@e', 'strtoupper(\'$1\')', $action), _('help'), array('class'=>'sqhelp'))
+            ).
             ($breadcrumbs ? $breadcrumbs : '&nbsp;')
           ).
           html('div', array('id'=>'content'),

@@ -5,7 +5,8 @@ body { margin: 0.5em; overflow-y: scroll; font-family: sans-serif !important; }
 #id { float: right; }
 #id ul { float: left; padding: 0; margin: 0.2em 0.5em; }
 #id ul li { list-style-type: none; }
-h1 { display: block; }
+h1 { display: inline; margin-right: 0.5em; }
+a.sqhelp { font-size: small; }
 #breadcrumbs { font-size: small; }
 #breadcrumbs li a { color: #000; }
 #breadcrumbs li { margin-right: 0; }
@@ -24,7 +25,7 @@ p { margin: 0.5em 0; }
 
 table { width: 100%; border-collapse: collapse; background-color: #fff; }
 th, td { padding: 0.1em; vertical-align: top; width: 1%; }
-th { text-align: left; background-color: #fff; font-weight: normal; font-style: italic; }
+th { text-align: left; background-color: #fff; font-weight: normal; font-style: italic; font-size: small; }
 th.heading { font-weight: bold; font-style: normal; }
 tr.rowodd { background-color: #ddd; }
 tr.rowodd td.top, tr.roweven { background-color: #eee; }
