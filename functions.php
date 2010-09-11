@@ -168,7 +168,7 @@
         $possible_attributes[$attribute] = $value;
       foreach ($attributes as $attribute=>$value)
         if ($attribute) {
-          if (array_key_exists($attribute, $possible_attributes))
+          if (isset($possible_attributes[$attribute]))
             $possible_attributes[$attribute]++;
           else
             add_log('warning', sprintf(_('unknown attribute %s for tag %s'), $attribute, $tag));
@@ -244,7 +244,7 @@
   function callable_function($functionname, $parameternames = null) {
     static $callable_functions = array();
     if (is_null($parameternames)) {
-      if (!array_key_exists($functionname, $callable_functions))
+      if (!isset($callable_functions[$functionname]))
         error(sprintf(_('function %s is not callable'), $functionname));
       return $callable_functions[$functionname];
     }
@@ -1097,8 +1097,8 @@
       $charset = isset($matches[1]) ? bare($matches[1]) : '';
       $general_language = preg_replace('@_[a-z]*@', '', $language);
       $wanted_locales[$system_locale] =
-        10 * (array_key_exists($language, $wanted_languages) ? 1 + $wanted_languages[$language] : (array_key_exists($general_language, $wanted_languages) ? 1 + $wanted_languages[$general_language] : 0)) +
-         1 * (array_key_exists($charset, $wanted_charsets) ? 1 + $wanted_charsets[$charset] : 0);
+        10 * (isset($wanted_languages[$language]) ? 1 + $wanted_languages[$language] : (isset($wanted_languages[$general_language]) ? 1 + $wanted_languages[$general_language] : 0)) +
+         1 * (isset($wanted_charsets[$charset]) ? 1 + $wanted_charsets[$charset] : 0);
     }
     arsort($wanted_locales);
     $wanted_locales = array_keys($wanted_locales);

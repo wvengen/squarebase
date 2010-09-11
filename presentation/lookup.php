@@ -18,7 +18,7 @@
       else
         $linkedtables["$tablename:$fieldname"] = $foreigntablename;
     }
-    return array_key_exists("$tablename:$fieldname", $linkedtables) ? $linkedtables["$tablename:$fieldname"] : null;
+    return isset($linkedtables["$tablename:$fieldname"]) ? $linkedtables["$tablename:$fieldname"] : null;
   }
 
   function probability_lookup($field) {

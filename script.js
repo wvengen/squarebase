@@ -373,10 +373,11 @@ ready(
       ).
     end().
 
-    find('.alternative .checkboxedit').
+    find('.alternative .checkboxedit, .alternative select').
       change(
         function() {
-          var rijen = 
+          var show = $(this).is('input') ? $(this).attr('checked') : $(this).val();
+          var rijen =
             $(this).
             closest('table').
             find('tr.table-' + $(this).closest('td').find('.tablename').text());
@@ -384,17 +385,17 @@ ready(
           rijen.
           filter(':first').
             children('td:first').
-              attr('rowspan', $(this).attr('checked') ? 1 : rijen.length).
+              attr('rowspan', show ? 1 : rijen.length).
               find('.pluralsingular').
-                css('display', $(this).attr('checked') ? 'none' : 'block').
+                css('display', show ? 'none' : 'block').
               end().
             end().
             find('td:not(:first)').
-              css('display', $(this).attr('checked') ? 'none' : 'table-cell').
+              css('display', show ? 'none' : 'table-cell').
             end().
           end().
           filter(':not(:first)').
-            css('display', $(this).attr('checked') ? 'none' : 'table-row').
+            css('display', show ? 'none' : 'table-row').
           end();
         }
       ).

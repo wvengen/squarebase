@@ -461,8 +461,11 @@
         }
 
         $tableoptions = array(html('option', array('value'=>'', 'selected'=>!$field['linkedtable'] ? 'selected' : null), ''));
-        foreach ($alltablenames as $onetablename=>$oneprimarykeyfieldname)
+        $alternativeoptions = array(html('option', array('value'=>'', 'selected'=>!$metabasename || isset($alternative_views[$tablename]) ? 'selected' : null), ''));
+        foreach ($alltablenames as $onetablename=>$oneprimarykeyfieldname) {
           $tableoptions[] = html('option', array('value'=>$onetablename, 'selected'=>$onetablename == $field['linkedtable'] ? 'selected' : null), $onetablename);
+          $alternativeoptions[] = html('option', array('value'=>$onetablename, 'selected'=>isset($alternative_views[$tablename]) && $onetablename == $alternative_views[$tablename] ? 'selected' : null), $onetablename);
+        }
 
         $mostlikelyoption = null;
         $moreorlesslikelyoptions = $unlikelyoptions = array();
@@ -490,11 +493,18 @@
                   $tablename.
                   html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$table['primarykeyfieldname']))
                 ).
-                (isset($table['possible_view_for_table'])
+                ($table['is_view']
                 ? html('div', array('class'=>'alternative'),
-                    html('input', array('type'=>'hidden', 'name'=>"$tablename:possibleviewfortable", 'value'=>$table['possible_view_for_table'])).
-                    html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:viewfortable", 'id'=>"$tablename:viewfortable", 'checked'=>!$metabasename || isset($alternative_views[$tablename]) ? 'checked' : null)).
-                    html('label', array('for'=>"$tablename:viewfortable"), sprintf(_('alternative for %s'), $table['possible_view_for_table']))
+                    (isset($table['possible_view_for_table'])
+                    ? html('input', array('type'=>'hidden', 'name'=>"$tablename:possibleviewfortable", 'value'=>$table['possible_view_for_table'])).
+                      html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:viewfortable", 'id'=>"$tablename:viewfortable", 'checked'=>!$metabasename || isset($alternative_views[$tablename]) ? 'checked' : null)).
+                      html('label', array('for'=>"$tablename:viewfortable"), sprintf(_('alternative for %s'), $table['possible_view_for_table']))
+                    : html('input', array('type'=>'hidden', 'name'=>"$tablename:viewfortable", 'value'=>'on')).
+                      html('label', array('for'=>"$tablename:possibleviewfortable"), _('alternative for')).
+                      html('select', array('name'=>"$tablename:possibleviewfortable", 'id'=>"$tablename:possibleviewfortable"),
+                        join($alternativeoptions)
+                      )
+                    )
                   )
                 : ''
                 )
@@ -701,10 +711,10 @@
     $tableids = array();
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table['table_name'];
-      if (!parameter('post', "$tablename:viewfortable"))
-        $tableids[$tablename] = insert_or_update($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>parameter('post', "$tablename:singular"), 'plural'=>parameter('post', "$tablename:plural"), 'intablelist'=>parameter('post', "$tablename:intablelist") == 'on'));
-      else
+      if (parameter('post', "$tablename:viewfortable") && parameter('post', "$tablename:possibleviewfortable"))
         insert_or_update($metabasename, 'views', array('viewname'=>$tablename, 'tableid'=>$tableids[parameter('post', "$tablename:possibleviewfortable")]));
+      else
+        $tableids[$tablename] = insert_or_update($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>parameter('post', "$tablename:singular"), 'plural'=>parameter('post', "$tablename:plural"), 'intablelist'=>parameter('post', "$tablename:intablelist") == 'on'));
     }
 
     $errors = array();
