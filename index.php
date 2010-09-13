@@ -18,12 +18,20 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
+  include('functions.php');
+
   ini_set('session.use_only_cookies', true);
   session_set_cookie_params(7 * 24 * 60 * 60);
   session_save_path('session');
   session_start();
 
-  include('functions.php');
+  umask(0177); // => maximum = rw-.---.---
+
+  set_preference('scripty', 1);
+  set_preference('ajaxy', 1);
+  set_preference('logsy', 0);
+
+  error_reporting(php_sapi_name() == 'cli' || parameter('cookie', 'logsy') ? E_ALL : 0);
 
   $languagename = !parameter('get', 'language') && parameter('get', 'metabasename') ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;
 
@@ -63,6 +71,16 @@
   if ($action == 'script')
     augment_file('script', 'js', 'text/javascript');
 
+  /********************************************************************************************/
+
+  if (parameter('cookie', 'logsy')) {
+    if (parameter('get') && parameter('post'))
+      error(_('both get and post parameters'));
+    $parametersource = parameter('post') ? 'post' : 'get';
+    add_log($parametersource, $parametersource.': '.html('div', array('class'=>'arrayshow'), array_show(parameter($parametersource))));
+//  add_log('cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show(parameter('cookie'))));
+  }
+ 
   /********************************************************************************************/
 
   if ($action == 'login') {
@@ -108,14 +126,10 @@
       form(
         ($next ? html('input', array('type'=>'hidden', 'name'=>'next', 'value'=>$next)) : '').
         html('table', array('class'=>'box'),
-          html('tr', array(),
-            array(
-              html('td', array(), html('label', array('for'=>'usernameandhost'), _('user').'@'._('host'))).html('td', array('class'=>'filler'), $usernameandhost_input),
-              html('td', array(), html('label', array('for'=>'password'), _('password'))).html('td', array(), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password', 'value'=>$password))),
-              html('td', array(), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale()),
-              html('td', array(), '').                                                    html('td', array(), html('input', array('type'=>'submit', 'name'=>'action',   'value'=>'connect', 'class'=>'mainsubmit')))
-            )
-          )
+          inputrow(_('user').'@'._('host'), $usernameandhost_input, _('The username@host from the underlying MySql database.')).
+          inputrow(_('password'), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password', 'value'=>$password)), _('The password for username@host from the underlying MySql database.')).
+          inputrow(_('language'), select_locale(), _('The default language for displaying translations, dates, numbers, etc.')).
+          inputrow(null,  html('input', array('type'=>'submit', 'name'=>'action',   'value'=>'connect', 'class'=>'mainsubmit')))
         )
       )
     );
@@ -175,7 +189,7 @@
         $links[] = $link;
         $rows[] =
           html('tr', array('class'=>join_non_null(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
-            html('td', array(),
+            html('td', array('class'=>'filler'),
               internal_reference($link, $databasename)
             ).
             html('td', array(),
@@ -293,13 +307,9 @@
     page($action, breadcrumbs(null, $databasename),
       form(
         html('table', array('class'=>'box'),
-          html('tr', array(),
-            array(
-              html('td', array(), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array('class'=>'filler'), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
-              html('td', array(), html('label', array(), _('tables'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'tables', 'value'=>$tables, 'title'=>$tables, 'readonly'=>'readonly', 'class'=>'readonly'))),
-              html('td', array(), html('label', array('for'=>'language'), _('language'))).html('td', array(), select_locale())
-            )
-          )
+          inputrow(_('database'), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly')), _('The name of the database to build a metabase for.')).
+          inputrow(_('tables'), html('input', array('type'=>'text', 'name'=>'tables', 'value'=>$tables, 'title'=>$tables, 'readonly'=>'readonly', 'class'=>'readonly')), _('The names of the tables in this database.')).
+          inputrow(_('language'), select_locale(), _('The language for displaying dates, numbers, etc in this database.'))
         ).
         html('p', array(),
           html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'form_metabase_for_database', 'class'=>'mainsubmit'))
@@ -421,12 +431,14 @@
     foreach ($infos as $tablename=>$table) {
       $rowsfields[] =
         html('tr', array(),
-          html('th', array(),
-            array(
-              _('table'), _('singular').' / '._('plural'), _('top'), _('desc'), _('list'), _('edit'), _('title').' / '._('field'), _('presentation').' / '._('type')
-            )
-          ).
-          html('th', array('class'=>'filler'), '')
+          column_header(_('table'), 'The name of the table').
+          column_header(_('singular').' / '._('plural'), 'The singular form and the plural form of the table name.').
+          column_header(_('top'), 'Whether this table will be visible on the toplevel of "show database".').
+          column_header(_('desc'), 'Whether this field will be included in the short description of a record.').
+          column_header(_('list'), 'Whether this field will be included in the list of records.').
+          column_header(_('edit'), 'Whether this field will be included in the form to edit a record.').
+          column_header(_('title').' / '._('field'), 'The readable title / original field name.').
+          column_header(_('presentation').' / '._('type'), 'The presentation that will be used to show and edit this field / the original type.', true)
         );
 
       foreach ($table['fields'] as $field) {
@@ -539,7 +551,7 @@
                 $fieldname
               )
             ).
-            html('td', array(),
+            html('td', array('class'=>'filler'),
               html('div', array('class'=>'firstrow'),
                 html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions).
                 ($fieldname != $table['primarykeyfieldname'] && preg_match('@^(tiny|small|medium|big)?int(eger)?\b@', $field['column_type'])
@@ -553,8 +565,7 @@
                 join_non_null(' ', $field['column_type'], $nullallowed ? null : 'not null', $fieldname == $table['primarykeyfieldname'] ? 'auto_increment' : null).
                 html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))
               )
-            ).
-            html('td', array('class'=>'filler'), '')
+            )
           );
       }
     }
@@ -587,13 +598,9 @@
         )
       : form(
           html('table', array('class'=>'box'),
-            html('tr', array(),
-              array(
-                html('td', array(), html('label', array('for'=>'metabasename'), _('metabasename'))).html('td', array('class'=>'filler'), $metabase_input),
-                html('td', array(), html('label', array('for'=>'databasename'), _('databasename'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly'))),
-                html('td', array(), html('label', array('for'=>'language'), _('language'))).html('td', array(), html('input', array('type'=>'text', 'name'=>'language', 'value'=>$language, 'readonly'=>'readonly', 'class'=>'readonly')))
-              )
-            )
+            inputrow(_('metabase'), $metabase_input, _('The name of the metabase that will be build for this database.')).
+            inputrow(_('database'), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly')), _('The name of this database.')).
+            inputrow(_('language'), html('input', array('type'=>'text', 'name'=>'language', 'value'=>$language, 'readonly'=>'readonly', 'class'=>'readonly')), _('The language for displaying dates, numbers, etc in this database.'))
           ).
           html('table', array('class'=>'box'),
             join($rowsfields)
@@ -768,7 +775,7 @@
 
   if ($action == 'form_database_for_metabase') {
     $metabasename = parameter('get', 'metabasename');
-    $rows = array(html('th', array(), _('database')).html('th', array('class'=>'filler'), 'database'));
+    $rows = array(html('th', array(), _('database')).html('th', array('class'=>'filler'), ''));
     $databasenames = databasenames($metabasename);
 
     $databases = all_databases();

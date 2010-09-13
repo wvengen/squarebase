@@ -6,7 +6,6 @@ body { margin: 0.5em; overflow-y: scroll; font-family: sans-serif !important; }
 #id ul { float: left; padding: 0; margin: 0.2em 0.5em; }
 #id ul li { list-style-type: none; }
 h1 { display: inline; margin-right: 0.5em; }
-a.sqhelp { font-size: small; }
 #breadcrumbs { font-size: small; }
 #breadcrumbs li a { color: #000; }
 #breadcrumbs li { margin-right: 0; }
@@ -36,8 +35,9 @@ td.description { width: 0.1em; height: 1.5em; }
 td.number { text-align: right; }
 th.center, td.center { text-align: center; }
 th.filler, td.filler { width: 99%; }
-td div { white-space: nowrap; }
+td div, td ul { white-space: nowrap; }
 td div.secondrow { font-size: x-small; color: #666; }
+.help { color: #999; font-size: x-small; position: relative; bottom: 0.4em; }
 
 ul, ol { padding: 0.5em 2.5em; }
 ul.compact { margin: 0; padding: 0; overflow: hidden; }
@@ -90,7 +90,6 @@ tr.roweven.closing td, tr.roweven.closing td a { background-color: #fbb !importa
 #warnings { padding: 0; }
 #warnings li { list-style-type: none; }
 #error, .problem, .warning { font-weight: bold; color: #f00; }
-.help { color: #999; margin-left: 0.5em; }
 
 .trace { white-space: nowrap; }
 

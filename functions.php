@@ -20,22 +20,6 @@
 
   include('inflection.php');
 
-  umask(0177); // => maximum = rw-.---.---
-
-  set_preference('scripty', 1);
-  set_preference('ajaxy', 1);
-  set_preference('logsy', 0);
-
-  error_reporting(php_sapi_name() == 'cli' || parameter('cookie', 'logsy') ? E_ALL : 0);
-
-  if (parameter('cookie', 'logsy')) {
-    if (parameter('get') && parameter('post'))
-      error(_('both get and post parameters'));
-    $parametersource = parameter('post') ? 'post' : 'get';
-    add_log($parametersource, $parametersource.': '.html('div', array('class'=>'arrayshow'), array_show(parameter($parametersource))));
-    add_log('cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show(parameter('cookie'))));
-  }
- 
   function is_local() {
     return parameter('server', 'HTTP_HOST') == 'localhost';
   }
@@ -121,48 +105,44 @@
   function html($tag, $attributes = array(), $text = null) {
     if (parameter('cookie', 'logsy')) {
       static $types = array( // in attributes: 0=required, 1=optional
-        'html'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'head'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'title'   =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'script'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'type'=>0, 'src'=>0)),
-        'body'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'pre'     =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'div'     =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
+        'html'    =>array('empty'=>false, 'attributes'=>array()),
+        'head'    =>array('empty'=>false, 'attributes'=>array()),
+        'title'   =>array('empty'=>false, 'attributes'=>array()),
+        'script'  =>array('empty'=>false, 'attributes'=>array('type'=>0, 'src'=>0)),
+        'body'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1)),
+        'pre'     =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1)),
+        'div'     =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1)),
         'span'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1)),
-        'p'       =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'h1'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'h2'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'ol'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'ul'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'li'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'a'       =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'href'=>0)),
-        'table'   =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'tr'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'th'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'colspan'=>1, 'rowspan'=>1)),
-        'td'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'colspan'=>1, 'rowspan'=>1)),
-        'form'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'action'=>0, 'enctype'=>1, 'method'=>0)),
-        'fieldset'=>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'optgroup'=>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'label'=>0)),
-        'label'   =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'for'=>1)),
-        'select'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'name'=>0, 'readonly'=>1)),
-        'option'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'value'=>1, 'selected'=>1)),
-        'textarea'=>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'name'=>0, 'rows'=>0, 'cols'=>0, 'readonly'=>1)),
-        'strong'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1)),
-        'link'    =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'href'=>0, 'type'=>0, 'rel'=>0)),
-        'img'     =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'src'=>0, 'alt'=>0, 'title'=>1)),
-        'input'   =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'name'=>0, 'value'=>1, 'type'=>0, 'readonly'=>1, 'disabled'=>1, 'checked'=>1, 'title'=>1))
+        'p'       =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1)),
+        'h1'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1)),
+        'h2'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1)),
+        'ol'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1)),
+        'ul'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1)),
+        'li'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1)),
+        'a'       =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1, 'href'=>0)),
+        'table'   =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1)),
+        'tr'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1)),
+        'th'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1, 'colspan'=>1, 'rowspan'=>1)),
+        'td'      =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1, 'colspan'=>1, 'rowspan'=>1)),
+        'form'    =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1, 'action'=>0, 'enctype'=>1, 'method'=>0)),
+        'fieldset'=>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1)),
+        'optgroup'=>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1, 'label'=>0)),
+        'label'   =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1, 'for'=>1)),
+        'select'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1, 'name'=>0, 'readonly'=>1)),
+        'option'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1, 'value'=>1, 'selected'=>1)),
+        'textarea'=>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1, 'name'=>0, 'rows'=>0, 'cols'=>0, 'readonly'=>1)),
+        'strong'  =>array('empty'=>false, 'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1)),
+        'link'    =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1, 'href'=>0, 'type'=>0, 'rel'=>0)),
+        'img'     =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1, 'src'=>0, 'alt'=>0)),
+        'input'   =>array('empty'=>true,  'attributes'=>array('id'=>1, 'class'=>1, 'title'=>1, 'name'=>0, 'value'=>1, 'type'=>0, 'readonly'=>1, 'disabled'=>1, 'checked'=>1))
       );
-      $type = $types[$tag];
-      if ($type['empty'] === false) {
-        if (is_null($text))
-          add_log('warning', sprintf(_('missing text for html tag %s'), $tag));
-      }
-      elseif ($type['empty'] === true) {
-        if (!is_null($text))
-          add_log('warning', sprintf(_('text for html tag %s: %s'), $tag, $text));
-      }
-      else
+      if (!isset($types[$tag]))
         add_log('warning', sprintf(_('unknown html tag %s'), $tag));
+      $type = $types[$tag];
+      if ($type['empty'] === false && is_null($text))
+        add_log('warning', sprintf(_('missing text for html tag %s'), $tag));
+      if ($type['empty'] === true && !is_null($text))
+        add_log('warning', sprintf(_('text for html tag %s: %s'), $tag, $text));
       $possible_attributes = array();
       foreach ($type['attributes'] as $attribute=>$value)
         $possible_attributes[$attribute] = $value;
@@ -509,11 +489,24 @@
             (parameter('cookie', 'logsy') ? html('ol', array('class'=>'logs'), join(get_logs('logs'))) : '')
           ).
           html('div', array('id'=>'footer'),
-            html('div', array('id'=>'poweredby'), external_reference('http://squarebase.org/', html('img', array('src'=>'powered_by_squarebase.png', 'alt'=>'powered by squarebase'))))
+            external_reference('http://squarebase.org/', html('img', array('src'=>'powered_by_squarebase.png', 'alt'=>'powered by squarebase')), array('id'=>'poweredby'))
           )
         )
       )
     );
+  }
+
+  function inputrow($label, $input, $help = null) {
+    return
+      html('tr', array('title'=>$help),
+        html('td', array(), is_null($label) ? '' : html('label', array('for'=>preg_match1('@id="(\w+)"@', $input)), $label)).
+        html('td', array(), $input).
+        html('td', array('class'=>join_non_null(' ', 'filler', 'help')), is_null($help) ? '' : _('?'))
+      );
+  }
+
+  function column_header($header, $help, $filler = false) {
+    return html('th', array('class'=>$filler ? 'filler' : null, 'title'=>$help), $header.html('span', array('class'=>'help'), _('?')));
   }
 
   function form($content, $method = 'get') {
