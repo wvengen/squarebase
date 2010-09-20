@@ -15,7 +15,7 @@ h1 { display: inline; margin-right: 0.5em; }
 .box { border: 0.1em solid #999; }
 .tableedit { padding-bottom: 0.5em; }
 .tableedit td, .tablelist th, .tablelist tr.quickadd td { white-space: nowrap; }
-tr.quickadd label { display: block; font-style: italic; }
+tr.quickadd label { display: block; font-style: italic; font-size: small; }
 .referringlist.tablelist { margin-bottom: 1em; }
 .referrer { font-size: small; margin-left: 0.5em; }
 
@@ -25,7 +25,7 @@ p { margin: 0.5em 0; }
 table { width: 100%; border-collapse: collapse; background-color: #fff; }
 th, td { padding: 0.1em; vertical-align: top; width: 1%; }
 th { text-align: left; background-color: #fff; font-weight: normal; font-style: italic; font-size: small; }
-th.heading { font-weight: bold; font-style: normal; }
+th.heading { font-weight: bold; font-style: normal; font-size: medium; }
 tr.rowodd { background-color: #ddd; }
 tr.rowodd td.top, tr.roweven { background-color: #eee; }
 tr.list:hover { background-color: #ffc; }
@@ -36,8 +36,7 @@ td.number { text-align: right; }
 th.center, td.center { text-align: center; }
 th.filler, td.filler { width: 99%; }
 td div, td ul { white-space: nowrap; }
-td div.secondrow { font-size: x-small; color: #666; }
-.help { color: #999; font-size: x-small; position: relative; bottom: 0.4em; }
+.help { color: #999; font-size: small; position: relative; bottom: 0.4em; }
 
 ul, ol { padding: 0.5em 2.5em; }
 ul.compact { margin: 0; padding: 0; overflow: hidden; }
@@ -52,6 +51,7 @@ select { height: 1.35em; }
 optgroup { color: #666; background-color: #ddd; font-size: x-small; text-align: center; font-style: normal; }
 option { color: #000; background-color: #fff; font-size: medium; text-align: left; height: 1.2em; }
 input.readonly, select.readonly { border-color: #ccc; background-color: #eee; color: #999; }
+
 ul.minimal { margin: 0; padding: 0; }
 ul.minimal li { list-style-type: none; }
 ul.minimal li .radio { margin-right: 0.3em; }
@@ -60,7 +60,8 @@ input.mainsubmit, input.minorsubmit, .cancel { margin-right: 1em; }
 input.mainsubmit:hover, input.minorsubmit:hover { background-color: #ddd; }
 input.mainsubmit.delete { margin-left: 5em; }
 input.mainsubmit.delete:hover, .cancel:hover, .drop:hover, .forget:hover, .close:hover { background-color: #f00 !important; color: #fff !important; }
-.cancel, .close, .forget { padding: 0.1em 0.5em; }
+.cancel, .close { padding: 0.1em 0.5em; }
+.drop { margin-left: 1em; }
 .inlistforquickadd { background-color: #fda; }
 
 .closing { background-color: #fcc !important; }
@@ -105,5 +106,10 @@ tr.roweven.closing td, tr.roweven.closing td a { background-color: #fbb !importa
 .logs .arrayshow { margin-left: 1em; }
 .logs .arrayshow:hover { white-space: pre; }
 .togglelogs, .logs a { color: #99e; }
+
+.lastusernamesandhosts label { width: 12.4em; display: inline-block;}
+#usernameandhost, #password, #databasename, #metabasename, #tables { width: 16em; }
+#usernameandhost.afterradio { width: 15em; }
+#language { width: 16.5em; }
 
 /* css_* */

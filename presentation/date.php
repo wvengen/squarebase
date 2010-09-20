@@ -13,7 +13,7 @@
   function formfield_date($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return 
       html('input', array('type'=>'text', 'class'=>join_non_null(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'value'=>date2local($value), 'readonly'=>$readonly ? 'readonly' : null)).
-      ($extra && !$readonly ? html('span', array('class'=>'help'), find_datetime_format('%x', 'text')) : '');
+      ($extra ? html('span', array('class'=>'help', 'title'=>sprintf(_('Date format: %s'), find_datetime_format('%x', 'text'))), _('?')) : '');
   }
 
   function formattedsql_date($fieldname) {

@@ -33,6 +33,14 @@
 
   error_reporting(php_sapi_name() == 'cli' || parameter('cookie', 'logsy') ? E_ALL : 0);
 
+  if (parameter('cookie', 'logsy')) {
+    if (parameter('get') && parameter('post'))
+      error(_('both get and post parameters'));
+    $parametersource = parameter('post') ? 'post' : 'get';
+    add_log($parametersource, $parametersource.': '.html('div', array('class'=>'arrayshow'), array_show(parameter($parametersource))));
+//  add_log('cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show(parameter('cookie'))));
+  }
+
   $languagename = !parameter('get', 'language') && parameter('get', 'metabasename') ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;
 
   set_best_locale(
@@ -73,16 +81,6 @@
 
   /********************************************************************************************/
 
-  if (parameter('cookie', 'logsy')) {
-    if (parameter('get') && parameter('post'))
-      error(_('both get and post parameters'));
-    $parametersource = parameter('post') ? 'post' : 'get';
-    add_log($parametersource, $parametersource.': '.html('div', array('class'=>'arrayshow'), array_show(parameter($parametersource))));
-//  add_log('cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show(parameter('cookie'))));
-  }
- 
-  /********************************************************************************************/
-
   if ($action == 'login') {
     $usernameandhost = parameter('get', 'usernameandhost');
     $next = parameter('get', 'next');
@@ -99,34 +97,35 @@
       $lastusernamesandhosts = parameter('cookie', 'lastusernamesandhosts');
       if ($lastusernamesandhosts) {
         foreach (explode(',', $lastusernamesandhosts) as $thisusernameandhost)
-          $radios[] = html('input', array('type'=>'radio', 'class'=>join_non_null(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'id'=>"lastusernameandhost:$thisusernameandhost", 'value'=>$thisusernameandhost, 'checked'=>$radios ? null : 'checked')).html('label', array('for'=>"lastusernameandhost:$thisusernameandhost"), $thisusernameandhost).internal_reference(array('action'=>'forget_username_and_host', 'usernameandhost'=>$thisusernameandhost), 'forget', array('class'=>'forget'));
+          $radios[] =
+            html('input', array('type'=>'radio', 'class'=>join_non_null(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'id'=>"lastusernameandhost:$thisusernameandhost", 'value'=>$thisusernameandhost, 'checked'=>$radios ? null : 'checked')).
+            html('label', array('for'=>"lastusernameandhost:$thisusernameandhost"), $thisusernameandhost).
+            internal_reference(array('action'=>'forget_username_and_host', 'usernameandhost'=>$thisusernameandhost), 'forget', array('class'=>'forget'));
       }
       if (!$radios)
         $usernameandhost = 'root@localhost';
-    }
-
-    $usernameandhost_input = html('input', array('type'=>'text', 'class'=>'skipfirstfocus', 'id'=>'usernameandhost', 'name'=>'usernameandhost', 'value'=>$usernameandhost));
-
-    if (isset($radios)) {
-      $usernameandhost_input =
-        html('ul', array('class'=>'minimal'),
-          html('li', array(),
-            array_merge(
-              $radios,
-              array(
-                html('input', array('type'=>'radio', 'class'=>join_non_null(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'value'=>'')).
-                $usernameandhost_input
-              )
-            )
-          )
-        );
     }
 
     page($action, null,
       form(
         ($next ? html('input', array('type'=>'hidden', 'name'=>'next', 'value'=>$next)) : '').
         html('table', array('class'=>'box'),
-          inputrow(_('user').'@'._('host'), $usernameandhost_input, _('The username@host from the underlying MySql database.')).
+          inputrow(_('user').'@'._('host'),
+            isset($radios)
+            ? html('ul', array('class'=>join_non_null(' ', 'minimal', 'lastusernamesandhosts')),
+                html('li', array(),
+                  array_merge(
+                    $radios,
+                    array(
+                      html('input', array('type'=>'radio', 'class'=>join_non_null(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'value'=>'')).
+                      html('input', array('type'=>'text', 'class'=>join_non_null(' ', 'afterradio', 'skipfirstfocus'), 'id'=>'usernameandhost', 'name'=>'usernameandhost', 'value'=>$usernameandhost))
+                    )
+                  )
+                )
+              )
+            : html('input', array('type'=>'text', 'class'=>'skipfirstfocus', 'id'=>'usernameandhost', 'name'=>'usernameandhost', 'value'=>$usernameandhost)),
+            _('The username@host from the underlying MySql database.')
+          ).
           inputrow(_('password'), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password', 'value'=>$password)), _('The password for username@host from the underlying MySql database.')).
           inputrow(_('language'), select_locale(), _('The default language for displaying translations, dates, numbers, etc.')).
           inputrow(null,  html('input', array('type'=>'submit', 'name'=>'action',   'value'=>'connect', 'class'=>'mainsubmit')))
@@ -221,7 +220,7 @@
   /********************************************************************************************/
 
   if ($action == 'new_metabase_from_database') {
-    $rows = array(html('th', array(), _('database')).html('th', array(), _('tables')).html('th', array('class'=>'filler'), ''));
+    $rows = array(html('th', array('class'=>'filler'), _('database')).html('th', array(), _('tables')).html('th', array(), ''));
     $databases = all_databases();
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['schema_name'];
@@ -240,23 +239,18 @@
           while ($table = mysql_fetch_assoc($tables)) {
             $tablelist[] = $table['table_name'];
           }
-          $fulllist = null;
           if (count($tablelist) > 5) {
-            $fulllist = join(' ', array_slice($tablelist, 4));
-            array_splice($tablelist, 4, count($tablelist), html('span', array('title'=>$fulllist), '&hellip;'));
+            $notshown = join(' ', array_slice($tablelist, 4));
+            array_splice($tablelist, 4, count($tablelist), html('span', array('title'=>$notshown), '&hellip;'));
           }
           $contents = html('ul', array('class'=>'compact'), html('li', array(), $tablelist));
         }
       }
       $rows[] =
         html('tr', array('class'=>join_non_null(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
-          html('td', array(),
-            array(
-              internal_reference(array('action'=>'language_for_database', 'databasename'=>$databasename), $databasename),
-              $contents,
-              has_grant('DROP', $databasename) ? internal_reference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop', array('class'=>'drop')) : ''
-            )
-          )
+          html('td', array('class'=>'filler'), internal_reference(array('action'=>'language_for_database', 'databasename'=>$databasename), $databasename)).
+          html('td', array(), $contents).
+          html('td', array(), has_grant('DROP', $databasename) ? internal_reference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop', array('class'=>'drop')) : '')
         );
     }
     page($action, null,
@@ -307,8 +301,8 @@
     page($action, breadcrumbs(null, $databasename),
       form(
         html('table', array('class'=>'box'),
-          inputrow(_('database'), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly')), _('The name of the database to build a metabase for.')).
-          inputrow(_('tables'), html('input', array('type'=>'text', 'name'=>'tables', 'value'=>$tables, 'title'=>$tables, 'readonly'=>'readonly', 'class'=>'readonly')), _('The names of the tables in this database.')).
+          inputrow(_('database'), html('input', array('type'=>'text', 'id'=>'databasename', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly')), _('The name of the database to build a metabase for.')).
+          inputrow(_('tables'), html('input', array('type'=>'text', 'id'=>'tables', 'name'=>'tables', 'value'=>$tables, 'title'=>$tables, 'readonly'=>'readonly', 'class'=>'readonly')), _('The names of the tables in this database.')).
           inputrow(_('language'), select_locale(), _('The language for displaying dates, numbers, etc in this database.'))
         ).
         html('p', array(),
@@ -437,8 +431,8 @@
           column_header(_('desc'), 'Whether this field will be included in the short description of a record.').
           column_header(_('list'), 'Whether this field will be included in the list of records.').
           column_header(_('edit'), 'Whether this field will be included in the form to edit a record.').
-          column_header(_('title').' / '._('field'), 'The readable title / original field name.').
-          column_header(_('presentation').' / '._('type'), 'The presentation that will be used to show and edit this field / the original type.', true)
+          column_header(_('title').' + '._('field'), 'The readable title / original field name.').
+          column_header(_('presentation').' + '._('type'), 'The presentation that will be used to show and edit this field / the original type.', true)
         );
 
       foreach ($table['fields'] as $field) {
@@ -543,28 +537,18 @@
             html('td', array('class'=>'center'),
               html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null))
             ).
-            html('td', array(),
-              html('div', array('class'=>'firstrow'),
-                html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))
-              ).
-              html('div', array('class'=>'secondrow'),
-                $fieldname
-              )
+            html('td', array('title'=>$fieldname),
+              html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))
             ).
-            html('td', array('class'=>'filler'),
-              html('div', array('class'=>'firstrow'),
-                html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions).
-                ($fieldname != $table['primarykeyfieldname'] && preg_match('@^(tiny|small|medium|big)?int(eger)?\b@', $field['column_type'])
-                ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename", 'class'=>'foreigntablename'),
-                    join($tableoptions)
-                  )
-                : ''
+            html('td', array('class'=>'filler', 'title'=>join_non_null(' ', $field['column_type'], $nullallowed ? null : 'not null', $fieldname == $table['primarykeyfieldname'] ? 'auto_increment' : null)),
+              html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions).
+              ($fieldname != $table['primarykeyfieldname'] && preg_match('@^(tiny|small|medium|big)?int(eger)?\b@', $field['column_type'])
+              ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename", 'class'=>'foreigntablename'),
+                  join($tableoptions)
                 )
+              : ''
               ).
-              html('div', array('class'=>'secondrow'),
-                join_non_null(' ', $field['column_type'], $nullallowed ? null : 'not null', $fieldname == $table['primarykeyfieldname'] ? 'auto_increment' : null).
-                html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))
-              )
+              html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))
             )
           );
       }

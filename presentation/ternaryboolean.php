@@ -1,6 +1,6 @@
 <?php
   function probability_ternaryboolean($field) {
-    if (!$field['is_nullable'])
+    if ($field['is_nullable'])
       return 0;
     $probability_boolean = probability_boolean($field);
     return $probability_boolean ? $probability_boolean + 0.1 : 0;

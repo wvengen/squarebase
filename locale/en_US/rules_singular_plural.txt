@@ -27,5 +27,4 @@ quiz//zes
 gas|alias|atlas|penis|o|us|x|ch|ss|sh//es
 [^aeiouy]|qu/y/ies
 [^fo]/fe/ves
-s/is/es
 //s

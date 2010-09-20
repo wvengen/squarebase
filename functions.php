@@ -476,10 +476,7 @@
                 )
               )
             ).
-            html('div', array(),
-              html('h1', array('id'=>'title'), $title).
-              external_reference('http://squarebase.org/wiki/'.preg_replace('@(?:^|_)(\w)@e', 'strtoupper(\'$1\')', $action), _('help'), array('class'=>'sqhelp'))
-            ).
+            html('h1', array('id'=>'title'), $title).
             ($breadcrumbs ? $breadcrumbs : '&nbsp;')
           ).
           html('div', array('id'=>'content'),
@@ -501,7 +498,7 @@
       html('tr', array('title'=>$help),
         html('td', array(), is_null($label) ? '' : html('label', array('for'=>preg_match1('@id="(\w+)"@', $input)), $label)).
         html('td', array(), $input).
-        html('td', array('class'=>join_non_null(' ', 'filler', 'help')), is_null($help) ? '' : _('?'))
+        html('td', array('class'=>'filler'), is_null($help) ? '' : html('span', array('class'=>'help'), _('?')))
       );
   }
 
