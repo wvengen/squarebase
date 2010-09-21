@@ -130,14 +130,14 @@ jQuery.fn.hidelogs = function() {
   $(this).
 
   find('.logs').
-    before('<a href="" class="togglelogs ajaxified">logs</a>').
+    before('<div><a href="" class="togglelogs ajaxified">logs</a></div>').
   end().
 
   find('.togglelogs').
-  css('display', 'block').
   click(
     function() {
       $(this).
+      parent().
       next().
       toggle();
       return false;

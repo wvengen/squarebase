@@ -178,7 +178,7 @@
 
   if ($action == 'index') {
     $metabases = all_databases();
-    $rows = array(html('th', array('class'=>'filler'), _('database')).html('th', array(), _('metabase')).html('th', array(), ''));
+    $rows = array(html('th', array('class'=>'filler'), _('database')).html('th', array('class'=>'secondary'), _('metabase')).html('th', array(), ''));
     $links = array();
     while ($metabase = mysql_fetch_assoc($metabases)) {
       $metabasename = $metabase['schema_name'];
@@ -191,7 +191,7 @@
             html('td', array('class'=>'filler'),
               internal_reference($link, $databasename)
             ).
-            html('td', array(),
+            html('td', array('class'=>'secondary'),
               has_grant('DROP', $metabasename)
               ? array(
                   internal_reference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename),
@@ -220,7 +220,7 @@
   /********************************************************************************************/
 
   if ($action == 'new_metabase_from_database') {
-    $rows = array(html('th', array('class'=>'filler'), _('database')).html('th', array(), _('tables')).html('th', array(), ''));
+    $rows = array(html('th', array('class'=>'filler'), _('database')).html('th', array('class'=>'secondary'), _('tables')).html('th', array(), ''));
     $databases = all_databases();
     while ($database = mysql_fetch_assoc($databases)) {
       $databasename = $database['schema_name'];
@@ -239,18 +239,19 @@
           while ($table = mysql_fetch_assoc($tables)) {
             $tablelist[] = $table['table_name'];
           }
+          $notshown = null;
           if (count($tablelist) > 5) {
-            $notshown = join(' ', array_slice($tablelist, 4));
-            array_splice($tablelist, 4, count($tablelist), html('span', array('title'=>$notshown), '&hellip;'));
+            $notshown = '+ '.join(' ', array_slice($tablelist, 4));
+            array_splice($tablelist, 4, count($tablelist), '&hellip;');
           }
-          $contents = html('ul', array('class'=>'compact'), html('li', array(), $tablelist));
+          $contents = html('ul', array('class'=>'compact', 'title'=>$notshown), html('li', array(), $tablelist));
         }
       }
       $rows[] =
         html('tr', array('class'=>join_non_null(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array('class'=>'filler'), internal_reference(array('action'=>'language_for_database', 'databasename'=>$databasename), $databasename)).
-          html('td', array(), $contents).
-          html('td', array(), has_grant('DROP', $databasename) ? internal_reference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop', array('class'=>'drop')) : '')
+          html('td', array('class'=>'secondary'), $contents).
+          html('td', array('class'=>'secondary'), has_grant('DROP', $databasename) ? internal_reference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop', array('class'=>'drop')) : '')
         );
     }
     page($action, null,

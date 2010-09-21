@@ -449,7 +449,7 @@
         ).
         html('body', array('class'=>join_non_null(' ', preg_replace('@_@', '', $action), parameter('cookie', 'ajaxy') ? 'ajaxy' : null)),
           html('div', array('id'=>'header'),
-            html('div', array('id'=>'id'),
+            html('div', array('id'=>'id', 'class'=>'secondary'),
               (is_local()
               ? html('ul', array(),
                   html('li', array('id'=>'togglescripty'),

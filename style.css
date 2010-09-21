@@ -20,7 +20,12 @@ tr.quickadd label { display: block; font-style: italic; font-size: small; }
 .referrer { font-size: small; margin-left: 0.5em; }
 
 a { color: #00e; }
+a:hover { background-color: #00e; color: #fff; }
 p { margin: 0.5em 0; }
+
+.secondary { color: #999; }
+.secondary a { color: #99e; }
+.secondary a:hover { background-color: #99e; color: #fff; }
 
 table { width: 100%; border-collapse: collapse; background-color: #fff; }
 th, td { padding: 0.1em; vertical-align: top; width: 1%; }
@@ -106,6 +111,7 @@ tr.roweven.closing td, tr.roweven.closing td a { background-color: #fbb !importa
 .logs .arrayshow { margin-left: 1em; }
 .logs .arrayshow:hover { white-space: pre; }
 .togglelogs, .logs a { color: #99e; }
+.togglelogs:hover { background-color: #99e; color: #fff; }
 
 .lastusernamesandhosts label { width: 12.4em; display: inline-block;}
 #usernameandhost, #password, #databasename, #metabasename, #tables { width: 16em; }
