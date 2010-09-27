@@ -20,7 +20,7 @@
 
   $databasename = parameter('get', 'databasename');
 
-  $tables = query('top', 'SELECT table_name FROM information_schema.tables WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
+  $tables = query('SELECT table_name FROM information_schema.tables WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
   if ($tables) {
     $tablelist = array();
     while ($table = mysql_fetch_assoc($tables)) {

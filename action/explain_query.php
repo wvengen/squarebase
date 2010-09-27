@@ -20,8 +20,8 @@
 
   $query = parameter('get', 'query');
 
-  $explanations = query('top', 'EXPLAIN EXTENDED '.$query);
-  query('top', 'SHOW WARNINGS');
+  $explanations = query('EXPLAIN EXTENDED '.$query);
+  query('SHOW WARNINGS');
 
   $headings = array();
   for ($i = 0; $i < mysql_num_fields($explanations); $i++) {

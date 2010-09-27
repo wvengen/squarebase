@@ -24,7 +24,7 @@
   $uniquefieldname = parameter('post', 'uniquefieldname');
   $uniquevalue     = parameter('post', 'uniquevalue');
 
-  query('data', 'DELETE FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+  query('DELETE FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
 
   back();
 ?>

@@ -260,10 +260,10 @@
   }
 
   function error($error) {
+    $traces = array();
     if (parameter('cookie', 'logsy')) {
       $stack = debug_backtrace();
       $mainpath = preg_match1('@^.*/@', $stack[0]['file']);
-      $traces = array();
       foreach ($stack as $element) {
         $args = array();
         if ($element['args']) {
@@ -296,7 +296,7 @@
     return $connection;
   }
 
-  function query($metaordata, $query, $arguments = array(), $connection = null) {
+  function query($query, $arguments = array(), $connection = null) {
     static $session_connection = null;
     if (!$connection) {
       if (!$session_connection) {
@@ -342,7 +342,7 @@
         $traces[] = (isset($element['file']) ? preg_match1('@\/(\w+)\.php$@', $element['file']) : '').(isset($element['line']) ? '#'.$element['line'] : '').':'.$element['function'];
       }
 
-      add_log("query$metaordata",
+      add_log('query',
         html('div', array('class'=>'query'),
           preg_replace(
             array('@<@' , '@>@' , '@& @'  ),
@@ -376,7 +376,7 @@
           $databasename = preg_match1('@^INSERT INTO `(.*?)`@', $fullquery);
           $tablename    = preg_match1('@^INSERT INTO `.*?`\.`(.*?)`@', $fullquery);
           $keyfields = array();
-          $keys = query($metaordata, 'SELECT seq_in_index, column_name FROM information_schema.statistics WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$databasename, 'tablename'=>$tablename));
+          $keys = query('SELECT seq_in_index, column_name FROM information_schema.statistics WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$databasename, 'tablename'=>$tablename));
           while ($key = mysql_fetch_assoc($keys)) {
             if ($key['seq_in_index'] == 1)
               $keynr--;
@@ -401,7 +401,7 @@
         $error = mysql_error();
         if (preg_match('@^CHECK OPTION failed \'(.*?)\.(.*?)\'$@', $error, $matches)) {
           $warning = _('not allowed to add a record with these values');
-          $view = query01($metaordata, 'SELECT view_definition FROM information_schema.views WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$matches[1], 'tablename'=>$matches[2]));
+          $view = query01('SELECT view_definition FROM information_schema.views WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$matches[1], 'tablename'=>$matches[2]));
           if ($view && preg_match('@ where \(`(.*?)`\.`(.*?)`\.`(.*?)` = (.*?)\)+$@', $view['view_definition'], $where))
             $warning = sprintf(_('only allowed to add a record with %s = %s'), $where[3], preg_replace('@^_\w+@', '', $where[4]));
         }
@@ -412,8 +412,8 @@
     }
   }
 
-  function query01($metaordata, $query, $arguments = array(), $connection = null) {
-    $results = query($metaordata, $query, $arguments, $connection);
+  function query01($query, $arguments = array(), $connection = null) {
+    $results = query($query, $arguments, $connection);
     if (!$results || mysql_num_rows($results) == 0)
       return null;
     if (mysql_num_rows($results) == 1)
@@ -421,15 +421,15 @@
     error(sprintf(_('problem because there are %s results'), mysql_num_rows($results)).html('p', array(), array(htmlentities($query), array_show($arguments))));
   }
 
-  function query1($metaordata, $query, $arguments = array(), $connection = null) {
-    $results = query($metaordata, $query, $arguments, $connection);
+  function query1($query, $arguments = array(), $connection = null) {
+    $results = query($query, $arguments, $connection);
     if ($results && mysql_num_rows($results) == 1)
       return mysql_fetch_assoc($results);
     error(sprintf(_('problem because there are %s results'), $results ? mysql_num_rows($results) : 'no').html('p', array(), array(htmlentities($query), array_show($arguments))));
   }
 
-  function query1field($metaordata, $query, $arguments = array(), $field = null, $connection = null) {
-    $result = query1($metaordata, $query, $arguments, $connection);
+  function query1field($query, $arguments = array(), $field = null, $connection = null) {
+    $result = query1($query, $arguments, $connection);
     if (is_null($field)) {
       if (count($result) != 1)
         error(sprintf(_('problem retrieving 1 field, because there are %d fields'), count($result)));
@@ -527,17 +527,17 @@
   }
 
   function databasenames($metabasename) {
-    if (mysql_num_rows(query('meta', 'SELECT table_name FROM information_schema.tables WHERE table_schema = "<metabasename>" AND table_name LIKE "databases"', array('metabasename'=>$metabasename))) == 0)
+    if (mysql_num_rows(query('SELECT table_name FROM information_schema.tables WHERE table_schema = "<metabasename>" AND table_name LIKE "databases"', array('metabasename'=>$metabasename))) == 0)
       return array();
     $databases = array();
-    $results = query('meta', 'SELECT databasename FROM `<metabasename>`.`databases`', array('metabasename'=>$metabasename));
+    $results = query('SELECT databasename FROM `<metabasename>`.`databases`', array('metabasename'=>$metabasename));
     while ($result = mysql_fetch_assoc($results))
       $databases[] = $result['databasename'];
     return $databases;
   }
 
   function all_databases() {
-    return query('root', 'SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ("information_schema", "mysql")');
+    return query('SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ("information_schema", "mysql")');
   }
 
   function breadcrumbs($metabasename, $databasename = null, $tablename = null, $uniquefieldname = null, $uniquevalue = null) {
@@ -545,7 +545,7 @@
       if ($metabasename && $databasename && $tablename && $uniquefieldname) {
         $viewname = table_or_view($metabasename, $databasename, $tablename);
         $descriptor = descriptor($metabasename, $databasename, $tablename, $viewname);
-        $uniquepart = query1field('data', "SELECT $descriptor[select] FROM `<databasename>`.`<viewname>` ".join(' ', $descriptor['joins'])."WHERE `<viewname>`.<uniquefieldname> = <uniquevalue>", array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+        $uniquepart = query1field("SELECT $descriptor[select] FROM `<databasename>`.`<viewname>` ".join(' ', $descriptor['joins'])."WHERE `<viewname>`.<uniquefieldname> = <uniquevalue>", array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
       }
       else
         $uniquepart = $uniquevalue;
@@ -627,7 +627,7 @@
     );
     if ($ordernames)
       $ordernames[0] .= ' '.($orderasc ? 'ASC' : 'DESC');
-    $records = query('data',
+    $records = query(
       "SELECT ".
       ($limit ? "SQL_CALC_FOUND_ROWS " : "").
       "$viewname.$uniquefieldname AS $uniquefieldname".
@@ -638,7 +638,7 @@
       ($ordernames ? " ORDER BY ".join(', ', $ordernames) : '').
       ($limit ? " LIMIT $limit".($offset ? " OFFSET $offset" : '') : '')
     );
-    $foundrecords = $limit ? query1field('data', 'SELECT FOUND_ROWS()') : null;
+    $foundrecords = $limit ? query1field('SELECT FOUND_ROWS()') : null;
 
     $rows = mysql_num_rows($records) > 0 ? array(html('tr', array(), join($header))) : array();
     while ($row = mysql_fetch_assoc($records)) {
@@ -735,7 +735,7 @@
       while ($field = mysql_fetch_assoc($fields))
         if ($field['inedit'])
           $fieldnames[] = $field['fieldname'];
-      $row = query1('data', 'SELECT '.join(', ', $fieldnames).' FROM `<databasename>`.`<viewname>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+      $row = query1('SELECT '.join(', ', $fieldnames).' FROM `<databasename>`.`<viewname>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
     }
 
     get_presentationnames();
@@ -765,7 +765,7 @@
 
     if (!is_null($uniquevalue)) {
       $referrers = array();
-      $referringfields = query('meta', 'SELECT tbl.tablename, tbl.singular, fld.fieldname AS fieldname, fld.title AS title, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.fields fld LEFT JOIN `<metabasename>`.tables mtf ON mtf.tableid = fld.foreigntableid LEFT JOIN `<metabasename>`.tables tbl ON tbl.tableid = fld.tableid LEFT JOIN `<metabasename>`.fields mfu ON tbl.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
+      $referringfields = query('SELECT tbl.tablename, tbl.singular, fld.fieldname AS fieldname, fld.title AS title, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.fields fld LEFT JOIN `<metabasename>`.tables mtf ON mtf.tableid = fld.foreigntableid LEFT JOIN `<metabasename>`.tables tbl ON tbl.tableid = fld.tableid LEFT JOIN `<metabasename>`.fields mfu ON tbl.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
         $viewname = table_or_view($metabasename, $databasename, $referringfield['tablename']);
         if ($viewname)
@@ -812,7 +812,7 @@
       $arguments["_name_$fieldname"] = $fieldname;
       $arguments["_value_$fieldname"] = $fieldvalue;
     }
-    query('data',
+    query(
       $uniquefieldname && !is_null($uniquevalue)
       ? "UPDATE `<databasename>`.`<tablename>` SET ".join(', ', $sets)." WHERE <uniquefieldname> = \"<uniquevalue>\""
       : "INSERT INTO `<databasename>`.`<tablename>` SET ".join(', ', $sets),
@@ -855,7 +855,7 @@
   function table_or_view($metabasename, $databasename, $tablename, $uniquefieldname = null, $uniquevalue = null) {
     static $alternatives = array();
     if (!isset($alternatives[$metabasename][$databasename])) {
-      $views = query('meta',
+      $views = query(
         '('.
           'SELECT tablename, tablename AS viewname '.
           'FROM `<metabasename>`.tables '.
@@ -878,7 +878,7 @@
     if ($alternatives[$metabasename][$databasename][$tablename][0] == $tablename || is_null($uniquefieldname))
       return $alternatives[$metabasename][$databasename][$tablename][0];
     foreach ($alternatives[$metabasename][$databasename][$tablename] as $viewname)
-      if (query1field('data', 'SELECT COUNT(*) FROM `<databasename>`.`<viewname>` WHERE <uniquefieldname> = <uniquevalue>', array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)))
+      if (query1field('SELECT COUNT(*) FROM `<databasename>`.`<viewname>` WHERE <uniquefieldname> = <uniquevalue>', array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)))
         return $viewname;
     return null;
   }
@@ -898,7 +898,7 @@
           $wherepart = "COALESCE(u$letter.privilege_type, s$letter.privilege_type, t$letter.privilege_type, c$letter.privilege_type) IS NOT NULL ";
       }
     }
-    return query('meta',
+    return query(
       'SELECT '.
         join_non_null(', ',
           ($viewname == $tablename ? 'tbl.tablename' : 'vw.viewname').' AS viewname',
@@ -1153,7 +1153,7 @@
     //$databasename == '*' means privilege on all databases
     //$databasename == '?' means privilege on at least one database
     return mysql_num_rows(
-      query('meta',
+      query(
         'SELECT "<privilege>" '.
         'FROM information_schema.schemata sc '.
         'LEFT JOIN information_schema.user_privileges   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
@@ -1169,7 +1169,7 @@
 
   function databases_with_grant($privilege) {
     //for privilege see http://dev.mysql.com/doc/refman/5.0/en/privileges-provided.html
-    $grants = query('meta',
+    $grants = query(
       '( '.
         'SELECT up.privilege_type, sc.schema_name '.
         'FROM information_schema.schemata sc '.
@@ -1236,7 +1236,7 @@
   //  add_log('cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show(parameter('cookie'))));
     }
 
-    $languagename = !parameter('get', 'language') && parameter('get', 'metabasename') ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;
+    $languagename = !parameter('get', 'language') && parameter('get', 'metabasename') ? query1field('SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;
 
     set_best_locale(
       preg_replace(

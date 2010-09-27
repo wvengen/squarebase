@@ -20,7 +20,7 @@
 
   $metabasename = parameter('get', 'metabasename');
   $databasename = parameter('get', 'databasename');
-  $tables = query('meta', 'SELECT * FROM `<metabasename>`.tables LEFT JOIN `<metabasename>`.fields ON tables.uniquefieldid = fields.fieldid WHERE intablelist = true ORDER BY tablename', array('metabasename'=>$metabasename));
+  $tables = query('SELECT * FROM `<metabasename>`.tables LEFT JOIN `<metabasename>`.fields ON tables.uniquefieldid = fields.fieldid WHERE intablelist = true ORDER BY tablename', array('metabasename'=>$metabasename));
   $rows = array(html('th', array('class'=>'filler'), _('table')));
   while ($table = mysql_fetch_assoc($tables)) {
     $tablename = $table['tablename'];

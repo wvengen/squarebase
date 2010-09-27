@@ -4,7 +4,7 @@
   function probability_textwithpreview($field) {
     if (!preg_match('@^(tiny||medium|long)text\b@', $field['column_type']))
       return 0;
-    $texts = query('data', "SELECT $field[column_name] FROM `$field[table_schema]`.`$field[table_name]` WHERE $field[column_name] IS NOT NULL LIMIT 10");
+    $texts = query("SELECT $field[column_name] FROM `$field[table_schema]`.`$field[table_name]` WHERE $field[column_name] IS NOT NULL LIMIT 10");
     if (mysql_num_rows($texts) == 0)
       return 0;
     while ($text = mysql_fetch_assoc($texts)) {

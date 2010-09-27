@@ -33,7 +33,7 @@
   }
   else {
     $databasename = parameter('post', 'databasename');
-    query('root', 'DROP DATABASE `<databasename>`', array('databasename'=>$databasename));
+    query('DROP DATABASE `<databasename>`', array('databasename'=>$databasename));
     back();
   }
 ?>

@@ -5,12 +5,12 @@
   //return the database in an array
   function readDatabase($connection) {
     $database = array();
-    $tables = query('meta', 'SELECT table_name, column_name FROM information_schema.columns WHERE table_schema="<databasename>" AND extra="auto_increment"', array('databasename'=>'inventory'), $connection);
+    $tables = query('SELECT table_name, column_name FROM information_schema.columns WHERE table_schema="<databasename>" AND extra="auto_increment"', array('databasename'=>'inventory'), $connection);
     while ($table = mysql_fetch_assoc($tables)) {
       $tablename = $table['table_name'];
       $columnname = $table['column_name'];
       $database[$tablename] = array();
-      $records = query('meta', 'SELECT * FROM <databasename>.<tablename> ORDER BY <columnname>', array('databasename'=>'inventory', 'tablename'=>$tablename, 'columnname'=>$columnname), $connection);
+      $records = query('SELECT * FROM <databasename>.<tablename> ORDER BY <columnname>', array('databasename'=>'inventory', 'tablename'=>$tablename, 'columnname'=>$columnname), $connection);
       while ($record = mysql_fetch_assoc($records)) {
         $database[$tablename][] = $record;
       }
@@ -25,9 +25,9 @@
   //make a test database
   $connection = mysql_connect('localhost', 'sqbase', 'sqbase');
 
-  query('data', 'DROP DATABASE IF EXISTS inventory', array(), $connection);
-  query('data', 'CREATE DATABASE inventory', array(), $connection);
-  query('data',
+  query('DROP DATABASE IF EXISTS inventory', array(), $connection);
+  query('CREATE DATABASE inventory', array(), $connection);
+  query(
     'CREATE TABLE inventory.computers ('.
       'computerID   INT(11)      NOT NULL AUTO_INCREMENT,'.
       'description  VARCHAR(80)  NOT NULL,'.
@@ -37,7 +37,7 @@
     array(),
     $connection
   );
-  query('data',
+  query(
     'CREATE TABLE inventory.employees ('.
       'employeeID   INT(11)      NOT NULL AUTO_INCREMENT,'.
       'firstName    VARCHAR(20)  NOT NULL,'.
@@ -49,7 +49,7 @@
     array(),
     $connection
   );
-  query('data',
+  query(
     'CREATE TABLE inventory.usages ('.
       'usageID      INT(11)      NOT NULL AUTO_INCREMENT,'.
       'dateAcquired DATE         NOT NULL,'.
@@ -64,7 +64,7 @@
     array(),
     $connection
   );
-  query('meta', 'DROP DATABASE IF EXISTS inventory_metabase', array(), $connection);
+  query('DROP DATABASE IF EXISTS inventory_metabase', array(), $connection);
 
   //check the database
   $database = array('computers'=>array(), 'employees'=>array(), 'usages'=>array());

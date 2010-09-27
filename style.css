@@ -107,9 +107,6 @@ input.title { width: 8em; }
 .logs { border: 0.1em solid #ccc; background-color: #eee; color: #999; clear: both; white-space: normal; }
 .logs>li { margin-bottom: 0.5em; }
 .logs ol { padding: 0; margin-left: 1em; }
-.logs .queryroot { padding-left: 1em; }
-.logs .querymeta { padding-left: 2em; }
-.logs .querydata { padding-left: 3em; }
 .logs .arrayshow { margin-left: 1em; }
 .logs .arrayshow:hover { white-space: pre; }
 .togglelogs, .logs a { color: #99e; }

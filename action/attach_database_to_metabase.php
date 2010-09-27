@@ -21,7 +21,7 @@
   $metabasename = parameter('get', 'metabasename');
   $databasename = parameter('get', 'databasename');
 
-  query('meta', 'INSERT IGNORE INTO `<metabasename>`.databases SET databasename = "<databasename>"', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
+  query('INSERT IGNORE INTO `<metabasename>`.databases SET databasename = "<databasename>"', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
 
   internal_redirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
 ?>

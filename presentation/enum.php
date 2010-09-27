@@ -2,7 +2,7 @@
   function probability_enum($field) {
     if (preg_match('@^(enum|set)\b@', $field['column_type']))
       return 0.9;
-    $distinct = query1('data', 'SELECT COUNT(`<fieldname>`) AS numberofrows, COUNT(DISTINCT(`<fieldname>`)) AS numberofdistinctvalues FROM `<databasename>`.`<tablename>`', array('databasename'=>$field['table_schema'], 'tablename'=>$field['table_name'], 'fieldname'=>$field['column_name']));
+    $distinct = query1('SELECT COUNT(`<fieldname>`) AS numberofrows, COUNT(DISTINCT(`<fieldname>`)) AS numberofdistinctvalues FROM `<databasename>`.`<tablename>`', array('databasename'=>$field['table_schema'], 'tablename'=>$field['table_name'], 'fieldname'=>$field['column_name']));
     return !$distinct['numberofrows'] ? 0 : 0.4 * (1 - $distinct['numberofdistinctvalues'] / $distinct['numberofrows']);
   }
 
