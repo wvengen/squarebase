@@ -18,9 +18,18 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  error_reporting(-1);
+  $metabasename            = parameter('post', 'metabasename');
+  $databasename            = parameter('post', 'databasename');
+  $tablename               = parameter('post', 'tablename');
+  $tablenamesingular       = parameter('post', 'tablenamesingular');
+  $uniquefieldname         = parameter('post', 'uniquefieldname');
+  $uniquevalue             = parameter('post', 'uniquevalue');
+  $referencedfromfieldname = parameter('post', 'referencedfromfieldname');
+  $back                    = parameter('post', 'back');
 
-  include('functions.php');
+  $viewname = table_or_view($metabasename, $databasename, $tablename);
 
-  do_action();
+  insert_or_update_from_formvalues($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, $uniquevalue, 'UPDATE');
+
+  back();
 ?>

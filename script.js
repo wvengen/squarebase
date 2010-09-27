@@ -355,7 +355,7 @@ ready(
     $('form').
     enhance_form();
 
-    $('body.formmetabasefordatabase').
+    $('table.formmetabasefordatabase').
     find('.insome').
       change(
         function() {
@@ -405,7 +405,7 @@ ready(
     find('.presentationname').
       change(
         function() {
-          $(this).closest('tr').find('.foreigntablename').toggle($(this).val() == 'lookup');
+          $(this).next('.foreigntablename').toggle($(this).val() == 'lookup');
         }
       ).
 //    change(). this takes too long on Firefox 3.0, therefore the following lines
@@ -416,7 +416,7 @@ ready(
     find('.presentationname[value=lookup]').
     each(
       function() {
-        $(this).closest('tr').find('.foreigntablename').show();
+        $(this).next('.foreigntablename').show();
       }
     );
 

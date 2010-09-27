@@ -18,9 +18,5 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  error_reporting(-1);
-
-  include('functions.php');
-
-  do_action();
+  augment_file('style', 'css', 'text/css');
 ?>

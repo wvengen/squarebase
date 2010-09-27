@@ -14,13 +14,13 @@ h1 { display: inline; margin-right: 0.5em; }
 #content { clear: both; }
 .box { border: 0.1em solid #999; }
 .tableedit { padding-bottom: 0.5em; }
-.tableedit td, .tablelist th, .tablelist tr.quickadd td { white-space: nowrap; }
+.tableedit td, .tablelist th, .tablelist tr.quickadd td, label { white-space: nowrap; }
 tr.quickadd label { display: block; font-style: italic; font-size: small; }
 .referringlist.tablelist { margin-bottom: 1em; }
 .referrer { font-size: small; margin-left: 0.5em; }
 
 a { color: #00e; }
-a:hover { background-color: #00e; color: #fff; }
+a:hover { background-color: #00e; color: #fff !important; }
 p { margin: 0.5em 0; }
 
 .secondary { color: #999; }
@@ -48,6 +48,7 @@ ul.compact { margin: 0; padding: 0; overflow: hidden; }
 ul.compact li { list-style-type: none; display: inline; margin-right: 1em; }
 
 fieldset { border: 0.1em solid #ccc; padding: 0.2em; }
+input[type="text"] { width: 30em; }
 input, textarea, select, option { font-size: medium; font-family: sans-serif !important; }
 input, textarea, option { padding: 0 0.2em; }
 input, textarea, select { background-color: #ffe; border: 0.1em solid #999; }
@@ -88,14 +89,15 @@ tr.roweven.closing td, tr.roweven.closing td a { background-color: #fbb !importa
 .alternative input { margin-right: 0.4em; }
 .alternative select { margin-left: 0.4em; }
 
-.title { width: 8em; }
+input.title { width: 8em; }
 .presentationname { width: 11em; }
 
 .important { font-weight: bold; }
 
+#error { padding: 0.5em; margin-bottom: 0.5em; }
 #warnings { padding: 0; }
 #warnings li { list-style-type: none; }
-#error, .problem, .warning { font-weight: bold; color: #f00; }
+#error, #warnings, .warning { font-weight: bold; background-color: #f00; color: #fff; }
 
 .trace { white-space: nowrap; }
 

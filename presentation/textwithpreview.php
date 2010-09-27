@@ -44,7 +44,7 @@
 
   function jquery_enhance_form_textwithpreview() {
     return
-      "getScripts('jquery.autogrow.js', '.textwithpreview.edit',\n".
+      "getScripts('jquery/autogrow.js', '.textwithpreview.edit',\n".
       "  function() {\n".
       "    $(this).\n".
       "    autogrow().\n".

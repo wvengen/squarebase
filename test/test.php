@@ -79,7 +79,7 @@
   $selenium->type('usernameandhost', 'sqbase');
   $selenium->type('password', 'sqbase');
   $selenium->clickAndWaitForPageToLoad('action', 'new metabase from database');
-  $selenium->equal($selenium->getContent('currentusernameandhost'), 'sqbase@localhost');
+  $selenium->equal($selenium->getContent('currentusernameandhost'), 'sqbase');
 
   //new metabase from database
   $selenium->clickAndWaitForPageToLoad('link=inventory', 'language for database');

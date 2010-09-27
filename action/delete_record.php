@@ -18,9 +18,13 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  error_reporting(-1);
+  $metabasename    = parameter('post', 'metabasename');
+  $databasename    = parameter('post', 'databasename');
+  $tablename       = parameter('post', 'tablename');
+  $uniquefieldname = parameter('post', 'uniquefieldname');
+  $uniquevalue     = parameter('post', 'uniquevalue');
 
-  include('functions.php');
+  query('data', 'DELETE FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
 
-  do_action();
+  back();
 ?>

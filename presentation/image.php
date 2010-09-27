@@ -67,7 +67,7 @@
       return null;
     case 'new':
       $newname = directory_part(parameter('post', "field:new:$field[fieldname]"));
-      $file = "./uploads/$newname";
+      $file = "./upload/$newname";
       $image = file_get_contents($file);
       unlink($file);
       return $image;
@@ -101,65 +101,36 @@
   function new_image() {
     $newname = directory_part(parameter('get', 'newname'));
 
-    $image = file_get_contents("./uploads/$newname");
+    $image = file_get_contents("./upload/$newname");
     http_response('Content-type: image/jpeg', $image);
   }
 
-  function file_upload_error_message($error_code) {
-    switch ($error_code) {
-    case UPLOAD_ERR_INI_SIZE:
-      return _('the uploaded file exceeds the upload_max_filesize directive in php.ini');
-    case UPLOAD_ERR_FORM_SIZE:
-      return _('the uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form');
-    case UPLOAD_ERR_PARTIAL:
-      return _('the uploaded file was only partially uploaded');
-    case UPLOAD_ERR_NO_FILE:
-      return _('no file was uploaded');
-    case UPLOAD_ERR_NO_TMP_DIR:
-      return _('missing a temporary folder');
-    case UPLOAD_ERR_CANT_WRITE:
-      return _('failed to write file to disk');
-    case UPLOAD_ERR_EXTENSION:
-      return _('file upload stopped by extension');
-    default:
-      return _('unknown upload error');
-    }
-  } 
-
   callable_function('upload_image', array());
 
-  function upload_image() {
-    $ajax = parameter('get', 'ajax');
+  function process_image() {
     $files = parameter('files');
-    if (count($files) == 1) {
-      $names = array_keys($files);
-      $file = $files[$names[0]];
-      if ($file['error'] == UPLOAD_ERR_OK) {
-        if ($file['type'] == 'image/jpeg') {
-          if (preg_match('@^\w+\.\w+$@i', $file['name'])) {
-            if (preg_match('@\.jpe?g$@i', $file['name'])) {
-              $newname = strftime('%Y_%m_%d_%H_%M_%S').'_'.directory_part($file['name']);
-              if (move_uploaded_file($file['tmp_name'], "./uploads/$newname"))
-                $ajax = preg_replace('@\bnewname=[^&]*@', "newname=$newname", $ajax);
-            }
-            else
-              $warning = sprintf(_('invalid extension: %s'), $file['name']);
-          }
-          else
-            $warning = sprintf(_('invalid characters in file name: %s'), $file['name']);
-        }
-        else
-          $warning = sprintf(_('invalid mime type: %s'), $file['type']);
-      }
-      else
-        $warning = file_upload_error_message($file['error']);
-    }
-    else
-      $warning = sprintf(_('not 1 file uploaded but %d'), count($files));
+    if (count($files) != 1)
+      return sprintf(_('not 1 file uploaded but %d'), count($files));
+    $names = array_keys($files);
+    $file = $files[$names[0]];
+    if ($file['error'] != UPLOAD_ERR_OK)
+      return file_upload_error_message($file['error']);
+    if ($file['type'] != 'image/jpeg')
+      return sprintf(_('invalid mime type: %s'), $file['type']);
+    if (!preg_match('@^\w+\.\w+$@i', $file['name']))
+      return sprintf(_('invalid characters in file name: %s'), $file['name']);
+    if (!preg_match('@\.jpe?g$@i', $file['name']))
+      return sprintf(_('invalid extension: %s'), $file['name']);
+    $newname = strftime('%Y_%m_%d_%H_%M_%S').'_'.directory_part($file['name']);
+    if (!move_uploaded_file($file['tmp_name'], "./upload/$newname"))
+      return sprintf(_('uploaded file cannot be moved: %s'), $file['name']);
+    call_function(preg_replace('@\bnewname=[^&]*@', "newname=$newname", parameter('get', 'ajax')));
+  }
+
+  function upload_image() {
+    $warning = process_image();
     if ($warning)
       add_log('warning', $warning);
-//  page('abc', null, 'hallo '.$_GET);
-    call_function($ajax);
   }
 
   function css_image() {
@@ -174,7 +145,7 @@
 
   function jquery_enhance_form_image() {
     return
-      "getScripts(['jquery.uploadfile.js'], '.image',\n".
+      "getScripts(['jquery/uploadfile.js'], '.image',\n".
       "  function() {\n".
       "    $(this).\n".
       "    find(':input[type=file]').\n".

@@ -33,7 +33,7 @@
         'get_or_post'=>$_GET ? $_GET : $_POST,
         'server'=>$_SERVER,
         'files'=>$_FILES,
-        'session'=>$_SESSION,
+        'session'=>isset($_SESSION) ? $_SESSION : array(),
         'cookie'=>$_COOKIE
       );
     $array = isset($arrays[$type]) ? $arrays[$type] : array();
@@ -214,7 +214,11 @@
   }
 
   function include_phpfile($parts) {
-    include_once(file_name($parts));
+    $filename = file_name($parts);
+    if (!file_exists($filename))
+      return false;
+    include_once($filename);
+    return true;
   }
 
   function include_presentation($presentationname) {
@@ -285,6 +289,13 @@
     return parameter('session', $list, array(), array());
   }
 
+  function mysql_open($host, $username, $password) {
+    $connection = @mysql_connect($host, $username, $password);
+    if (mysql_errno())
+      logout(sprintf(_('problem connecting to the database manager: %s'), mysql_error()));
+    return $connection;
+  }
+
   function query($metaordata, $query, $arguments = array(), $connection = null) {
     static $session_connection = null;
     if (!$connection) {
@@ -293,9 +304,7 @@
           error(_('mysql module not found'));
         if (!parameter('session', 'username'))
           internal_redirect(array('action'=>'login'));
-        $session_connection = @mysql_connect(parameter('session', 'host'), parameter('session', 'username'), parameter('session', 'password'));
-        if (mysql_errno())
-          logout(sprintf(_('problem connecting to the database manager: %s'), mysql_error()));
+        $session_connection = mysql_open(parameter('session', 'host'), parameter('session', 'username'), parameter('session', 'password'));
       }
       $connection = $session_connection;
     }
@@ -303,7 +312,7 @@
     if (preg_match('@= *\'<\w+>\'@', $query))
       add_log('warning', sprintf(_('wrong single quotes around value in query: %s'), $query));
 
-    $fullquery = preg_replace('@(["`])?<(\w+)>(["`])?@e', '(is_null($arguments["$2"]) ? "NULL" : (is_bool($arguments["$2"]) ? ($arguments["$2"] ? "TRUE" : "FALSE") : (is_numeric($arguments["$2"]) ? (int) $arguments["$2"] : "$1".mysql_escape_string($arguments["$2"])."$3")))', $query);
+    $fullquery = preg_replace('@(["`])?<(\w+)>(["`])?@e', '(is_null($arguments["$2"]) ? "NULL" : (is_bool($arguments["$2"]) ? ($arguments["$2"] ? "TRUE" : "FALSE") : (!"$1" && is_numeric($arguments["$2"]) ? (int) $arguments["$2"] : "$1".mysql_escape_string($arguments["$2"])."$3")))', $query);
 
     $before = microtime();
     $result = mysql_query($fullquery);
@@ -367,7 +376,7 @@
           $databasename = preg_match1('@^INSERT INTO `(.*?)`@', $fullquery);
           $tablename    = preg_match1('@^INSERT INTO `.*?`\.`(.*?)`@', $fullquery);
           $keyfields = array();
-          $keys = query($metaordata, 'SELECT seq_in_index, column_name FROM INFORMATION_SCHEMA.STATISTICS WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$databasename, 'tablename'=>$tablename));
+          $keys = query($metaordata, 'SELECT seq_in_index, column_name FROM information_schema.statistics WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$databasename, 'tablename'=>$tablename));
           while ($key = mysql_fetch_assoc($keys)) {
             if ($key['seq_in_index'] == 1)
               $keynr--;
@@ -392,7 +401,7 @@
         $error = mysql_error();
         if (preg_match('@^CHECK OPTION failed \'(.*?)\.(.*?)\'$@', $error, $matches)) {
           $warning = _('not allowed to add a record with these values');
-          $view = query01($metaordata, 'SELECT view_definition FROM INFORMATION_SCHEMA.VIEWS WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$matches[1], 'tablename'=>$matches[2]));
+          $view = query01($metaordata, 'SELECT view_definition FROM information_schema.views WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$matches[1], 'tablename'=>$matches[2]));
           if ($view && preg_match('@ where \(`(.*?)`\.`(.*?)`\.`(.*?)` = (.*?)\)+$@', $view['view_definition'], $where))
             $warning = sprintf(_('only allowed to add a record with %s = %s'), $where[3], preg_replace('@^_\w+@', '', $where[4]));
         }
@@ -409,29 +418,36 @@
       return null;
     if (mysql_num_rows($results) == 1)
       return mysql_fetch_assoc($results);
-    error(sprintf(_('problem because there are %s results'), mysql_num_rows($results)).html('p', array(), htmlentities($query)));
+    error(sprintf(_('problem because there are %s results'), mysql_num_rows($results)).html('p', array(), array(htmlentities($query), array_show($arguments))));
   }
 
   function query1($metaordata, $query, $arguments = array(), $connection = null) {
     $results = query($metaordata, $query, $arguments, $connection);
     if ($results && mysql_num_rows($results) == 1)
       return mysql_fetch_assoc($results);
-    error(sprintf(_('problem because there are %s results'), $results ? mysql_num_rows($results) : 'no').html('p', array(), htmlentities($query)));
+    error(sprintf(_('problem because there are %s results'), $results ? mysql_num_rows($results) : 'no').html('p', array(), array(htmlentities($query), array_show($arguments))));
   }
 
   function query1field($metaordata, $query, $arguments = array(), $field = null, $connection = null) {
     $result = query1($metaordata, $query, $arguments, $connection);
-    return is_null($field) ? (count($result) == 1 ? array_shift(array_values($result)) : error(sprintf(_('problem retrieving 1 field, because there are %s fields'), count($result)))) : $result[$field];
+    if (is_null($field)) {
+      if (count($result) != 1)
+        error(sprintf(_('problem retrieving 1 field, because there are %d fields'), count($result)));
+      $fields = array_values($result);
+      return $fields[0];
+    }
+    if (!isset($result[$field]))
+      error(sprintf(_('problem retrieving field %s, because only these fields are present: %s'), $field, join(', ', array_values($result))));
+    return $result[$field];
   }
 
   function ajaxcontent($content) {
     return html('div', array('class'=>'ajaxcontent'), html('div', array('class'=>'ajaxcontainer'), $content));
   }
 
-  function page($action, $breadcrumbs, $content) {
-    $title = str_replace('_', ' ', $action);
-
+  function page($title, $breadcrumbs, $content) {
     $error = parameter('get', 'error');
+    $warnings = get_logs('warnings');
 
     http_response(
       array('Content-Type: text/html; charset=utf-8', 'Content-Language: '.get_locale()),
@@ -441,13 +457,13 @@
           html('title', array(), $title).
           html('link', array('href'=>internal_url(array('action'=>'style', 'metabasename'=>parameter('get', 'metabasename'))), 'type'=>'text/css', 'rel'=>'stylesheet')).
           (parameter('cookie', 'scripty')
-          ? html('script', array('type'=>'text/javascript', 'src'=>'jquery.min.js'), '').
-            html('script', array('type'=>'text/javascript', 'src'=>'jquery.requirescript.js'), '').
+          ? html('script', array('type'=>'text/javascript', 'src'=>'jquery/min.js'), '').
+            html('script', array('type'=>'text/javascript', 'src'=>'jquery/requirescript.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>internal_url(array('action'=>'script', 'metabasename'=>parameter('get', 'metabasename')))), '')
           : ''
           )
         ).
-        html('body', array('class'=>join_non_null(' ', preg_replace('@_@', '', $action), parameter('cookie', 'ajaxy') ? 'ajaxy' : null)),
+        html('body', array('class'=>join_non_null(' ', parameter('cookie', 'ajaxy') ? 'ajaxy' : null)),
           html('div', array('id'=>'header'),
             html('div', array('id'=>'id', 'class'=>'secondary'),
               (is_local()
@@ -466,7 +482,7 @@
               ).
               html('ul', array(),
                 html('li', array('id'=>'currentusernameandhost'),
-                  parameter('session', 'username') ? parameter('session', 'username').'@'.parameter('session', 'host') : '&nbsp;'
+                  parameter('session', 'username') ? preg_replace('@\@localhost$@', '', parameter('session', 'username').'@'.parameter('session', 'host')) : '&nbsp;'
                 ).
                 html('li', array('id'=>'logout'),
                   parameter('session', 'username') ? internal_reference(array('action'=>'logout'), 'logout') : '&nbsp;'
@@ -481,7 +497,7 @@
           ).
           html('div', array('id'=>'content'),
             ($error ?  html('div', array('id'=>'error'), $error) : '').
-            html('ol', array('id'=>'warnings'), join(get_logs('warnings'))).
+            ($warnings ? html('ol', array('id'=>'warnings'), join($warnings)) : '').
             $content.
             (parameter('cookie', 'logsy') ? html('ol', array('class'=>'logs'), join(get_logs('logs'))) : '')
           ).
@@ -511,7 +527,7 @@
   }
 
   function databasenames($metabasename) {
-    if (mysql_num_rows(query('meta', 'SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_schema = "<metabasename>" AND table_name LIKE "databases"', array('metabasename'=>$metabasename))) == 0)
+    if (mysql_num_rows(query('meta', 'SELECT table_name FROM information_schema.tables WHERE table_schema = "<metabasename>" AND table_name LIKE "databases"', array('metabasename'=>$metabasename))) == 0)
       return array();
     $databases = array();
     $results = query('meta', 'SELECT databasename FROM `<metabasename>`.`databases`', array('metabasename'=>$metabasename));
@@ -521,7 +537,7 @@
   }
 
   function all_databases() {
-    return query('root', 'SELECT schema_name FROM INFORMATION_SCHEMA.SCHEMATA WHERE schema_name NOT IN ("information_schema", "mysql")');
+    return query('root', 'SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ("information_schema", "mysql")');
   }
 
   function breadcrumbs($metabasename, $databasename = null, $tablename = null, $uniquefieldname = null, $uniquevalue = null) {
@@ -805,6 +821,22 @@
     return $uniquefieldname && !is_null($uniquevalue) ? $uniquevalue : mysql_insert_id();
   }
 
+  function insert_or_update_from_formvalues($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, $uniquevalue, $privilege) {
+    get_presentationnames();
+
+    $fieldnamesandvalues = array();
+    $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, $privilege);
+    while ($field = mysql_fetch_assoc($fields)) {
+      if ($field['inedit']) {
+        $value = call_user_func("formvalue_$field[presentationname]", array_merge($field, array('databasename'=>$databasename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)));
+        if ($privilege == 'UPDATE' || !is_null($value))
+          $fieldnamesandvalues[$field['fieldname']] = $value;
+      }
+    }
+
+    return insert_or_update($databasename, $viewname, $fieldnamesandvalues, $uniquefieldname, $uniquevalue);
+  }
+
   function preg_match1($pattern, $subject, $default = null) {
     return preg_match($pattern, $subject, $matches) ? (count($matches) == 2 ? $matches[1] : $matches[0]) : $default;
   }
@@ -827,7 +859,7 @@
         '('.
           'SELECT tablename, tablename AS viewname '.
           'FROM `<metabasename>`.tables '.
-          'LEFT JOIN INFORMATION_SCHEMA.TABLES tbl ON tbl.table_schema = "<databasename>" AND tbl.table_name = tablename '.
+          'LEFT JOIN information_schema.tables tbl ON tbl.table_schema = "<databasename>" AND tbl.table_name = tablename '.
           'WHERE table_name IS NOT NULL'.
         ') '.
         'UNION '.
@@ -835,7 +867,7 @@
           'SELECT tablename, viewname '.
           'FROM `<metabasename>`.views '.
           'LEFT JOIN `<metabasename>`.tables ON tables.tableid = views.tableid '.
-          'LEFT JOIN INFORMATION_SCHEMA.TABLES tbl ON tbl.table_schema = "<databasename>" AND tbl.table_name = viewname '.
+          'LEFT JOIN information_schema.tables tbl ON tbl.table_schema = "<databasename>" AND tbl.table_name = viewname '.
           'WHERE table_name IS NOT NULL'.
         ')',
         array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename)
@@ -858,10 +890,10 @@
         $letter = strtolower($oneprivilege{0});
         $selectparts[] = "COALESCE(u$letter.privilege_type, s$letter.privilege_type, t$letter.privilege_type, c$letter.privilege_type) AS privilege_".strtolower($oneprivilege);
         $joinparts[] =
-          "LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   u$letter ON u$letter.privilege_type = \"$oneprivilege\" AND u$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") ".
-          "LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES s$letter ON s$letter.privilege_type = \"$oneprivilege\" AND s$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND s$letter.table_schema = \"<databasename>\" ".
-          "LEFT JOIN INFORMATION_SCHEMA.TABLE_PRIVILEGES  t$letter ON t$letter.privilege_type = \"$oneprivilege\" AND t$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND t$letter.table_schema = \"<databasename>\" AND t$letter.table_name = \"<viewname>\" ".
-          "LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES c$letter ON c$letter.privilege_type = \"$oneprivilege\" AND c$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND c$letter.table_schema = \"<databasename>\" AND c$letter.table_name = \"<viewname>\" AND c$letter.column_name = fld.fieldname ";
+          "LEFT JOIN information_schema.user_privileges   u$letter ON u$letter.privilege_type = \"$oneprivilege\" AND u$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") ".
+          "LEFT JOIN information_schema.schema_privileges s$letter ON s$letter.privilege_type = \"$oneprivilege\" AND s$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND s$letter.table_schema = \"<databasename>\" ".
+          "LEFT JOIN information_schema.table_privileges  t$letter ON t$letter.privilege_type = \"$oneprivilege\" AND t$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND t$letter.table_schema = \"<databasename>\" AND t$letter.table_name = \"<viewname>\" ".
+          "LEFT JOIN information_schema.column_privileges c$letter ON c$letter.privilege_type = \"$oneprivilege\" AND c$letter.grantee IN (\"'<username>'@'<host>'\", \"'<username>'@'%'\") AND c$letter.table_schema = \"<databasename>\" AND c$letter.table_name = \"<viewname>\" AND c$letter.column_name = fld.fieldname ";
         if ($privilege == $oneprivilege)
           $wherepart = "COALESCE(u$letter.privilege_type, s$letter.privilege_type, t$letter.privilege_type, c$letter.privilege_type) IS NOT NULL ";
       }
@@ -1008,7 +1040,7 @@
 
         $metabasename = parameter('get', 'metabasename');
         if ($metabasename) {
-          @include_phpfile(array('metabase', "$metabasename.php"));
+          include_phpfile(array('metabase', "$metabasename.php"));
           $extra[] =
             "/* $function_prefix[1]_$metabasename */\n".
             @call_user_func("$function_prefix[1]_$metabasename");
@@ -1123,11 +1155,11 @@
     return mysql_num_rows(
       query('meta',
         'SELECT "<privilege>" '.
-        'FROM INFORMATION_SCHEMA.SCHEMATA sc '.
-        'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
-        ($databasename == '*' ? '' : 'LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp ON sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.($databasename == '?' ? '' : 'AND sp.table_schema = "<databasename>" ')).
-        ($tablename    == '*' ? '' : 'LEFT JOIN INFORMATION_SCHEMA.TABLE_PRIVILEGES  tp ON tp.privilege_type = "<privilege>" AND tp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND tp.table_schema = "<databasename>" '.($tablename == '?' ? '' : 'AND tp.table_name = "<tablename>" ')).
-        ($fieldname    == '*' ? '' : 'LEFT JOIN INFORMATION_SCHEMA.COLUMN_PRIVILEGES cp ON cp.privilege_type = "<privilege>" AND cp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND cp.table_schema = "<databasename>" AND cp.table_name = "<tablename>" '.($fieldname == '?' ? '' : 'AND cp.column_name = "<fieldname>" ')).
+        'FROM information_schema.schemata sc '.
+        'LEFT JOIN information_schema.user_privileges   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
+        ($databasename == '*' ? '' : 'LEFT JOIN information_schema.schema_privileges sp ON sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.($databasename == '?' ? '' : 'AND sp.table_schema = "<databasename>" ')).
+        ($tablename    == '*' ? '' : 'LEFT JOIN information_schema.table_privileges  tp ON tp.privilege_type = "<privilege>" AND tp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND tp.table_schema = "<databasename>" '.($tablename == '?' ? '' : 'AND tp.table_name = "<tablename>" ')).
+        ($fieldname    == '*' ? '' : 'LEFT JOIN information_schema.column_privileges cp ON cp.privilege_type = "<privilege>" AND cp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND cp.table_schema = "<databasename>" AND cp.table_name = "<tablename>" '.($fieldname == '?' ? '' : 'AND cp.column_name = "<fieldname>" ')).
         'WHERE '.($databasename == '?' || $databasename == '*' ? '' : 'sc.schema_name = "<databasename>" AND ').'(up.privilege_type IS NOT NULL OR sp.privilege_type IS NOT NULL '.($tablename == '*' ? '' : 'OR tp.privilege_type IS NOT NULL ').($fieldname == '*' ? '' : 'OR cp.privilege_type IS NOT NULL').') '.
         'LIMIT 1',
         array('databasename'=>$databasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname, 'username'=>parameter('session', 'username'), 'host'=>parameter('session', 'host'), 'privilege'=>$privilege)
@@ -1140,16 +1172,16 @@
     $grants = query('meta',
       '( '.
         'SELECT up.privilege_type, sc.schema_name '.
-        'FROM INFORMATION_SCHEMA.SCHEMATA sc '.
-        'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
-        'LEFT JOIN INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp ON sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND sp.table_schema = sc.schema_name '.
+        'FROM information_schema.schemata sc '.
+        'LEFT JOIN information_schema.user_privileges   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
+        'LEFT JOIN information_schema.schema_privileges sp ON sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND sp.table_schema = sc.schema_name '.
         'WHERE sc.schema_name NOT IN ("mysql", "information_schema") '.
       ') '.
       'UNION '.
       '( '.
         'SELECT up.privilege_type, table_schema '.
-        'FROM INFORMATION_SCHEMA.SCHEMA_PRIVILEGES sp '.
-        'LEFT JOIN INFORMATION_SCHEMA.USER_PRIVILEGES   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
+        'FROM information_schema.schema_privileges sp '.
+        'LEFT JOIN information_schema.user_privileges   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
         'WHERE table_schema NOT IN ("mysql", "information_schema") AND sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
       ')',
       array('username'=>parameter('session', 'username'), 'host'=>parameter('session', 'host'), 'privilege'=>$privilege)
@@ -1161,5 +1193,78 @@
       $databases[] = $grant['schema_name'];
     }
     return $databases;
+  }
+
+  function file_upload_error_message($error_code) {
+    switch ($error_code) {
+    case UPLOAD_ERR_INI_SIZE:
+      return _('the uploaded file exceeds the upload_max_filesize directive in php.ini');
+    case UPLOAD_ERR_FORM_SIZE:
+      return _('the uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form');
+    case UPLOAD_ERR_PARTIAL:
+      return _('the uploaded file was only partially uploaded');
+    case UPLOAD_ERR_NO_FILE:
+      return _('no file was uploaded');
+    case UPLOAD_ERR_NO_TMP_DIR:
+      return _('missing a temporary folder');
+    case UPLOAD_ERR_CANT_WRITE:
+      return _('failed to write file to disk');
+    case UPLOAD_ERR_EXTENSION:
+      return _('file upload stopped by extension');
+    default:
+      return _('unknown upload error');
+    }
+  } 
+
+  function do_action() {
+    ini_set('session.use_only_cookies', true);
+    session_set_cookie_params(7 * 24 * 60 * 60);
+    session_save_path('session');
+    session_start();
+
+    umask(0177); // => maximum = rw-.---.---
+
+    set_preference('scripty', 1);
+    set_preference('ajaxy', 1);
+    set_preference('logsy', 0);
+
+    if (parameter('cookie', 'logsy')) {
+      if (parameter('get') && parameter('post'))
+        error(_('both get and post parameters'));
+      $parametersource = parameter('post') ? 'post' : 'get';
+      add_log($parametersource, $parametersource.': '.html('div', array('class'=>'arrayshow'), array_show(parameter($parametersource))));
+  //  add_log('cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show(parameter('cookie'))));
+    }
+
+    $languagename = !parameter('get', 'language') && parameter('get', 'metabasename') ? query1field('meta', 'SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;
+
+    set_best_locale(
+      preg_replace(
+        array('@\.[a-z][a-z0-9\-]*@', '@_([a-z]+)@ie'       ),
+        array(''                    , '"-".strtolower("$1")'),
+        join_non_null(',',
+          preg_match('/^([^\.]+)/', parameter('get', 'language'),    $matches) ? $matches[1].';q=4.0' : null,
+          preg_match('/^([^\.]+)/', $languagename,                   $matches) ? $matches[1].';q=3.0' : null,
+          preg_match('/^([^\.]+)/', parameter('cookie', 'language'), $matches) ? $matches[1].';q=2.0' : null,
+          parameter('server', 'HTTP_ACCEPT_LANGUAGE'),
+          'en;q=0.0'
+        )
+      ),
+      join_non_null(',',
+        preg_match('/\.(.*?)$/', parameter('get', 'language'),    $matches) ? $matches[1].';q=4.0' : null,
+        preg_match('/\.(.*?)$/', $languagename,                   $matches) ? $matches[1].';q=3.0' : null,
+        preg_match('/\.(.*?)$/', parameter('cookie', 'language'), $matches) ? $matches[1].';q=2.0' : null,
+        parameter('server', 'HTTP_ACCEPT_CHARSET'),
+        '*;q=0.0'
+      )
+    );
+
+    bindtextdomain('messages', './locale');
+    textdomain('messages');
+
+    $action = first_non_null(parameter('get_or_post', 'action'), 'login');
+
+    if (!include_phpfile(array('action', "$action.php")))
+      error('unknown action '.$action);
   }
 ?>

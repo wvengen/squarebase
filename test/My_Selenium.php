@@ -8,10 +8,11 @@
     }
 
     public function stopAndClearProgress($error = null) {
-      $this->stop();
       print sprintf("\r%s\r%s", str_repeat(' ', 120), $error);
       if ($error)
         exit(1);
+      else
+        $this->stop();
    }
 
     //returns a nicely formatted value
@@ -34,10 +35,8 @@
     }       
 
     private function combine($found, $expected) {
-      $array1 = explode("\n", $this->value($found));
-      $array2 = explode("\n", $this->value($expected));
-      array_shift($array1);
-      array_shift($array2);
+      $array1 = explode("\n", preg_replace('@^\n@', '', $this->value($found)));
+      $array2 = explode("\n", preg_replace('@^\n@', '', $this->value($expected)));
       $max = max(count($array1), count($array2));
       $array1 = array_pad($array1, $max, '-');
       $array2 = array_pad($array2, $max, '-');

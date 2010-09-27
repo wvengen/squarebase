@@ -7,7 +7,7 @@ PIDFILE=/tmp/SELENIUM_SERVER_PID
 none:
 
 install:
-	sudo chown :www-data session uploads
+	sudo chown :www-data session upload
 	chmod g+w session
 	chmod a+x $(PHPFILES)
 
@@ -18,7 +18,7 @@ testbegin:
 	sleep 10
 
 testmiddle:
-	php tests/test.php
+	php test/test.php
 
 testend:
 	-kill `cat $(PIDFILE)`

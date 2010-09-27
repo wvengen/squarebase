@@ -18,9 +18,10 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  error_reporting(-1);
+  $metabasename = parameter('get', 'metabasename');
+  $databasename = parameter('get', 'databasename');
 
-  include('functions.php');
+  query('meta', 'INSERT IGNORE INTO `<metabasename>`.databases SET databasename = "<databasename>"', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
 
-  do_action();
+  internal_redirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
 ?>

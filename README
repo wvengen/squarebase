@@ -1,13 +1,9 @@
 Hi, welcome to the wonderful world of Squarebase
 
-Squarebase gives you web-based access to your MySql databases without having to write a single line of programming code.
+Squarebase gives you web-based access to your MySQL databases programming.
 
 The basic idea is that Squarebase builds a database (called the "metabase") that describes the structure of the database.
-The information in the metabase is used to format the forms to browse and edit the database.
-
-After changing the structure of the database or the contents of the metabase, they can be synchronized again.
-
-Interestingly, the metabase of a metabase (called the "squarebase") is the same for all metabases.
+The information in the metabase is used to show the contents of the database.
 
 Notes:
 
@@ -22,8 +18,3 @@ Notes:
 
 4. There is a demo database named inventory
    $ make inventory
-
-5. Conventions
-   a. Table names are plural (e.g. orders instead of order)
-   b. Each table has exactly 1 auto_increment field that is the primary key
-   c. All foreign key fields have the singular form of table name they are referring to in their name (e.g. orderID)

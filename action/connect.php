@@ -18,9 +18,24 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  error_reporting(-1);
+  $usernameandhost = parameter('get', 'lastusernameandhost');
+  if (!$usernameandhost)
+    $usernameandhost = parameter('get', 'usernameandhost');
+  if (preg_match('@^([^\@]+)\@([^\@]+)$@', $usernameandhost, $match)) {
+    $username = $match[1];
+    $host     = $match[2];
+  }
+  elseif ($usernameandhost) {
+    $username = $usernameandhost;
+    $host     = 'localhost';
+  }
+  else
+    internal_redirect(array('action'=>'login', 'error'=>_('no username@host given')));
+  $password = parameter('get', 'password');
+  $language = parameter('get', 'language');
 
-  include('functions.php');
+  login($username, $host, $password, $language);
 
-  do_action();
+  $next = parameter('get', 'next');
+  internal_redirect(first_non_null(http_parse_query($next), array('action'=>'index')));
 ?>

@@ -31,7 +31,7 @@
 
   function jquery_enhance_form_text() {
     return
-      "getScripts('jquery.autogrow.js', '.text.edit',\n".
+      "getScripts('jquery/autogrow.js', '.text.edit',\n".
       "  function() {\n".
       "    $(this).\n".
       "    autogrow();\n".
