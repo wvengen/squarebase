@@ -18,12 +18,18 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  $metabasename = parameter('get', 'metabasename');
-  $databasename = parameter('get', 'databasename');
+  include('functions.php');
+
+  init();
+
+  include('inflection.php');
+
+  $metabasename = get_parameter($_GET, 'metabasename', null);
+  $databasename = get_parameter($_GET, 'databasename');
   $language =
     $metabasename
-    ? query1field('SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename')))
-    : parameter('get', 'language');
+    ? query1field('SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>$metabasename))
+    : get_parameter($_GET, 'language');
 
   // pass 1: store query results and find the primary key field name
   $infos = $alltablenames = $tableswithoutsinglevaluedprimarykey = array();
@@ -231,19 +237,19 @@
             )
           : ''
           ).
-          html('td', array('class'=>'center'),
+          html('td', array('class'=>join_non_null(' ', 'row', 'center')),
             html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null))
           ).
-          html('td', array('class'=>join_non_null(' ', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)),
+          html('td', array('class'=>join_non_null(' ', 'row', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)),
             html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))
           ).
-          html('td', array('class'=>'center'),
+          html('td', array('class'=>join_non_null(' ', 'row', 'center')),
             html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null))
           ).
-          html('td', array('title'=>$fieldname),
+          html('td', array('class'=>'row', 'title'=>$fieldname),
             html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))
           ).
-          html('td', array('class'=>'filler', 'title'=>join_non_null(' ', $field['column_type'], $nullallowed ? null : 'not null', $fieldname == $table['primarykeyfieldname'] ? 'auto_increment' : null)),
+          html('td', array('class'=>join_non_null(' ', 'row', 'filler'), 'title'=>join_non_null(' ', $field['column_type'], $nullallowed ? null : 'not null', $fieldname == $table['primarykeyfieldname'] ? 'auto_increment' : null)),
             html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions).
             ($fieldname != $table['primarykeyfieldname'] && preg_match('@^(tiny|small|medium|big)?int(eger)?\b@', $field['column_type'])
             ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename", 'class'=>'foreigntablename'),
@@ -275,7 +281,7 @@
       $metabase_input = html('select', array('name'=>'metabasename'), join($metabase_options));
     }
     // prevent reading the language for a non-existent metabase in the next action
-    $metabase_input .= html('input', array('type'=>'hidden', 'name'=>'language', 'value'=>parameter('cookie', 'language')));
+    $metabase_input .= html('input', array('type'=>'hidden', 'name'=>'language', 'value'=>get_parameter($_COOKIE, 'language')));
   }
 
   page('form metabase for database', breadcrumbs($metabasename, $databasename),
@@ -293,7 +299,7 @@
           join($rowsfields)
         ).
         html('p', array(),
-          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract_structure_from_database_to_metabase', 'class'=>'mainsubmit'))
+          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract_structure_from_database_to_metabase', 'class'=>'submit'))
         ),
         'post'
       )

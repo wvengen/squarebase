@@ -18,19 +18,25 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  $usernameandhost = parameter('get', 'usernameandhost');
-  $next = parameter('get', 'next');
+  include('functions.php');
 
-  if (parameter('session', 'username') && parameter('session', 'host') && $usernameandhost == parameter('get', 'username').'@'.parameter('get', 'host'))
-    internal_redirect(first_non_null(http_parse_query($next), array('action'=>'index')));
+  init();
 
-  if (is_null($usernameandhost) && parameter('session', 'username'))
+  $usernameandhost = get_parameter($_GET, 'usernameandhost', null);
+  $username        = get_parameter($_GET, 'username', null);
+  $host            = get_parameter($_GET, 'host', null);
+  $password        = get_parameter($_GET, 'password', null);
+  $next            = get_parameter($_GET, 'next', null);
+
+  if ($usernameandhost == $username.'@'.$host)
+    internal_redirect(first_non_null(http_parse_url($next), array('action'=>'index')));
+
+  if (is_null($usernameandhost) && get_parameter($_SESSION, 'username', null))
     internal_redirect(array('action'=>'index'));
 
-  $password = parameter('get', 'password');
   if (!$usernameandhost) {
     $radios = array();
-    $lastusernamesandhosts = parameter('cookie', 'lastusernamesandhosts');
+    $lastusernamesandhosts = get_parameter($_COOKIE, 'lastusernamesandhosts', null);
     if ($lastusernamesandhosts) {
       foreach (explode(',', $lastusernamesandhosts) as $thisusernameandhost)
         $radios[] =
@@ -64,7 +70,7 @@
         ).
         inputrow(_('password'), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password', 'value'=>$password)), _('The password for username@host from the underlying MySql database.')).
         inputrow(_('language'), select_locale(), _('The default language for displaying translations, dates, numbers, etc.')).
-        inputrow(null,  html('input', array('type'=>'submit', 'name'=>'action',   'value'=>'connect', 'class'=>'mainsubmit')))
+        inputrow(null,  html('input', array('type'=>'submit', 'name'=>'action',   'value'=>'connect', 'class'=>'submit')))
       )
     )
   );

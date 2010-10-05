@@ -18,7 +18,11 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  $metabasename = parameter('get', 'metabasename');
+  include('functions.php');
+
+  init();
+
+  $metabasename = get_parameter($_GET, 'metabasename');
   $rows = array(html('th', array(), _('database')).html('th', array('class'=>'filler'), ''));
   $databasenames = databasenames($metabasename);
 
@@ -41,7 +45,7 @@
         array(
           html('input', array('type'=>'text', 'name'=>'databasename')),
           html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
-          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'attach_database_to_metabase', 'class'=>'mainsubmit'))
+          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'attach_database_to_metabase', 'class'=>'submit'))
         )
       )
     );

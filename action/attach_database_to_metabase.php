@@ -18,8 +18,12 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  $metabasename = parameter('get', 'metabasename');
-  $databasename = parameter('get', 'databasename');
+  include('functions.php');
+
+  init();
+
+  $metabasename = get_parameter($_GET, 'metabasename');
+  $databasename = get_parameter($_GET, 'databasename');
 
   query('INSERT IGNORE INTO `<metabasename>`.databases SET databasename = "<databasename>"', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
 

@@ -18,53 +18,22 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  include('inflection.php');
-
   function is_local() {
-    return parameter('server', 'HTTP_HOST') == 'localhost';
+    return get_parameter($_SERVER, 'HTTP_HOST') == 'localhost';
   }
 
-  function parameter($type, $name = null, $new_value = null, $default = null) {
-    static $arrays = null;
-    if (!$arrays)
-      $arrays = array(
-        'get'=>$_GET,
-        'post'=>$_POST,
-        'get_or_post'=>$_GET ? $_GET : $_POST,
-        'server'=>$_SERVER,
-        'files'=>$_FILES,
-        'session'=>isset($_SESSION) ? $_SESSION : array(),
-        'cookie'=>$_COOKIE
-      );
-    $array = isset($arrays[$type]) ? $arrays[$type] : array();
-    if (is_null($name)) {
-      if (!is_null($new_value)) {
-        $arrays[$type] = $new_value;
-        if ($type == 'session')
-          $_SESSION = $new_value;
-      }
-      return $array;
-    }
-    if (!is_null($new_value)) {
-      $arrays[$type][$name] = $new_value;
-      switch ($type) {
-      case 'cookie':
-        setcookie($name, $new_value, time() + 365 * 24 * 60 * 60);
-        break;
-      case 'session':
-        $_SESSION[$name] = $new_value;
-        break;
-      case 'get':
-      case 'post':
-        $arrays['get_or_post'][$name] = $new_value;
-        break;
-      case 'get_or_post':
-        $arrays[$_GET ? 'get' : 'post'][$name] = $new_value;
-        break;
-      }
-    }
-    $value = isset($array[$name]) ? $array[$name] : null;
-    return is_null($value) ? $default : str_replace(array('\\"', '\\\''), array('"', '\''), $value);
+  function get_parameter($array, $name, $default = 'undefined') {
+    if (!isset($array[$name]) && $default == 'undefined')
+      error(sprintf(_('parameter does not exist: %s'), $name));
+    return isset($array[$name]) ? str_replace(array('\\"', '\\\''), array('"', '\''), $array[$name]) : $default;
+  }
+
+  function set_parameter(&$array, $name, $new_value, $default = null) {
+    $value = isset($array[$name]) ? $array[$name] : $default;
+    $array[$name] = $new_value;
+    if ($array === $_COOKIE)
+      setcookie($name, $new_value, time() + 365 * 24 * 60 * 60);
+    return $value;
   }
 
   function is_non_null($var) {
@@ -103,7 +72,7 @@
 
   /* all atribute names and values will be encoded using htmlentities; the text however won't, because it may contain other HTML code from previous calls to this function */
   function html($tag, $attributes = array(), $text = null) {
-    if (parameter('cookie', 'logsy')) {
+    if (get_parameter($_COOKIE, 'logsy', 0)) {
       static $types = array( // in attributes: 0=required, 1=optional
         'html'    =>array('empty'=>false, 'attributes'=>array()),
         'head'    =>array('empty'=>false, 'attributes'=>array()),
@@ -166,23 +135,34 @@
     return $starttag.(is_null($text) ? '' : (is_array($text) ? join_non_null($endtag.$starttag, $text) : $text).$endtag);
   }
 
+  function preg_match1($pattern, $subject, $default = null) {
+    return preg_match($pattern, $subject, $matches) ? (count($matches) == 2 ? $matches[1] : $matches[0]) : $default;
+  }
+
   function directory_part($part) {
-    return preg_match1('@(\w+\.?\w*)$@', $part);
+    return preg_match1('@\w+\.?\w*$@', $part);
   }
 
   function file_name($parts) {
-    return join('/', array_map('directory_part', $parts));
+    return '../'.join('/', array_map('directory_part', $parts));
   }
 
   function http_parse_query($query) {
     if (is_null($query))
       return null;
-    parse_str(preg_replace('@^.*\?@', '', $query), $parameters);
+    parse_str($query, $parameters);
     return $parameters;
   }
 
-  function http_url($parameters = null) {
-    return parameter('server', 'SCRIPT_NAME').($parameters ? '?'.http_build_query($parameters) : '');
+  function http_parse_url($url) {
+    return http_parse_query(preg_replace('@^.*?([^\/]*)\.php(\?|$)@', 'action=\1&', $url));
+  }
+
+  function http_url($parameters) {
+    $action = isset($parameters['action']) ? $parameters['action'] : 'index';
+    unset($parameters['action']);
+    $query = http_build_query($parameters);
+    return directory_part($action.'.php').($query ? '?'.$query : '');
   }
 
   function internal_url($parameters) {
@@ -236,11 +216,11 @@
   }
 
   //calls the function in the query string with parameters from the query string if the function is explicitly set callable
-  function call_function($querystring) {
-    if (!$querystring)
+  function call_function($url) {
+    if (!$url)
       return;
-    $parameters = http_parse_query($querystring);
-    if (parameter('cookie', 'logsy'))
+    $parameters = http_parse_url($url);
+    if (get_parameter($_COOKIE, 'logsy', 0))
       add_log('call', 'call_function: '.html('div', array('class'=>'arrayshow'), array_show($parameters)));
 
     if ($parameters['presentationname'])
@@ -255,26 +235,33 @@
   }
 
   function back() {
-    call_function(parameter('get_or_post', 'ajax'));
-    internal_redirect(http_parse_query(first_non_null(parameter('get_or_post', 'back'), parameter('server', 'HTTP_REFERER'))));
+    call_function(first_non_null(get_parameter($_POST, 'ajax', null), get_parameter($_GET, 'ajax', null)));
+    internal_redirect(http_parse_url(first_non_null(get_parameter($_POST, 'back', null), get_parameter($_GET, 'back', null), get_parameter($_SERVER, 'HTTP_REFERER', null))));
   }
 
   function error($error) {
     $traces = array();
-    if (parameter('cookie', 'logsy')) {
+    if (get_parameter($_COOKIE, 'logsy', 0)) {
       $stack = debug_backtrace();
-      $mainpath = preg_match1('@^.*/@', $stack[0]['file']);
+      $mainpath = preg_match1('@^(.*/).*?/@', $stack[0]['file']);
       foreach ($stack as $element) {
         $args = array();
         if ($element['args']) {
           foreach ($element['args'] as $arg)
-            $args[] = preg_replace('@<(.*?)>@', '&lt;$1&gt;', "'$arg'");
+            $args[] = is_array($arg) ? 'array' : preg_replace('@<(.*?)>@', '&lt;$1&gt;', "'$arg'");
         }
-        $traces[] = html('div', array('class'=>'trace'), preg_replace("@$mainpath@", '', "$element[file]:$element[line] $element[function](".join(',', $args).")"));
+        $traces[] =
+          html('div', array('class'=>'trace'),
+            preg_replace("@$mainpath@", '',
+              (isset($element['file']) ? "$element[file]:$element[line]: " : '').
+              $element['function'].'('.join(', ', $args).')'
+            )
+          );
       }
     }
     page('error', null,
-      html('div', array('id'=>'error'), $error).
+      html('div', array('class'=>'error'), $error).
+      $mainpath.
       ($traces ? html('p', array('class'=>'trace'), html('ol', array(), html('li', array(), $traces))) : '')
     );
     exit;
@@ -282,11 +269,11 @@
 
   function add_log($class, $text) {
     $list = $class == 'warning' ? 'warnings' : 'logs';
-    parameter('session', $list, array_merge(parameter('session', $list) ? parameter('session', $list) : array(), array(html('li', array('class'=>$class), $text))));
+    set_parameter($_SESSION, $list, array_merge(get_parameter($_SESSION, $list, null) ? get_parameter($_SESSION, $list) : array(), array(html('li', array('class'=>$class), $text))));
   }
 
   function get_logs($list) {
-    return parameter('session', $list, array(), array());
+    return set_parameter($_SESSION, $list, array(), array());
   }
 
   function mysql_open($host, $username, $password) {
@@ -302,9 +289,9 @@
       if (!$session_connection) {
         if (!extension_loaded('mysql'))
           error(_('mysql module not found'));
-        if (!parameter('session', 'username'))
+        if (!get_parameter($_SESSION, 'username', null))
           internal_redirect(array('action'=>'login'));
-        $session_connection = mysql_open(parameter('session', 'host'), parameter('session', 'username'), parameter('session', 'password'));
+        $session_connection = mysql_open(get_parameter($_SESSION, 'host'), get_parameter($_SESSION, 'username'), get_parameter($_SESSION, 'password'));
       }
       $connection = $session_connection;
     }
@@ -321,7 +308,7 @@
     list($aftermsec, $aftersec) = explode(' ', $after);
     $errno = mysql_errno();
 
-    $sqlcommand = preg_match1('@^[^A-Z]*([A-Z]+) @i', $fullquery);
+    $sqlcommand = preg_match1('@[A-Z]+\b@i', $fullquery);
     $numresults = preg_match('@^(EXPLAIN|SELECT|SHOW)$@i', $sqlcommand) && $result ? mysql_num_rows($result) : null;
     if (!is_null($numresults)) {
       $resultlist = array();
@@ -335,7 +322,7 @@
       mysql_data_reset($result);
     }
 
-    if (parameter('cookie', 'logsy')) {
+    if (get_parameter($_COOKIE, 'logsy', 0)) {
       $stack = debug_backtrace();
       $traces = array();
       foreach ($stack as $element) {
@@ -446,7 +433,7 @@
   }
 
   function page($title, $breadcrumbs, $content) {
-    $error = parameter('get', 'error');
+    $error = get_parameter($_GET, 'error', null);
     $warnings = get_logs('warnings');
 
     http_response(
@@ -455,37 +442,35 @@
       html('html', array(),
         html('head', array(),
           html('title', array(), $title).
-          html('link', array('href'=>internal_url(array('action'=>'style', 'metabasename'=>parameter('get', 'metabasename'))), 'type'=>'text/css', 'rel'=>'stylesheet')).
-          (parameter('cookie', 'scripty')
+          html('link', array('href'=>internal_url(array('action'=>'style', 'metabasename'=>get_parameter($_GET, 'metabasename', null))), 'type'=>'text/css', 'rel'=>'stylesheet')).
+          (get_parameter($_COOKIE, 'scripty', 1)
           ? html('script', array('type'=>'text/javascript', 'src'=>'jquery/min.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>'jquery/requirescript.js'), '').
-            html('script', array('type'=>'text/javascript', 'src'=>internal_url(array('action'=>'script', 'metabasename'=>parameter('get', 'metabasename')))), '')
+            html('script', array('type'=>'text/javascript', 'src'=>internal_url(array('action'=>'script', 'metabasename'=>get_parameter($_GET, 'metabasename', null)))), '')
           : ''
           )
         ).
-        html('body', array('class'=>join_non_null(' ', parameter('cookie', 'ajaxy') ? 'ajaxy' : null)),
+        html('body', array('class'=>join_non_null(' ', get_parameter($_COOKIE, 'ajaxy', 1) ? 'ajaxy' : null)),
           html('div', array('id'=>'header'),
             html('div', array('id'=>'id', 'class'=>'secondary'),
               (is_local()
               ? html('ul', array(),
-                  html('li', array('id'=>'togglescripty'),
-                    preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internal_reference(array_merge(parameter('get'), array('scripty'=>parameter('cookie', 'scripty') ? 'off' : 'on')), parameter('cookie', 'scripty') ? _('javascript is on') : _('javascript is off')) : (parameter('cookie', 'scripty') ? _('javascript is on') : _('javascript is off'))
-                  ).
-                  html('li', array('id'=>'toggleajaxy'),
-                    preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? (parameter('cookie', 'scripty') ? internal_reference(array_merge(parameter('get'), array('ajaxy'=>parameter('cookie', 'ajaxy') ? 'off' : 'on')), parameter('cookie', 'ajaxy') ? _('ajax is on') : _('ajax is off')) : _('ajax is off')) : (parameter('cookie', 'ajaxy') ? _('ajax is on') : _('ajax is off'))
-                  ).
-                  html('li', array('id'=>'togglelogsy'),
-                    preg_match('@\?@', parameter('server', 'REQUEST_URI')) ? internal_reference(array_merge(parameter('get'), array('logsy'=>parameter('cookie', 'logsy') ? 'off' : 'on')), parameter('cookie', 'logsy') ? _('logging is on') : _('logging is off')) : (parameter('cookie', 'logsy') ? _('logging is on') : _('logging is off'))
+                  html('li', array(),
+                    array(
+                      !$_POST ? internal_reference(array_merge($_GET, array('scripty'=>get_parameter($_COOKIE, 'scripty', 1) ? 'off' : 'on')), get_parameter($_COOKIE, 'scripty', 1) ? _('javascript is on') : _('javascript is off')) : (get_parameter($_COOKIE, 'scripty', 1) ? _('javascript is on') : _('javascript is off')),
+                      !$_POST ? (get_parameter($_COOKIE, 'scripty', 1) ? internal_reference(array_merge($_GET, array('ajaxy'=>get_parameter($_COOKIE, 'ajaxy', 1) ? 'off' : 'on')), get_parameter($_COOKIE, 'ajaxy', 1) ? _('ajax is on') : _('ajax is off')) : _('ajax is off')) : (get_parameter($_COOKIE, 'ajaxy', 1) ? _('ajax is on') : _('ajax is off')),
+                      !$_POST ? internal_reference(array_merge($_GET, array('logsy'=>get_parameter($_COOKIE, 'logsy', 0) ? 'off' : 'on')), get_parameter($_COOKIE, 'logsy', 0) ? _('logging is on') : _('logging is off')) : (get_parameter($_COOKIE, 'logsy', 0) ? _('logging is on') : _('logging is off'))
+                    )
                   )
                 )
               : ''
               ).
               html('ul', array(),
                 html('li', array('id'=>'currentusernameandhost'),
-                  parameter('session', 'username') ? preg_replace('@\@localhost$@', '', parameter('session', 'username').'@'.parameter('session', 'host')) : '&nbsp;'
+                  get_parameter($_SESSION, 'username', null) ? preg_replace('@\@localhost$@', '', get_parameter($_SESSION, 'username').'@'.get_parameter($_SESSION, 'host')) : '&nbsp;'
                 ).
                 html('li', array('id'=>'logout'),
-                  parameter('session', 'username') ? internal_reference(array('action'=>'logout'), 'logout') : '&nbsp;'
+                  get_parameter($_SESSION, 'username', null) ? internal_reference(array('action'=>'logout'), 'logout') : '&nbsp;'
                 ).
                 html('li', array('id'=>'locale'),
                   get_locale()
@@ -496,10 +481,10 @@
             ($breadcrumbs ? $breadcrumbs : '&nbsp;')
           ).
           html('div', array('id'=>'content'),
-            ($error ?  html('div', array('id'=>'error'), $error) : '').
-            ($warnings ? html('ol', array('id'=>'warnings'), join($warnings)) : '').
+            ($error ?  html('div', array('class'=>'error'), $error) : '').
+            ($warnings ? html('ol', array('class'=>'warnings'), join($warnings)) : '').
             $content.
-            (parameter('cookie', 'logsy') ? html('ol', array('class'=>'logs'), join(get_logs('logs'))) : '')
+            (get_parameter($_COOKIE, 'logsy', 0) ? html('ol', array('class'=>'logs'), join(get_logs('logs'))) : '')
           ).
           html('div', array('id'=>'footer'),
             external_reference('http://squarebase.org/', html('img', array('src'=>'powered_by_squarebase.png', 'alt'=>'powered by squarebase')), array('id'=>'poweredby'))
@@ -512,7 +497,7 @@
   function inputrow($label, $input, $help = null) {
     return
       html('tr', array('title'=>$help),
-        html('td', array(), is_null($label) ? '' : html('label', array('for'=>preg_match1('@id="(\w+)"@', $input)), $label)).
+        html('td', array(), is_null($label) ? '' : html('label', array('for'=>preg_match1('@\bid="(\w+)"@', $input)), $label)).
         html('td', array(), $input).
         html('td', array('class'=>'filler'), is_null($help) ? '' : html('span', array('class'=>'help'), _('?')))
       );
@@ -523,7 +508,10 @@
   }
 
   function form($content, $method = 'get') {
-    return html('form', array('action'=>http_url(), 'enctype'=>'multipart/form-data', 'method'=>$method), $content);
+    return
+      html('form', array('action'=>http_url(array('action'=>preg_match1('@\bvalue="(\w+)"@', preg_match1('@<input [^>]*\btype="submit"[^>]*>@', $content)))), 'enctype'=>'multipart/form-data', 'method'=>$method),
+        $content
+      );
   }
 
   function databasenames($metabasename) {
@@ -558,7 +546,7 @@
         html('li', array('class'=>'notfirst'),
           array(
             !is_null($metabasename) ? (has_grant('DROP', $metabasename) ? internal_reference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename) : $metabasename) : '&hellip;',
-            !is_null($databasename) ? ($metabasename ? internal_reference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'back'=>parameter('server', 'REQUEST_URI')), $databasename) : $databasename) : null,
+            !is_null($databasename) ? ($metabasename ? internal_reference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), $databasename) : $databasename) : null,
             !is_null($tablename)    ? ($metabasename && $databasename && $uniquefieldname ? internal_reference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname), $tablename) : $tablename) : null,
             $uniquepart
           )
@@ -660,8 +648,8 @@
         html('tr', array('class'=>join_non_null(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array(),
             $can_update
-            ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('edit'), array('class'=>'editrecord', 'id'=>"edit_record_${tablenamesingular}_${row[$uniquefieldname]}"))
-            : internal_reference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('show'), array('class'=>'showrecord', 'id'=>"show_record_${tablenamesingular}_${row[$uniquefieldname]}"))
+            ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), _('edit'), array('class'=>'editrecord', 'id'=>"edit_record_${tablenamesingular}_${row[$uniquefieldname]}"))
+            : internal_reference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), _('show'), array('class'=>'showrecord', 'id'=>"show_record_${tablenamesingular}_${row[$uniquefieldname]}"))
           ).
           join($columns)
         );
@@ -673,18 +661,18 @@
           html('td', array(), '').
           html('td', array('colspan'=>count($quickadd) - 1),
             html('div', array(),
-              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'id'=>"quickadd_record_$tablenamesingular", 'class'=>'mainsubmit')).
-              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'id'=>"quickadd_record_and_edit_$tablenamesingular", 'class'=>'minorsubmit')).
-              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI'), 'id'=>"full_record_$tablenamesingular"), _('full record')).
+              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'id'=>"quickadd_record_$tablenamesingular", 'class'=>'submit')).
+              html('input', array('type'=>'checkbox', 'class'=>'skipfirstfocus', 'name'=>'addrecordandedit', 'id'=>'addrecordandedit')).
+              html('label', array('for'=>'addrecordandedit', 'class'=>'altsubmit'), _('add record and edit')).
+              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, "field:$foreignfieldname"=>$foreignvalue, 'back'=>get_parameter($_SERVER, 'REQUEST_URI'), 'id'=>"full_record_$tablenamesingular"), _('full record'), array('class'=>'fullrecord')).
               (is_null($foreignvalue) ? '' : html('span', array('class'=>'changeslost'), _('(changes to form fields are lost)')))
-            ).
-            (is_null($uniquevalue) ? '' : ajaxcontent(edit_record('UPDATE', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue)))
+            )
           )
         )
       : html('tr', array(),
           html('td', array('colspan'=>count($header)),
             html('div', array(),
-              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, "field:$foreignfieldname"=>$foreignvalue, 'back'=>parameter('server', 'REQUEST_URI')), _('add record'))
+              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, "field:$foreignfieldname"=>$foreignvalue, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), _('add record'))
             )
           )
         );
@@ -702,14 +690,14 @@
     if (is_null($foreignvalue) || isset($offsets))
       $rows[] =
         html('tr', array(),
-          html('td', array(), is_null($foreignvalue) ? internal_reference(http_parse_query(parameter('server', 'HTTP_REFERER')), 'close', array('class'=>'close')) : '').
+          html('td', array(), is_null($foreignvalue) ? internal_reference(http_parse_url(get_parameter($_SERVER, 'HTTP_REFERER')), 'close', array('class'=>'close')) : '').
           html('td', array('colspan'=>count($header) - 1),
             isset($offsets) ? html('ol', array('class'=>'offsets'), html('li', array(), $offsets)) : ''
           )
         );
 
     return
-      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('action'=>'call_function', 'functionname'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'orderasc'=>$orderasc ? 'on' : '', 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
+      html('div', array('class'=>'ajax', 'id'=>http_url(array('action'=>'call_function', 'functionname'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'orderasc'=>$orderasc ? 'on' : '', 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
         (count($rows) > 0
         ? form(
             html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
@@ -717,16 +705,17 @@
             html('input', array('type'=>'hidden', 'name'=>'tablename', 'value'=>$tablename)).
             html('input', array('type'=>'hidden', 'name'=>'tablenamesingular', 'value'=>$tablenamesingular)).
             html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
-            html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>isset($back) ? $back : parameter('server', 'HTTP_REFERER'))).
+            html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>isset($back) ? $back : get_parameter($_SERVER, 'HTTP_REFERER'))).
             html('table', array('class'=>join_non_null(' ', $interactive ? 'box' : null, 'tablelist')), join($rows)),
             'post'
-          )
+          ).
+          (is_null($uniquevalue) ? '' : ajaxcontent(edit_record('UPDATE', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue)))
         : ''
         )
       );
   }
 
-  function edit_record($privilege, $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $referencedfromfieldname, $back = null) {
+  function edit_record($privilege, $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $referencedfromfieldname) {
     $viewname = table_or_view($metabasename, $databasename, $tablename, $uniquefieldname, $uniquevalue);
     $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, 'SELECT', true);
 
@@ -748,7 +737,7 @@
       if ($field['inedit'])
         $lines[] =
           html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
-          html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), first_non_null(parameter('get', "field:$field[fieldname]"), $privilege == 'INSERT' ? $field['defaultvalue'] : $row[$field['fieldname']]), $privilege == 'SELECT' || ($privilege == 'INSERT' && (!$field['privilege_insert'] || parameter('get', "field:$field[fieldname]"))) || ($privilege == 'UPDATE' && !$field['privilege_update']), true)).
+          html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), first_non_null(get_parameter($_GET, "field:$field[fieldname]", null), $privilege == 'INSERT' ? $field['defaultvalue'] : $row[$field['fieldname']]), $privilege == 'SELECT' || ($privilege == 'INSERT' && (!$field['privilege_insert'] || get_parameter($_GET, "field:$field[fieldname]", null))) || ($privilege == 'UPDATE' && !$field['privilege_update']), true)).
           html('td', array('class'=>'filler'), '');
     }
 
@@ -757,9 +746,17 @@
     $lines[] =
       html('td', array('class'=>'description'), '').
       html('td', array('class'=>'field'),
-        (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$mainaction, 'id'=>"${mainaction}_$tablenamesingular", 'class'=>'mainsubmit')) : '').
-        ($privilege == 'INSERT' && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record_and_edit', 'id'=>"add_record_and_edit_$tablenamesingular", 'class'=>'minorsubmit')) : '').
-        (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $viewname) ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'delete_record', 'id'=>"delete_record_$tablenamesingular", 'class'=>join_non_null(' ', 'mainsubmit', 'delete'))) : '')
+        (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$mainaction, 'id'=>"${mainaction}_$tablenamesingular", 'class'=>'submit')) : '').
+        ($privilege == 'INSERT' && has_grant($privilege, $databasename, $viewname, '?')
+        ? html('input', array('type'=>'checkbox', 'class'=>'skipfirstfocus', 'name'=>'addrecordandedit', 'id'=>'addrecordandedit')).
+          html('label', array('for'=>'addrecordandedit', 'class'=>'altsubmit'), _('add record and edit'))
+        : ''
+        ).
+        (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $viewname)
+        ? html('input', array('type'=>'checkbox', 'class'=>'deleterecord', 'name'=>'deleterecord', 'id'=>'deleterecord')).
+          html('label', array('for'=>'deleterecord', 'class'=>'altsubmit'), _('delete record'))
+        : ''
+        )
       ).
       html('td', array('class'=>'filler'), '');
 
@@ -782,6 +779,7 @@
             );
       }
     }
+    $back = first_non_null(get_parameter($_GET, 'back', null), get_parameter($_SERVER, 'HTTP_REFERER'));
 
     return
       html('div', array('class'=>'box'),
@@ -793,14 +791,14 @@
           html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
           html('input', array('type'=>'hidden', 'name'=>'uniquevalue', 'value'=>$uniquevalue)).
           html('input', array('type'=>'hidden', 'name'=>'referencedfromfieldname', 'value'=>$referencedfromfieldname)).
-          html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back ? $back : parameter('server', 'HTTP_REFERER'))).
+          html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back)).
           html('table', array('class'=>'tableedit'), html('tr', array(), $lines)),
           'post'
         ).
         ($referrers ? html('table', array('class'=>'referringlist'), join($referrers)) : '').
         ($privilege == 'SELECT' || !has_grant($privilege, $databasename, $viewname, '?')
-        ? internal_reference(http_parse_query($back ? $back : parameter('server', 'HTTP_REFERER')), _('close'), array('class'=>'close'))
-        : internal_reference(http_parse_query($back ? $back : parameter('server', 'HTTP_REFERER')), _('cancel'), array('class'=>'cancel'))
+        ? internal_reference(http_parse_url($back), _('close'), array('class'=>'close'))
+        : internal_reference(http_parse_url($back), _('cancel'), array('class'=>'cancel'))
         )
       );
   }
@@ -827,7 +825,7 @@
     $fieldnamesandvalues = array();
     $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname, $privilege);
     while ($field = mysql_fetch_assoc($fields)) {
-      if ($field['inedit']) {
+      if ($field['inedit'] && $field['fieldid'] != $field['uniquefieldid']) {
         $value = call_user_func("formvalue_$field[presentationname]", array_merge($field, array('databasename'=>$databasename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)));
         if ($privilege == 'UPDATE' || !is_null($value))
           $fieldnamesandvalues[$field['fieldname']] = $value;
@@ -835,16 +833,6 @@
     }
 
     return insert_or_update($databasename, $viewname, $fieldnamesandvalues, $uniquefieldname, $uniquevalue);
-  }
-
-  function preg_match1($pattern, $subject, $default = null) {
-    return preg_match($pattern, $subject, $matches) ? (count($matches) == 2 ? $matches[1] : $matches[0]) : $default;
-  }
-
-  function preg_delete($pattern, $subject) {
-    if (!preg_match($pattern, $subject, $matches))
-      return array($subject, null);
-    return array(preg_replace($pattern, '', $subject), $matches[1]);
   }
 
   function mysql_data_reset($results) {
@@ -937,7 +925,7 @@
         ($viewname == $tablename ? '' : 'AND vw.viewname = "<viewname>" ').
         'AND '.$wherepart.
       'ORDER BY fld.fieldid',
-      array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'viewname'=>$viewname, 'username'=>parameter('session', 'username'), 'host'=>parameter('session', 'host'))
+      array('metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'viewname'=>$viewname, 'username'=>get_parameter($_SESSION, 'username'), 'host'=>get_parameter($_SESSION, 'host'))
     );
   }
 
@@ -979,29 +967,48 @@
   }
 
   function set_preference($item, $default) {
-    $value = first_non_null(is_local() ? null : $default, parameter('get', $item) == 'on' ? 1 : null, parameter('get', $item) == 'off' ? 0 : null, parameter('cookie', $item), $default);
-    if ($value !== parameter('cookie', $item)) {
-      parameter('cookie', $item, $value);
-      if (is_local())
-        internal_redirect(http_parse_query(preg_replace("@&$item=\w+@", '', parameter('server', 'REQUEST_URI'))));
+    $value = first_non_null(is_local() ? null : $default, get_parameter($_GET, $item, null) == 'on' ? 1 : null, get_parameter($_GET, $item, null) == 'off' ? 0 : null, get_parameter($_COOKIE, $item, null), $default);
+    if ($value !== get_parameter($_COOKIE, $item, null)) {
+      set_parameter($_COOKIE, $item, $value);
+      if (is_local()) {
+        $parameters = http_parse_url(get_parameter($_SERVER, 'REQUEST_URI'));
+        unset($parameters[$item]);
+        internal_redirect($parameters);
+      }
     }
   }
 
   function forget($usernameandhost) {
-    parameter('cookie', 'lastusernamesandhosts', join_non_null(',', array_diff(explode(',', parameter('cookie', 'lastusernamesandhosts')), array($usernameandhost))));
+    set_parameter($_COOKIE, 'lastusernamesandhosts', join_non_null(',', array_diff(explode(',', get_parameter($_COOKIE, 'lastusernamesandhosts', null)), array($usernameandhost))));
+  }
+
+  function session_begin() {
+    ini_set('session.use_only_cookies', true);
+    session_set_cookie_params(0, preg_match1('@^.*/@', get_parameter($_SERVER, 'SCRIPT_NAME')));
+    session_save_path(file_name(array('session')));
+    session_start();
+  }
+
+  function session_end() {
+    if (ini_get('session.use_cookies')) {
+      $cookie_params = session_get_cookie_params();
+      setcookie(session_name(), '', time() - 24 * 60 * 60, $cookie_params['path'], $cookie_params['domain'], $cookie_params['secure'], $cookie_params['httponly']);
+    }
+    session_unset();
+    session_destroy();
+    $_SESSION = array();
   }
 
   function login($username, $host, $password, $language) {
-    parameter('session', 'username', $username);
-    parameter('session', 'host'    , $host);
-    parameter('session', 'password', $password);
-    parameter('cookie', 'language', $language);
-    parameter('cookie', 'lastusernamesandhosts', join_non_null(',', array_diff(array_unique(array_merge(array("$username@$host"), array_diff(explode(',', parameter('cookie', 'lastusernamesandhosts')), array("$username@$host")))), array(''))));
+    set_parameter($_SESSION, 'username', $username);
+    set_parameter($_SESSION, 'host'    , $host);
+    set_parameter($_SESSION, 'password', $password);
+    set_parameter($_COOKIE, 'language', $language);
+    set_parameter($_COOKIE, 'lastusernamesandhosts', join_non_null(',', array_diff(array_unique(array_merge(array("$username@$host"), array_diff(explode(',', get_parameter($_COOKIE, 'lastusernamesandhosts', null)), array("$username@$host")))), array(''))));
   }
 
   function logout($error = null) {
-    parameter('session', null, array());
-    session_destroy();
+    session_end();
     internal_redirect(array('action'=>'login', 'error'=>$error));
   }
 
@@ -1009,9 +1016,9 @@
     static $presentationnames = array();
     if ($presentationnames)
       return $presentationnames;
-    $dir = opendir('presentation');
+    $dir = opendir(file_name(array('presentation')));
     while ($file = readdir($dir)) {
-      if (preg_match('@^(.*)\.php$@', $file, $matches)) {
+      if (preg_match('@^([a-z]+)\.php$@', $file, $matches)) {
         $presentationnames[] = $matches[1];
         include_presentation($matches[1]);
       }
@@ -1038,7 +1045,7 @@
             "/* $function_prefix[1]_$presentationname */\n".
             @call_user_func("$function_prefix[1]_$presentationname");
 
-        $metabasename = parameter('get', 'metabasename');
+        $metabasename = get_parameter($_GET, 'metabasename', null);
         if ($metabasename) {
           include_phpfile(array('metabase', "$metabasename.php"));
           $extra[] =
@@ -1162,7 +1169,7 @@
         ($fieldname    == '*' ? '' : 'LEFT JOIN information_schema.column_privileges cp ON cp.privilege_type = "<privilege>" AND cp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") AND cp.table_schema = "<databasename>" AND cp.table_name = "<tablename>" '.($fieldname == '?' ? '' : 'AND cp.column_name = "<fieldname>" ')).
         'WHERE '.($databasename == '?' || $databasename == '*' ? '' : 'sc.schema_name = "<databasename>" AND ').'(up.privilege_type IS NOT NULL OR sp.privilege_type IS NOT NULL '.($tablename == '*' ? '' : 'OR tp.privilege_type IS NOT NULL ').($fieldname == '*' ? '' : 'OR cp.privilege_type IS NOT NULL').') '.
         'LIMIT 1',
-        array('databasename'=>$databasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname, 'username'=>parameter('session', 'username'), 'host'=>parameter('session', 'host'), 'privilege'=>$privilege)
+        array('databasename'=>$databasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname, 'username'=>get_parameter($_SESSION, 'username'), 'host'=>get_parameter($_SESSION, 'host'), 'privilege'=>$privilege)
       )
     ) > 0;
   }
@@ -1184,7 +1191,7 @@
         'LEFT JOIN information_schema.user_privileges   up ON up.privilege_type = "<privilege>" AND up.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
         'WHERE table_schema NOT IN ("mysql", "information_schema") AND sp.privilege_type = "<privilege>" AND sp.grantee IN ("\'<username>\'@\'<host>\'", "\'<username>\'@\'%\'") '.
       ')',
-      array('username'=>parameter('session', 'username'), 'host'=>parameter('session', 'host'), 'privilege'=>$privilege)
+      array('username'=>get_parameter($_SESSION, 'username'), 'host'=>get_parameter($_SESSION, 'host'), 'privilege'=>$privilege)
     );
     $databases = array();
     while ($grant = mysql_fetch_assoc($grants)) {
@@ -1216,11 +1223,8 @@
     }
   } 
 
-  function do_action() {
-    ini_set('session.use_only_cookies', true);
-    session_set_cookie_params(7 * 24 * 60 * 60);
-    session_save_path('session');
-    session_start();
+  function init() {
+    session_begin();
 
     umask(0177); // => maximum = rw-.---.---
 
@@ -1228,43 +1232,38 @@
     set_preference('ajaxy', 1);
     set_preference('logsy', 0);
 
-    if (parameter('cookie', 'logsy')) {
-      if (parameter('get') && parameter('post'))
+    if (get_parameter($_COOKIE, 'logsy', 0)) {
+      if ($_GET && $_POST)
         error(_('both get and post parameters'));
-      $parametersource = parameter('post') ? 'post' : 'get';
-      add_log($parametersource, $parametersource.': '.html('div', array('class'=>'arrayshow'), array_show(parameter($parametersource))));
-  //  add_log('cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show(parameter('cookie'))));
+      $parametersource = $_POST ? 'post' : 'get';
+      add_log($parametersource, $parametersource.': '.html('div', array('class'=>'arrayshow'), array_show(array_merge($_POST, $_GET))));
+  //  add_log('cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
     }
 
-    $languagename = !parameter('get', 'language') && parameter('get', 'metabasename') ? query1field('SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>parameter('get', 'metabasename'))) : null;
+    $languagename = !get_parameter($_GET, 'language', null) && get_parameter($_GET, 'metabasename', null) ? query1field('SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>get_parameter($_GET, 'metabasename'))) : null;
 
     set_best_locale(
       preg_replace(
         array('@\.[a-z][a-z0-9\-]*@', '@_([a-z]+)@ie'       ),
         array(''                    , '"-".strtolower("$1")'),
         join_non_null(',',
-          preg_match('/^([^\.]+)/', parameter('get', 'language'),    $matches) ? $matches[1].';q=4.0' : null,
+          preg_match('/^([^\.]+)/', get_parameter($_GET, 'language', null),    $matches) ? $matches[1].';q=4.0' : null,
           preg_match('/^([^\.]+)/', $languagename,                   $matches) ? $matches[1].';q=3.0' : null,
-          preg_match('/^([^\.]+)/', parameter('cookie', 'language'), $matches) ? $matches[1].';q=2.0' : null,
-          parameter('server', 'HTTP_ACCEPT_LANGUAGE'),
+          preg_match('/^([^\.]+)/', get_parameter($_COOKIE, 'language', null), $matches) ? $matches[1].';q=2.0' : null,
+          get_parameter($_SERVER, 'HTTP_ACCEPT_LANGUAGE', null),
           'en;q=0.0'
         )
       ),
       join_non_null(',',
-        preg_match('/\.(.*?)$/', parameter('get', 'language'),    $matches) ? $matches[1].';q=4.0' : null,
+        preg_match('/\.(.*?)$/', get_parameter($_GET, 'language', null),    $matches) ? $matches[1].';q=4.0' : null,
         preg_match('/\.(.*?)$/', $languagename,                   $matches) ? $matches[1].';q=3.0' : null,
-        preg_match('/\.(.*?)$/', parameter('cookie', 'language'), $matches) ? $matches[1].';q=2.0' : null,
-        parameter('server', 'HTTP_ACCEPT_CHARSET'),
+        preg_match('/\.(.*?)$/', get_parameter($_COOKIE, 'language', null), $matches) ? $matches[1].';q=2.0' : null,
+        get_parameter($_SERVER, 'HTTP_ACCEPT_CHARSET', null),
         '*;q=0.0'
       )
     );
 
     bindtextdomain('messages', './locale');
     textdomain('messages');
-
-    $action = first_non_null(parameter('get_or_post', 'action'), 'login');
-
-    if (!include_phpfile(array('action', "$action.php")))
-      error('unknown action '.$action);
   }
 ?>

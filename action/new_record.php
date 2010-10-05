@@ -18,16 +18,17 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  $metabasename            = parameter('get', 'metabasename');
-  $databasename            = parameter('get', 'databasename');
-  $tablename               = parameter('get', 'tablename');
-  $tablenamesingular       = parameter('get', 'tablenamesingular');
-  $uniquefieldname         = parameter('get', 'uniquefieldname');
-  $uniquevalue             = parameter('get', 'uniquevalue');
-  $referencedfromfieldname = parameter('get', 'referencedfromfieldname');
-  $back                    = parameter('get', 'back');
+  include('functions.php');
 
-  page('new record', breadcrumbs($metabasename, $databasename, $tablename, $uniquefieldname, $uniquevalue),
-    edit_record('INSERT', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $referencedfromfieldname, $back ? $back : parameter('server', 'HTTP_REFERER'))
+  init();
+
+  $metabasename            = get_parameter($_GET, 'metabasename');
+  $databasename            = get_parameter($_GET, 'databasename');
+  $tablename               = get_parameter($_GET, 'tablename');
+  $tablenamesingular       = get_parameter($_GET, 'tablenamesingular');
+  $referencedfromfieldname = get_parameter($_GET, 'referencedfromfieldname', null);
+
+  page('new record', breadcrumbs($metabasename, $databasename, $tablename),
+    edit_record('INSERT', $metabasename, $databasename, $tablename, $tablenamesingular, null, null, $referencedfromfieldname)
   );
 ?>

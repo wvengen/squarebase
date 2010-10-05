@@ -18,24 +18,27 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  $metabasename            = parameter('post', 'metabasename');
-  $databasename            = parameter('post', 'databasename');
-  $tablename               = parameter('post', 'tablename');
-  $tablenamesingular       = parameter('post', 'tablenamesingular');
-  $uniquefieldname         = parameter('post', 'uniquefieldname');
-  $uniquevalue             = parameter('post', 'uniquevalue');
-  $referencedfromfieldname = parameter('post', 'referencedfromfieldname');
-  $back                    = parameter('post', 'back');
+  include('functions.php');
+
+  init();
+
+  $metabasename            = get_parameter($_POST, 'metabasename');
+  $databasename            = get_parameter($_POST, 'databasename');
+  $tablename               = get_parameter($_POST, 'tablename');
+  $tablenamesingular       = get_parameter($_POST, 'tablenamesingular');
+  $uniquefieldname         = get_parameter($_POST, 'uniquefieldname');
+  $addrecordandedit        = get_parameter($_POST, 'addrecordandedit', null);
+  $back                    = get_parameter($_POST, 'back', null);
+  $ajax                    = get_parameter($_POST, 'ajax', null);
 
   $viewname = table_or_view($metabasename, $databasename, $tablename);
 
-  $uniquevalue = insert_or_update_from_formvalues($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, $uniquevalue, 'UPDATE');
+  $uniquevalue = insert_or_update_from_formvalues($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, null, 'INSERT');
 
-  $ajax = parameter('post', 'ajax');
   if ($ajax)
-    parameter('post', 'ajax', preg_replace('@\bvalue=\d+\b@', '', parameter('post', 'ajax'))."&value=$uniquevalue");
-  elseif ($referencedfromfieldname)
-    parameter('post', 'back', preg_replace('@\bback=@', "field:$referencedfromfieldname=$uniquevalue&back=", parameter('post', 'back')));
+    set_parameter($_POST, 'ajax', preg_replace('@\bvalue=\d+\b@', '', $ajax)."&value=$uniquevalue".($addrecordandedit ? "&uniquevalue=$uniquevalue" : ''));
+  elseif ($addrecordandedit)
+    internal_redirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
 
   back();
 ?>

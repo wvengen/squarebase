@@ -19,7 +19,7 @@
   }
 
   function formvalue_varchar($field) {
-    $value = parameter('post', "field:$field[fieldname]");
+    $value = get_parameter($_POST, "field:$field[fieldname]", null);
     return $value == '' ? null : $value;
   }
 

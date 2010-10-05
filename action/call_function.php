@@ -18,5 +18,9 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  call_function(parameter('server', 'REQUEST_URI'));
+  include('functions.php');
+
+  init();
+
+  call_function(get_parameter($_SERVER, 'REQUEST_URI'));
 ?>

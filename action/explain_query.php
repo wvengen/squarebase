@@ -18,7 +18,11 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  $query = parameter('get', 'query');
+  include('functions.php');
+
+  init();
+
+  $query = get_parameter($_GET, 'query');
 
   $explanations = query('EXPLAIN EXTENDED '.$query);
   query('SHOW WARNINGS');

@@ -18,10 +18,10 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  //rules are in local/<locale>/rules_singular_plural.txt
-  //a rule has the form "body/suffixsingular/suffixplural"
+  //rules are in locale/<locale>/rules_singular_plural.txt
+  //a rule has the form "<body>/<suffixsingular>/<suffixplural>", so the singular is "...<body><suffixsingular>" and the plural is "...<body><suffixplural>"
   //backrefences are allowed
-  //if a backrefence references a group in the other suffix, use the syntax \<number>=(<group>), so the regexp will contain the group and the replacement the backreference
+  //if a backrefence references a group in the other suffix, use the syntax \<number>=(<group>), so the regexp can use the group and the replacement the backreference
 
   //external functions
 
@@ -60,7 +60,7 @@
         list($body, $suffixsingular, $suffixplural) = explode('/', $rule);
         list($from, $to) = $fromquantity == 1 ? array($suffixsingular, $suffixplural) : array($suffixplural, $suffixsingular);
         //\<number>=(<group>) => (<group>)
-        //\<number> => \<number+1> beacuse an extra group ($body) is prepended
+        //\<number> => \<number+1> because an extra group ($body) is prepended
         $from = preg_replace('@(\\\\)(\d+)(=(\(.*?\)))?@e', "'\\3' ? '\\4' : '\\1'.(\\2 + 1)", $from);
         if (preg_match("@($body)$from$@i", $noun)) {
           //\<number>=(<group>) and \<number> => \<number+1>

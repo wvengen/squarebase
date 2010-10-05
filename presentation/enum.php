@@ -31,7 +31,7 @@
   }
 
   function formvalue_enum($field) {
-    return parameter('post', "field:$field[fieldname]");
+    return get_parameter($_POST, "field:$field[fieldname]", null);
   }
 
   function list_enum($metabasename, $databasename, $field, $value) {

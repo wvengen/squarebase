@@ -18,10 +18,12 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  $databasename = parameter('post', 'databasename');
-  $metabasename = parameter('post', 'metabasename');
-  if (!$metabasename)
-    error(_('no name given for the metabase'));
+  include('functions.php');
+
+  init();
+
+  $databasename = get_parameter($_POST, 'databasename');
+  $metabasename = get_parameter($_POST, 'metabasename');
 
   query('DROP DATABASE IF EXISTS `<metabasename>`', array('metabasename'=>$metabasename));
 
@@ -100,7 +102,7 @@
     array('metabasename'=>$metabasename)
   );
 
-  insert_or_update($metabasename, 'languages', array('languagename'=>parameter('post', 'language')));
+  insert_or_update($metabasename, 'languages', array('languagename'=>get_parameter($_POST, 'language')));
 
   insert_or_update($metabasename, 'databases', array('databasename'=>$databasename));
 
@@ -120,16 +122,16 @@
   $tableids = array();
   while ($table = mysql_fetch_assoc($tables)) {
     $tablename = $table['table_name'];
-    if (parameter('post', "$tablename:viewfortable") && parameter('post', "$tablename:possibleviewfortable"))
-      insert_or_update($metabasename, 'views', array('viewname'=>$tablename, 'tableid'=>$tableids[parameter('post', "$tablename:possibleviewfortable")]));
+    if (get_parameter($_POST, "$tablename:viewfortable", null) && get_parameter($_POST, "$tablename:possibleviewfortable", null))
+      insert_or_update($metabasename, 'views', array('viewname'=>$tablename, 'tableid'=>$tableids[get_parameter($_POST, "$tablename:possibleviewfortable")]));
     else
-      $tableids[$tablename] = insert_or_update($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>parameter('post', "$tablename:singular"), 'plural'=>parameter('post', "$tablename:plural"), 'intablelist'=>parameter('post', "$tablename:intablelist") == 'on'));
+      $tableids[$tablename] = insert_or_update($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>get_parameter($_POST, "$tablename:singular"), 'plural'=>get_parameter($_POST, "$tablename:plural"), 'intablelist'=>get_parameter($_POST, "$tablename:intablelist", null) == 'on'));
   }
 
   $errors = array();
   for (mysql_data_reset($tables); $table = mysql_fetch_assoc($tables); ) {
     $tablename = $table['table_name'];
-    if (!parameter('post', "$tablename:viewfortable")) {
+    if (!get_parameter($_POST, "$tablename:viewfortable", null)) {
       $tableid = $tableids[$tablename];
 
       $indescs = $inlists = $inedits = 0;
@@ -143,19 +145,19 @@
       while ($field = mysql_fetch_assoc($fields)) {
         $fieldname = $field['column_name'];
 
-        $foreigntablename = parameter('post', "$tablename:$fieldname:foreigntablename");
+        $foreigntablename = get_parameter($_POST, "$tablename:$fieldname:foreigntablename", null);
 
-        $indesc = parameter('post', "$tablename:$fieldname:indesc") ? true : false;
-        $inlist = parameter('post', "$tablename:$fieldname:inlist") ? true : false;
-        $inedit = parameter('post', "$tablename:$fieldname:inedit") ? true : false;
+        $indesc = get_parameter($_POST, "$tablename:$fieldname:indesc", null) ? true : false;
+        $inlist = get_parameter($_POST, "$tablename:$fieldname:inlist", null) ? true : false;
+        $inedit = get_parameter($_POST, "$tablename:$fieldname:inedit", null) ? true : false;
 
-        $fieldid = insert_or_update($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>parameter('post', "$tablename:$fieldname:title"), 'type'=>$field['column_type'], 'presentationid'=>$presentationids[parameter('post', "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
+        $fieldid = insert_or_update($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>get_parameter($_POST, "$tablename:$fieldname:title"), 'type'=>$field['column_type'], 'presentationid'=>$presentationids[get_parameter($_POST, "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
 
         $indescs += $indesc;
         $inlists += $inlist;
         $inedits += $inedit;
 
-        if (parameter('post', "$tablename:primary") == $fieldname)
+        if (get_parameter($_POST, "$tablename:primary") == $fieldname)
           query('UPDATE `<metabasename>`.tables SET uniquefieldid = <fieldid> WHERE tableid = <tableid>', array('metabasename'=>$metabasename, 'fieldid'=>$fieldid, 'tableid'=>$tableid));
       }
       if (!$indescs)

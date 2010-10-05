@@ -18,6 +18,10 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
+  include('functions.php');
+
+  init();
+
   $metabases = all_databases();
   $rows = array(html('th', array('class'=>'filler'), _('database')).html('th', array('class'=>'secondary'), _('metabase')).html('th', array(), ''));
   $links = array();

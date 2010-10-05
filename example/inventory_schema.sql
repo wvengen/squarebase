@@ -23,8 +23,8 @@ CREATE TABLE inventory.employees (
 CREATE TABLE inventory.usages (
    usageID      INT(11)      NOT NULL AUTO_INCREMENT,
    dateAcquired DATE         NOT NULL,
-   computerID   INT(11)      NOT NULL,
-   employeeID   INT(11)      NOT NULL,
+   computerID   INT(11)      NOT NULL REFERENCES computers (computerID) ON DELETE CASCADE,
+   employeeID   INT(11)      NOT NULL REFERENCES employees (employeeID) ON DELETE CASCADE,
    comments     VARCHAR(200) NOT NULL,
    PRIMARY KEY (usageID),
    KEY (computerID),

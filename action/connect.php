@@ -18,24 +18,29 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  $usernameandhost = parameter('get', 'lastusernameandhost');
-  if (!$usernameandhost)
-    $usernameandhost = parameter('get', 'usernameandhost');
-  if (preg_match('@^([^\@]+)\@([^\@]+)$@', $usernameandhost, $match)) {
+  include('functions.php');
+
+  init();
+
+  $lastusernameandhost = get_parameter($_GET, 'lastusernameandhost', null);
+  $usernameandhost     = get_parameter($_GET, 'usernameandhost', null);
+  $password            = get_parameter($_GET, 'password');
+  $language            = get_parameter($_GET, 'language');
+  $next                = get_parameter($_GET, 'next', null);
+
+  $bestusernameandhost = first_non_null($lastusernameandhost, $usernameandhost);
+  if (preg_match('@^([^\@]+)\@([^\@]+)$@', $bestusernameandhost, $match)) {
     $username = $match[1];
     $host     = $match[2];
   }
-  elseif ($usernameandhost) {
-    $username = $usernameandhost;
+  elseif ($bestusernameandhost) {
+    $username = $bestusernameandhost;
     $host     = 'localhost';
   }
   else
     internal_redirect(array('action'=>'login', 'error'=>_('no username@host given')));
-  $password = parameter('get', 'password');
-  $language = parameter('get', 'language');
 
   login($username, $host, $password, $language);
 
-  $next = parameter('get', 'next');
-  internal_redirect(first_non_null(http_parse_query($next), array('action'=>'index')));
+  internal_redirect(first_non_null(http_parse_url($next), array('action'=>'index')));
 ?>

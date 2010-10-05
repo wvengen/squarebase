@@ -33,15 +33,13 @@ th { text-align: left; background-color: #fff; font-weight: normal; font-style: 
 th.heading { font-weight: bold; font-style: normal; font-size: medium; }
 tr.rowodd { background-color: #ddd; }
 tr.rowodd td.top, tr.roweven { background-color: #eee; }
-tr.list:hover { background-color: #ffc; }
-tr.list:hover td.top { background-color: #eee; }
-tr.list td.top:hover { background-color: #ffc; }
+td.active { background-color: #ffc; }
 td.description { width: 0.1em; height: 1.5em; }
 td.number { text-align: right; }
 th.center, td.center { text-align: center; }
 th.filler, td.filler { width: 99%; }
 td div, td ul { white-space: nowrap; }
-.help { color: #999; font-size: small; position: relative; bottom: 0.4em; }
+.help { color: #999; font-size: x-small; position: relative; bottom: 0.4em; }
 
 ul, ol { padding: 0.5em 2.5em; }
 ul.compact { margin: 0; padding: 0; overflow: hidden; }
@@ -61,11 +59,10 @@ input.readonly, select.readonly { border-color: #ccc; background-color: #eee; co
 ul.minimal { margin: 0; padding: 0; }
 ul.minimal li { list-style-type: none; }
 ul.minimal li .radio { margin-right: 0.3em; }
-input.mainsubmit, input.minorsubmit { border: 0.15em solid #ccc; border-color: #ccc #666 #666 #ccc; background-color: #eee; color: #33f; padding: 0 0.2em; }
-input.mainsubmit, input.minorsubmit, .cancel { margin-right: 1em; }
-input.mainsubmit:hover, input.minorsubmit:hover { background-color: #ddd; }
-input.mainsubmit.delete { margin-left: 5em; }
-input.mainsubmit.delete:hover, .cancel:hover, .drop:hover, .forget:hover, .close:hover { background-color: #f00 !important; color: #fff !important; }
+input.submit, input.button { border: 0.15em solid #ccc; border-color: #ccc #666 #666 #ccc; background-color: #eee; color: #33f; padding: 0 0.2em; }
+input.submit, input.button, .altsubmit, .fullrecord, .cancel { margin-right: 1em; }
+input.submit:hover, input.button:hover { background-color: #ddd; }
+.altsubmit:hover, .cancel:hover, .drop:hover, .forget:hover, .close:hover { background-color: #f00 !important; color: #fff !important; }
 .cancel, .close { padding: 0.1em 0.5em; }
 .drop { margin-left: 1em; }
 .inlistforquickadd { background-color: #fda; }
@@ -94,10 +91,10 @@ input.title { width: 8em; }
 
 .important { font-weight: bold; }
 
-#error { padding: 0.5em; margin-bottom: 0.5em; }
-#warnings { padding: 0; }
-#warnings li { list-style-type: none; }
-#error, #warnings, .warning { font-weight: bold; background-color: #f00; color: #fff; }
+.error { padding: 0.5em; margin-bottom: 0.5em; }
+.warnings { padding: 0; }
+.warnings li { list-style-type: none; }
+.error, .warnings, .warning { font-weight: bold; background-color: #f00; color: #fff; }
 
 .trace { white-space: nowrap; }
 

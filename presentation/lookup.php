@@ -6,7 +6,7 @@
         $likeness = array();
         foreach ($alltablenames as $onetablename=>$oneprimarykeyfieldname) {
           $likeness[$onetablename] =
-            (preg_match("@$oneprimarykeyfieldname$@i", $fieldname) ? 200 + strlen($oneprimarykeyfieldname) : null)
+            (preg_match("@$oneprimarykeyfieldname$@i", $fieldname) ? 200 + strlen($oneprimarykeyfieldname) - levenshtein($onetablename, $fieldname) : null)
           + (preg_match("@$onetablename$@i", $fieldname) ? 100 + strlen($onetablename) : null);
         }
         arsort($likeness);
@@ -23,7 +23,7 @@
 
   function probability_lookup($field) {
     return 
-      ($field['referenced_table_name'] && linkedtable_lookup($field['table_name'], $field['column_name'], $field['referenced_table_name'])
+      ($field['referenced_table_name'] && linkedtable_lookup($field['table_name'], $field['column_name'], $field['referenced_table_name'], $field['alltablenames'])
       ? 1.0
       : (preg_match('@^(int|integer)\b@', $field['column_type']) && linkedtable_lookup($field['table_name'], $field['column_name'], null, $field['alltablenames'])
         ? 0.6
@@ -57,16 +57,20 @@
       $options[] = html('option', array_merge(array('value'=>$reference['_id']), $selected ? array('selected'=>'selected') : array()), $reference['_descriptor']);
     }
     if (!$readonly)
-      array_unshift($options, html('option', array_merge(array('value'=>''), $oneselected ? array() : array('selected'=>'selected')), ''));
+      array_unshift($options, html('option', array_merge(array('value'=>''), $value ? array() : array('selected'=>'selected')), ''));
+    if (!$oneselected && $value) {
+      array_unshift($options, html('option', array_merge(array('value'=>$value), array('selected'=>'selected')), $value));
+      $selected_descriptor = $value;
+    }
     return
-      html('div', array('class'=>'ajax', 'id'=>http_build_query(array('functionname'=>'ajax_lookup', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'fieldname'=>$fieldname, 'value'=>$value, 'presentationname'=>$presentationname, 'foreigntablename'=>$foreigntablename, 'foreigntablenamesingular'=>$foreigntablenamesingular, 'foreignuniquefieldname'=>$foreignuniquefieldname, 'nullallowed'=>$nullallowed, 'defaultvalue'=>$defaultvalue, 'readonly'=>$readonly, 'extra'=>$extra))),
+      html('div', array('class'=>'ajax', 'id'=>http_url(array('action'=>'call_function', 'functionname'=>'ajax_lookup', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'fieldname'=>$fieldname, 'value'=>$value, 'presentationname'=>$presentationname, 'foreigntablename'=>$foreigntablename, 'foreigntablenamesingular'=>$foreigntablenamesingular, 'foreignuniquefieldname'=>$foreignuniquefieldname, 'nullallowed'=>$nullallowed, 'defaultvalue'=>$defaultvalue, 'readonly'=>$readonly, 'extra'=>$extra))),
         html('div', array(),
           html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>join_non_null(' ', $presentationname, $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options)).
           ($extra
-          ? (has_grant('INSERT', $databasename, $foreigntablename, '?') ? internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'referencedfromfieldname'=>$fieldname, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablenamesingular), array('class'=>'newrecordlookup')) : '').
+          ? (has_grant('INSERT', $databasename, $foreigntablename, '?') ? internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'referencedfromfieldname'=>$fieldname, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablenamesingular), array('class'=>'newrecordlookup')) : '').
             (has_grant('UPDATE', $databasename, $foreigntablename, '?')
-            ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'uniquevalue'=>$value, 'referencedfromfieldname'=>$fieldname, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('edit %s %s'), $foreigntablenamesingular, $selected_descriptor), array('class'=>join_non_null(' ', 'existingrecord', $value ? null : 'hidden')))
-            : internal_reference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'uniquevalue'=>$value, 'referencedfromfieldname'=>$fieldname, 'back'=>parameter('server', 'REQUEST_URI')), sprintf(_('show %s %s'), $foreigntablenamesingular, $selected_descriptor), array('class'=>join_non_null(' ', 'existingrecord', $value ? null : 'hidden')))
+            ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'uniquevalue'=>$value, 'referencedfromfieldname'=>$fieldname, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), sprintf(_('edit %s %s'), $foreigntablenamesingular, $selected_descriptor), array('class'=>join_non_null(' ', 'existingrecord', $value ? null : 'hidden')))
+            : internal_reference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'uniquevalue'=>$value, 'referencedfromfieldname'=>$fieldname, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), sprintf(_('show %s %s'), $foreigntablenamesingular, $selected_descriptor), array('class'=>join_non_null(' ', 'existingrecord', $value ? null : 'hidden')))
             ).
             html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)'))
           : ''
@@ -80,7 +84,7 @@
   }
 
   function formvalue_lookup($field) {
-    $value = parameter('post', "field:$field[fieldname]");
+    $value = get_parameter($_POST, "field:$field[fieldname]", null);
     return $value == '' ? null : $value;
   }
 
@@ -89,7 +93,7 @@
       ($field['thisrecord']
       ? $field['descriptor']
       : ($field['descriptor']
-        ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$field['foreigntablename'], 'tablenamesingular'=>$field['foreigntablenamesingular'], 'uniquefieldname'=>$field['foreignuniquefieldname'], 'uniquevalue'=>$value, 'back'=>parameter('server', 'REQUEST_URI')), $field['descriptor']) 
+        ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$field['foreigntablename'], 'tablenamesingular'=>$field['foreigntablenamesingular'], 'uniquefieldname'=>$field['foreignuniquefieldname'], 'uniquevalue'=>$value, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), $field['descriptor']) 
         : htmlentities($value)
         )
       );

@@ -18,7 +18,7 @@
   }
 
   function formvalue_boolean($field) {
-    return parameter('post', "field:$field[fieldname]") ? 1 : 0;
+    return get_parameter($_POST, "field:$field[fieldname]", null) ? 1 : 0;
   }
 
   function list_boolean($metabasename, $databasename, $field, $value) {

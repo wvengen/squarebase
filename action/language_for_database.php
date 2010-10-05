@@ -18,7 +18,11 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  $databasename = parameter('get', 'databasename');
+  include('functions.php');
+
+  init();
+
+  $databasename = get_parameter($_GET, 'databasename');
 
   $tables = query('SELECT table_name FROM information_schema.tables WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
   if ($tables) {
@@ -37,7 +41,7 @@
         inputrow(_('language'), select_locale(), _('The language for displaying dates, numbers, etc in this database.'))
       ).
       html('p', array(),
-        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'form_metabase_for_database', 'class'=>'mainsubmit'))
+        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'form_metabase_for_database', 'class'=>'submit'))
       )
     )
   );

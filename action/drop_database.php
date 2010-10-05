@@ -18,22 +18,26 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  $databasename = parameter('get', 'databasename');
+  include('functions.php');
+
+  init();
+
+  $databasename = get_parameter($_GET, 'databasename', null);
+
   if ($databasename) {
-    page('confirm drop database', breadcrumbs(null, $databasename),
+    page('drop database', breadcrumbs(null, $databasename),
       form(
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
-        html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>parameter('server', 'HTTP_REFERER'))).
+        html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>get_parameter($_SERVER, 'HTTP_REFERER'))).
         html('p', array(), sprintf(_('Drop database %s?'), html('strong', array(), $databasename))).
-        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'drop_database', 'class'=>'mainsubmit')).
-        internal_reference(http_parse_query(parameter('server', 'HTTP_REFERER')), 'cancel', array('class'=>'cancel')),
+        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'drop_database', 'class'=>'submit')).
+        internal_reference(http_parse_url(get_parameter($_SERVER, 'HTTP_REFERER')), 'cancel', array('class'=>'cancel')),
         'post'
       )
     );
   }
-  else {
-    $databasename = parameter('post', 'databasename');
-    query('DROP DATABASE `<databasename>`', array('databasename'=>$databasename));
-    back();
-  }
+
+  $databasename = get_parameter($_POST, 'databasename');
+  query('DROP DATABASE `<databasename>`', array('databasename'=>$databasename));
+  back();
 ?>

@@ -105,8 +105,51 @@ jQuery.fn.enhance_form = function() {
     ).
   end().
 
+  find('.altsubmit').
+    each(
+      function() {
+        $(this).
+        after(
+          $('<input>').
+          attr('type', 'button').
+          attr('name', 'altaction').
+          attr('value', $(this).text()).
+          addClass('button').
+          click(
+            function() {
+              $(this).
+              closest('form').
+              find('.altsubmit').
+              prev().
+              attr('checked', true);
+
+              $(this).
+              closest('form').
+              submit();
+            }
+          )
+        ).
+        add($(this).prev()).
+        hide();
+      }
+    ).
+    closest('form').
+      find('.submit').
+        click(
+          function() {
+            $(this).
+            closest('form').
+            find('.altsubmit').
+            prev().
+            attr('checked', false);
+          }
+        ).
+      end().
+    end().
+  end().
+
   find('input, select').
-  filter(':enabled:not(:submit):not(.readonly):not(.skipfirstfocus):not(.list)').
+  filter(':enabled:not(:submit):not(:button):not(.readonly):not(.skipfirstfocus):not(.list)').
   eq(0).
   focus();
 
@@ -176,7 +219,10 @@ jQuery.fn.ajaxsubmit = function() {
         $(this).
         formhash(),
 
-        function() {
+        function(responseText, textStatus, XMLHttpRequest) {
+          if (!responseText.regexmatch(' id="content"'))
+            $(this).
+            html('<div class="error">' + responseText + '</div>');
           $(this).
           hidelogs().
           find('.ajax').
@@ -205,19 +251,6 @@ jQuery.fn.ajaxify = function() {
 
   find('.changeslost').
     css('display', 'none').
-  end().
-
-  find(':input[type=submit]:not(.ajaxified)').
-    addClass('ajaxified').
-    click(
-      function() {
-        // the following line is needed because the name=value of the submit button isn't included in form.serialize()/form.formhash()
-        // because there is no way to know which submit button is pressed
-        $(this).
-        append('<input type="hidden" name="action" value="' + $(this).val() + '"/>');
-        return true;
-      }
-    ).
   end().
 
   find('.cancel:not(.ajaxified), .close:not(.ajaxified)').
@@ -292,7 +325,10 @@ jQuery.fn.ajaxify = function() {
 
           null,
 
-          function() {
+          function(responseText, textStatus, XMLHttpRequest) {
+            if (!responseText.regexmatch(' id="content"'))
+              $(this).
+              html('<div class="error">' + responseText + '</div>');
             $(this).
             hidelogs().
             ajaxify().
@@ -414,11 +450,23 @@ ready(
       hide().
     end().
     find('.presentationname[value=lookup]').
-    each(
-      function() {
-        $(this).next('.foreigntablename').show();
-      }
-    );
+      each(
+        function() {
+          $(this).next('.foreigntablename').show();
+        }
+      ).
+    end().
+    
+    find('td.row').
+      hover(
+        function() {
+          $(this).
+          closest('tr').
+            find('td').
+            toggleClass('active');
+        }
+      ).
+    end();
 
     /* jquery_document_ready_* */
   }

@@ -18,15 +18,19 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  $metabasename      = parameter('get', 'metabasename');
-  $databasename      = parameter('get', 'databasename');
-  $tablename         = parameter('get', 'tablename');
-  $tablenamesingular = parameter('get', 'tablenamesingular');
-  $uniquefieldname   = parameter('get', 'uniquefieldname');
-  $limit             = parameter('get', 'limit');
-  $offset            = first_non_null(parameter('get', 'offset'), 0);
-  $orderfieldname    = parameter('get', 'orderfieldname');
-  $orderasc          = first_non_null(parameter('get', 'orderasc'), 'on') == 'on';
+  include('functions.php');
+
+  init();
+
+  $metabasename      = get_parameter($_GET, 'metabasename');
+  $databasename      = get_parameter($_GET, 'databasename');
+  $tablename         = get_parameter($_GET, 'tablename');
+  $tablenamesingular = get_parameter($_GET, 'tablenamesingular');
+  $uniquefieldname   = get_parameter($_GET, 'uniquefieldname');
+  $limit             = get_parameter($_GET, 'limit', null);
+  $offset            = get_parameter($_GET, 'offset', null);
+  $orderfieldname    = get_parameter($_GET, 'orderfieldname', null);
+  $orderasc          = get_parameter($_GET, 'orderasc', 'on') == 'on';
 
   page('show table', breadcrumbs($metabasename, $databasename, $tablename, $uniquefieldname),
     list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, null, $orderfieldname, $orderasc, null, null, null, true)

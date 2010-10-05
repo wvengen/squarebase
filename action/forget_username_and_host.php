@@ -18,7 +18,11 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  $usernameandhost = parameter('get', 'usernameandhost');
+  include('functions.php');
+
+  init();
+
+  $usernameandhost = get_parameter($_GET, 'usernameandhost');
 
   forget($usernameandhost);
   internal_redirect(array('action'=>'login'));

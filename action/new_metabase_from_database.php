@@ -18,6 +18,10 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
+  include('functions.php');
+
+  init();
+
   $rows = array(html('th', array('class'=>'filler'), _('database')).html('th', array('class'=>'secondary'), _('tables')).html('th', array(), ''));
   $databases = all_databases();
   while ($database = mysql_fetch_assoc($databases)) {

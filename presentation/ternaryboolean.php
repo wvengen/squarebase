@@ -23,7 +23,7 @@
   }
 
   function formvalue_ternaryboolean($field) {
-    $value = parameter('post', "field:$field[fieldname]");
+    $value = get_parameter($_POST, "field:$field[fieldname]", null);
     return $value == 'yes' ? 1 : ($value == 'no' ? 0 : null);
   }
 
