@@ -212,6 +212,7 @@ jQuery.fn.ajaxsubmit = function() {
 
       closest('form').
       closest('.ajax').
+      closest('.ajaxcontainer').
       load(
         $(this).
         attr('action') + ' #content',

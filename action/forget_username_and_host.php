@@ -25,5 +25,9 @@
   $usernameandhost = get_parameter($_GET, 'usernameandhost');
 
   forget($usernameandhost);
+
+  if (has_preference('messagy'))
+    add_log('message', sprintf(_('forgotten %s'), $usernameandhost));
+
   internal_redirect(array('action'=>'login'));
 ?>

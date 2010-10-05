@@ -5,6 +5,7 @@ body { margin: 0.5em; overflow-y: scroll; font-family: sans-serif !important; }
 #id { float: right; }
 #id ul { float: left; padding: 0; margin: 0.2em 0.5em; }
 #id ul li { list-style-type: none; }
+#id #preferences li { font-size: 70%; text-align: right; }
 h1 { display: inline; margin-right: 0.5em; }
 #breadcrumbs { font-size: small; }
 #breadcrumbs li a { color: #000; }
@@ -92,9 +93,11 @@ input.title { width: 8em; }
 .important { font-weight: bold; }
 
 .error { padding: 0.5em; margin-bottom: 0.5em; }
-.warnings { padding: 0; }
-.warnings li { list-style-type: none; }
-.error, .warnings, .warning { font-weight: bold; background-color: #f00; color: #fff; }
+.warnings, .messages { padding: 0; }
+.warnings li, .messages li { list-style-type: none; padding: 0.3em; }
+.error, .warnings, .warning, .messages { font-weight: bold; }
+.error, .warnings, .warning { background-color: #f00; color: #fff; }
+.messages { background-color: #090; color: #fff; }
 
 .trace { white-space: nowrap; }
 

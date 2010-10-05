@@ -32,10 +32,18 @@
 
   $viewname = table_or_view($metabasename, $databasename, $tablename);
 
-  if ($deleterecord)
+  if ($deleterecord) {
+    if (has_preference('messagy'))
+      $description = description($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, $uniquevalue);
     query('DELETE FROM `<databasename>`.`<viewname>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
-  else
+    if (has_preference('messagy'))
+      add_log('message', sprintf(_('deleted %s %s'), $tablenamesingular, $description));
+  }
+  else {
     insert_or_update_from_formvalues($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, $uniquevalue, 'UPDATE');
+    if (has_preference('messagy'))
+      add_log('message', sprintf(_('updated %s %s'), $tablenamesingular, description($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, $uniquevalue)));
+  }
 
   back();
 ?>

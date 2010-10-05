@@ -18,10 +18,6 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  function is_local() {
-    return get_parameter($_SERVER, 'HTTP_HOST') == 'localhost';
-  }
-
   function get_parameter($array, $name, $default = 'undefined') {
     if (!isset($array[$name]) && $default == 'undefined')
       error(sprintf(_('parameter does not exist: %s'), $name));
@@ -72,7 +68,7 @@
 
   /* all atribute names and values will be encoded using htmlentities; the text however won't, because it may contain other HTML code from previous calls to this function */
   function html($tag, $attributes = array(), $text = null) {
-    if (get_parameter($_COOKIE, 'logsy', 0)) {
+    if (has_preference('logsy')) {
       static $types = array( // in attributes: 0=required, 1=optional
         'html'    =>array('empty'=>false, 'attributes'=>array()),
         'head'    =>array('empty'=>false, 'attributes'=>array()),
@@ -220,7 +216,7 @@
     if (!$url)
       return;
     $parameters = http_parse_url($url);
-    if (get_parameter($_COOKIE, 'logsy', 0))
+    if (has_preference('logsy'))
       add_log('call', 'call_function: '.html('div', array('class'=>'arrayshow'), array_show($parameters)));
 
     if ($parameters['presentationname'])
@@ -241,7 +237,7 @@
 
   function error($error) {
     $traces = array();
-    if (get_parameter($_COOKIE, 'logsy', 0)) {
+    if (has_preference('logsy')) {
       $stack = debug_backtrace();
       $mainpath = preg_match1('@^(.*/).*?/@', $stack[0]['file']);
       foreach ($stack as $element) {
@@ -268,12 +264,13 @@
   }
 
   function add_log($class, $text) {
-    $list = $class == 'warning' ? 'warnings' : 'logs';
-    set_parameter($_SESSION, $list, array_merge(get_parameter($_SESSION, $list, null) ? get_parameter($_SESSION, $list) : array(), array(html('li', array('class'=>$class), $text))));
+    $list = ($class == 'warning' || $class == 'message' ? $class : 'log').'s';
+    set_parameter($_SESSION, $list, array_merge(get_parameter($_SESSION, $list, array()), array(html('li', array('class'=>$class), $text))));
   }
 
   function get_logs($list) {
-    return set_parameter($_SESSION, $list, array(), array());
+    $logs = set_parameter($_SESSION, $list, array());
+    return $logs ? html('ol', array('class'=>$list), join($logs)) : '';
   }
 
   function mysql_open($host, $username, $password) {
@@ -322,7 +319,7 @@
       mysql_data_reset($result);
     }
 
-    if (get_parameter($_COOKIE, 'logsy', 0)) {
+    if (has_preference('logsy')) {
       $stack = debug_backtrace();
       $traces = array();
       foreach ($stack as $element) {
@@ -433,9 +430,6 @@
   }
 
   function page($title, $breadcrumbs, $content) {
-    $error = get_parameter($_GET, 'error', null);
-    $warnings = get_logs('warnings');
-
     http_response(
       array('Content-Type: text/html; charset=utf-8', 'Content-Language: '.get_locale()),
       '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">'.
@@ -443,36 +437,34 @@
         html('head', array(),
           html('title', array(), $title).
           html('link', array('href'=>internal_url(array('action'=>'style', 'metabasename'=>get_parameter($_GET, 'metabasename', null))), 'type'=>'text/css', 'rel'=>'stylesheet')).
-          (get_parameter($_COOKIE, 'scripty', 1)
+          (has_preference('scripty')
           ? html('script', array('type'=>'text/javascript', 'src'=>'jquery/min.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>'jquery/requirescript.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>internal_url(array('action'=>'script', 'metabasename'=>get_parameter($_GET, 'metabasename', null)))), '')
           : ''
           )
         ).
-        html('body', array('class'=>join_non_null(' ', get_parameter($_COOKIE, 'ajaxy', 1) ? 'ajaxy' : null)),
+        html('body', array('class'=>join_non_null(' ', has_preference('ajaxy') ? 'ajaxy' : null)),
           html('div', array('id'=>'header'),
             html('div', array('id'=>'id', 'class'=>'secondary'),
-              (is_local()
-              ? html('ul', array(),
-                  html('li', array(),
-                    array(
-                      !$_POST ? internal_reference(array_merge($_GET, array('scripty'=>get_parameter($_COOKIE, 'scripty', 1) ? 'off' : 'on')), get_parameter($_COOKIE, 'scripty', 1) ? _('javascript is on') : _('javascript is off')) : (get_parameter($_COOKIE, 'scripty', 1) ? _('javascript is on') : _('javascript is off')),
-                      !$_POST ? (get_parameter($_COOKIE, 'scripty', 1) ? internal_reference(array_merge($_GET, array('ajaxy'=>get_parameter($_COOKIE, 'ajaxy', 1) ? 'off' : 'on')), get_parameter($_COOKIE, 'ajaxy', 1) ? _('ajax is on') : _('ajax is off')) : _('ajax is off')) : (get_parameter($_COOKIE, 'ajaxy', 1) ? _('ajax is on') : _('ajax is off')),
-                      !$_POST ? internal_reference(array_merge($_GET, array('logsy'=>get_parameter($_COOKIE, 'logsy', 0) ? 'off' : 'on')), get_parameter($_COOKIE, 'logsy', 0) ? _('logging is on') : _('logging is off')) : (get_parameter($_COOKIE, 'logsy', 0) ? _('logging is on') : _('logging is off'))
-                    )
+              html('ul', array('id'=>'preferences'),
+                html('li', array(),
+                  array(
+                    !$_POST ? internal_reference(array_merge($_GET, array('scripty'=>has_preference('scripty') ? 'off' : 'on')), has_preference('scripty') ? _('javascript is on') : _('javascript is off')) : (has_preference('scripty') ? _('javascript is on') : _('javascript is off')),
+                    !$_POST ? (has_preference('scripty') ? internal_reference(array_merge($_GET, array('ajaxy'=>has_preference('ajaxy') ? 'off' : 'on')), has_preference('ajaxy') ? _('ajax is on') : _('ajax is off')) : _('ajax is off')) : (has_preference('ajaxy') ? _('ajax is on') : _('ajax is off')),
+                    !$_POST ? internal_reference(array_merge($_GET, array('messagy'=>has_preference('messagy') ? 'off' : 'on')), has_preference('messagy') ? _('messaging is on') : _('messaging is off')) : (has_preference('messagy') ? _('messaging is on') : _('messaging is off')),
+                    !$_POST ? internal_reference(array_merge($_GET, array('logsy'=>has_preference('logsy') ? 'off' : 'on')), has_preference('logsy') ? _('logging is on') : _('logging is off')) : (has_preference('logsy') ? _('logging is on') : _('logging is off'))
                   )
                 )
-              : ''
               ).
               html('ul', array(),
                 html('li', array('id'=>'currentusernameandhost'),
                   get_parameter($_SESSION, 'username', null) ? preg_replace('@\@localhost$@', '', get_parameter($_SESSION, 'username').'@'.get_parameter($_SESSION, 'host')) : '&nbsp;'
                 ).
-                html('li', array('id'=>'logout'),
+                html('li', array(),
                   get_parameter($_SESSION, 'username', null) ? internal_reference(array('action'=>'logout'), 'logout') : '&nbsp;'
                 ).
-                html('li', array('id'=>'locale'),
+                html('li', array(),
                   get_locale()
                 )
               )
@@ -481,10 +473,11 @@
             ($breadcrumbs ? $breadcrumbs : '&nbsp;')
           ).
           html('div', array('id'=>'content'),
-            ($error ?  html('div', array('class'=>'error'), $error) : '').
-            ($warnings ? html('ol', array('class'=>'warnings'), join($warnings)) : '').
+            (get_parameter($_GET, 'error', null) ? html('div', array('class'=>'error'), get_parameter($_GET, 'error')) : '').
+            get_logs('warnings').
+            get_logs('messages').
             $content.
-            (get_parameter($_COOKIE, 'logsy', 0) ? html('ol', array('class'=>'logs'), join(get_logs('logs'))) : '')
+            get_logs('logs')
           ).
           html('div', array('id'=>'footer'),
             external_reference('http://squarebase.org/', html('img', array('src'=>'powered_by_squarebase.png', 'alt'=>'powered by squarebase')), array('id'=>'poweredby'))
@@ -528,12 +521,16 @@
     return query('SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT IN ("information_schema", "mysql")');
   }
 
+  function description($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, $uniquevalue) {
+    $descriptor = descriptor($metabasename, $databasename, $tablename, $viewname);
+    return query1field("SELECT $descriptor[select] FROM `<databasename>`.`<viewname>` ".join(' ', $descriptor['joins'])."WHERE `<viewname>`.<uniquefieldname> = <uniquevalue>", array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+  }
+
   function breadcrumbs($metabasename, $databasename = null, $tablename = null, $uniquefieldname = null, $uniquevalue = null) {
     if (!is_null($uniquevalue)) {
       if ($metabasename && $databasename && $tablename && $uniquefieldname) {
         $viewname = table_or_view($metabasename, $databasename, $tablename);
-        $descriptor = descriptor($metabasename, $databasename, $tablename, $viewname);
-        $uniquepart = query1field("SELECT $descriptor[select] FROM `<databasename>`.`<viewname>` ".join(' ', $descriptor['joins'])."WHERE `<viewname>`.<uniquefieldname> = <uniquevalue>", array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+        $uniquepart = description($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, $uniquevalue);
       }
       else
         $uniquepart = $uniquevalue;
@@ -966,15 +963,25 @@
     );
   }
 
+  function preference_default($item, $default = null) {
+    static $defaults = array();
+    if (!is_null($default))
+      $defaults[$item] = $default;
+    return $defaults[$item];
+  }
+
+  function has_preference($item) {
+    return get_parameter($_COOKIE, $item, preference_default($item));
+  }
+
   function set_preference($item, $default) {
-    $value = first_non_null(is_local() ? null : $default, get_parameter($_GET, $item, null) == 'on' ? 1 : null, get_parameter($_GET, $item, null) == 'off' ? 0 : null, get_parameter($_COOKIE, $item, null), $default);
+    preference_default($item, $default);
+    $value = first_non_null(get_parameter($_GET, $item, null) == 'on' ? 1 : null, get_parameter($_GET, $item, null) == 'off' ? 0 : null, get_parameter($_COOKIE, $item, null), $default);
     if ($value !== get_parameter($_COOKIE, $item, null)) {
       set_parameter($_COOKIE, $item, $value);
-      if (is_local()) {
-        $parameters = http_parse_url(get_parameter($_SERVER, 'REQUEST_URI'));
-        unset($parameters[$item]);
-        internal_redirect($parameters);
-      }
+      $parameters = http_parse_url(get_parameter($_SERVER, 'REQUEST_URI'));
+      unset($parameters[$item]);
+      internal_redirect($parameters);
     }
   }
 
@@ -1231,8 +1238,9 @@
     set_preference('scripty', 1);
     set_preference('ajaxy', 1);
     set_preference('logsy', 0);
+    set_preference('messagy', 1);
 
-    if (get_parameter($_COOKIE, 'logsy', 0)) {
+    if (has_preference('logsy')) {
       if ($_GET && $_POST)
         error(_('both get and post parameters'));
       $parametersource = $_POST ? 'post' : 'get';

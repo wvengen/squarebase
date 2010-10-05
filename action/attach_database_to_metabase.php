@@ -27,5 +27,8 @@
 
   query('INSERT IGNORE INTO `<metabasename>`.databases SET databasename = "<databasename>"', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
 
+  if (has_preference('messagy'))
+    add_log('message', sprintf(_('database %s attached to metabase %s'), $databasename, $metabasename));
+
   internal_redirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
 ?>

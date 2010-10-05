@@ -38,6 +38,11 @@
   }
 
   $databasename = get_parameter($_POST, 'databasename');
+
   query('DROP DATABASE `<databasename>`', array('databasename'=>$databasename));
+
+  if (has_preference('messagy'))
+    add_log('message', sprintf(_('database %s dropped'), $databasename));
+
   back();
 ?>
