@@ -114,13 +114,13 @@ jQuery.fn.enhance_form = function() {
           attr('type', 'button').
           attr('name', 'altaction').
           attr('value', $(this).text()).
+          addClass($(this).attr('for')).
           addClass('button').
           click(
             function() {
               $(this).
               closest('form').
-              find('.altsubmit').
-              prev().
+              find('.altsubmit :checkbox').
               attr('checked', true);
 
               $(this).
@@ -129,7 +129,6 @@ jQuery.fn.enhance_form = function() {
             }
           )
         ).
-        add($(this).prev()).
         hide();
       }
     ).
@@ -139,8 +138,7 @@ jQuery.fn.enhance_form = function() {
           function() {
             $(this).
             closest('form').
-            find('.altsubmit').
-            prev().
+            find('.altsubmit :checkbox').
             attr('checked', false);
           }
         ).
@@ -301,8 +299,8 @@ jQuery.fn.ajaxify = function() {
           containingblock.
           after(
             containingblock.css('display') == 'table-row'
-            ? '<tr class="ajaxcontent"><td colspan="' + $(containingblock).children().length + '" style="padding: 0;"><div class="ajaxcontainer"></div></td></tr>'
-            : '<div class="ajaxcontent"><div class="ajaxcontainer"></div></div>'
+            ? '<tr class="ajaxcontent"><td colspan="' + $(containingblock).children().length + '" style="padding: 0;"><div class="ajaxcontainer ajaxindent"></div></td></tr>'
+            : '<div class="ajaxcontent"><div class="ajaxcontainer ajaxindent"></div></div>'
           );
         else {
           if (ajaxcontent.attr('ajaxurl') == this.href)

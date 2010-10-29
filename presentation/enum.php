@@ -19,6 +19,7 @@
       $options[] = html('option', array('value'=>$value, 'selected'=>'selected'), htmlentities($value));
     else {
       $enums = explode("','", preg_match1("@(?:enum|set)\('(.+?)'\)@", $field['type']));
+      $oneselected = false;
       foreach ($enums as $enum) {
         $selected = $value == $enum;
         $oneselected = $oneselected || $selected;
@@ -26,8 +27,10 @@
       }
       if ($field['nullallowed'])
         array_unshift($options, html('option', array_merge(array('value'=>''), $oneselected ? array() : array('selected'=>'selected')), ''));
+      if (!$oneselected && $value)
+        array_unshift($options, html('option', array_merge(array('value'=>$value), array('selected'=>'selected')), $value));
     }
-    return html('select', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>join_non_null(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options));
+    return html('select', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>join_non_null_with_blank($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options));
   }
 
   function formvalue_enum($field) {

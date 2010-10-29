@@ -30,7 +30,7 @@
   while ($database = mysql_fetch_assoc($databases)) {
     $databasename = $database['schema_name'];
     $rows[] =
-      html('tr', array('class'=>join_non_null(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
+      html('tr', array('class'=>join_non_null_with_blank(count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
         html('td', array(),
           array(
             internal_reference(array('action'=>'attach_database_to_metabase', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $databasename),
@@ -45,7 +45,7 @@
         array(
           html('input', array('type'=>'text', 'name'=>'databasename')),
           html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
-          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'attach_database_to_metabase', 'class'=>'submit'))
+          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'attach database to metabase', 'class'=>'submit'))
         )
       )
     );

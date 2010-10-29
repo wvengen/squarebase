@@ -51,19 +51,21 @@ input[type="text"] { width: 30em; }
 input, textarea, select, option { font-size: medium; font-family: sans-serif !important; }
 input, textarea, option { padding: 0 0.2em; }
 input, textarea, select { background-color: #ffe; border: 0.1em solid #999; }
-input:focus, select:focus, textarea:focus { background-color: #ffc; }
+input:focus, select:focus, textarea:focus, label.altsubmit:hover { background-color: #ffc; }
 select { height: 1.35em; }
 optgroup { color: #666; background-color: #ddd; font-size: x-small; text-align: center; font-style: normal; }
 option { color: #000; background-color: #fff; font-size: medium; text-align: left; height: 1.2em; }
 input.readonly, select.readonly { border-color: #ccc; background-color: #eee; color: #999; }
+label.altsubmit { margin: 0 0.5em 0 -0.5em; padding: 0 0.5em; }
 
 ul.minimal { margin: 0; padding: 0; }
 ul.minimal li { list-style-type: none; }
 ul.minimal li .radio { margin-right: 0.3em; }
 input.submit, input.button { border: 0.15em solid #ccc; border-color: #ccc #666 #666 #ccc; background-color: #eee; color: #33f; padding: 0 0.2em; }
 input.submit, input.button, .altsubmit, .fullrecord, .cancel { margin-right: 1em; }
+.altsubmit input { margin-right: 0.3em; }
 input.submit:hover, input.button:hover { background-color: #ddd; }
-.altsubmit:hover, .cancel:hover, .drop:hover, .forget:hover, .close:hover { background-color: #f00 !important; color: #fff !important; }
+.deleterecord:hover, .cancel:hover, .drop:hover, .forget:hover, .close:hover { background-color: #f00 !important; color: #fff !important; }
 .cancel, .close { padding: 0.1em 0.5em; }
 .drop { margin-left: 1em; }
 .inlistforquickadd { background-color: #fda; }
@@ -71,7 +73,7 @@ input.submit:hover, input.button:hover { background-color: #ddd; }
 .closing { background-color: #fcc !important; }
 tr.rowodd.closing td, tr.rowodd.closing td a { background-color: #faa !important; }
 tr.roweven.closing td, tr.roweven.closing td a { background-color: #fbb !important; }
-.ajaxcontainer { margin: 0 0.5em; }
+.ajaxindent { margin: 0 0.5em; }
 .ajaxproblem { border-color: #c00 !important; }
 .ajaxincompatible { background-color: #f90 !important; }
 
@@ -103,6 +105,7 @@ input.title { width: 8em; }
 
 #footer { margin-top: 0.5em; }
 #poweredby { float: right; }
+#poweredby:hover { background-color: inherit !important; }
 
 .logs { border: 0.1em solid #ccc; background-color: #eee; color: #999; clear: both; white-space: normal; }
 .logs>li { margin-bottom: 0.5em; }

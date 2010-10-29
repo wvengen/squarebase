@@ -40,7 +40,7 @@
     if ($lastusernamesandhosts) {
       foreach (explode(',', $lastusernamesandhosts) as $thisusernameandhost)
         $radios[] =
-          html('input', array('type'=>'radio', 'class'=>join_non_null(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'id'=>"lastusernameandhost:$thisusernameandhost", 'value'=>$thisusernameandhost, 'checked'=>$radios ? null : 'checked')).
+          html('input', array('type'=>'radio', 'class'=>join_non_null_with_blank('radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'id'=>"lastusernameandhost:$thisusernameandhost", 'value'=>$thisusernameandhost, 'checked'=>$radios ? null : 'checked')).
           html('label', array('for'=>"lastusernameandhost:$thisusernameandhost"), preg_replace('@\@localhost$@', '', $thisusernameandhost)).
           internal_reference(array('action'=>'forget_username_and_host', 'usernameandhost'=>$thisusernameandhost), 'forget', array('class'=>'forget'));
     }
@@ -54,13 +54,13 @@
       html('table', array('class'=>'box'),
         inputrow(_('user').'@'._('host'),
           isset($radios)
-          ? html('ul', array('class'=>join_non_null(' ', 'minimal', 'lastusernamesandhosts')),
+          ? html('ul', array('class'=>join_non_null_with_blank('minimal', 'lastusernamesandhosts')),
               html('li', array(),
                 array_merge(
                   $radios,
                   array(
-                    html('input', array('type'=>'radio', 'class'=>join_non_null(' ', 'radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'value'=>'')).
-                    html('input', array('type'=>'text', 'class'=>join_non_null(' ', 'afterradio', 'skipfirstfocus'), 'id'=>'usernameandhost', 'name'=>'usernameandhost', 'value'=>$usernameandhost))
+                    html('input', array('type'=>'radio', 'class'=>join_non_null_with_blank('radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'value'=>'')).
+                    html('input', array('type'=>'text', 'class'=>join_non_null_with_blank('afterradio', 'skipfirstfocus'), 'id'=>'usernameandhost', 'name'=>'usernameandhost', 'value'=>$usernameandhost))
                   )
                 )
               )

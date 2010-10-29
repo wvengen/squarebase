@@ -1,6 +1,6 @@
 <?php
   function special_nameparts($tablename) {
-    return '('.join_non_null('|', _('name'), _('title'), _('description'), _('acronym'), _('abbr'), _('abbreviation'), _('value'), $tablename).')';
+    return '('.join_non_null_with_first_parameter('|', _('name'), _('title'), _('description'), _('acronym'), _('abbr'), _('abbreviation'), _('value'), $tablename).')';
   }
 
   function probability_varchar($field) {
@@ -15,7 +15,7 @@
   function is_quickaddable_varchar() { return true; }
 
   function formfield_varchar($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
-    return html('input', array('type'=>'text', 'class'=>join_non_null(' ', $field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null));
+    return html('input', array('type'=>'text', 'class'=>join_non_null_with_blank($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null));
   }
 
   function formvalue_varchar($field) {

@@ -201,7 +201,7 @@
         (count($unlikelyoptions)         ? html('optgroup', array('label'=>_('unlikely')), join(array_values($unlikelyoptions))) : '');
 
       $rowsfields[] =
-        html('tr', array('class'=>join_non_null(' ', ($field['fieldnr'] + 1) % 2 ? 'rowodd' : 'roweven', 'list', "table-$tablename")),
+        html('tr', array('class'=>join_non_null_with_blank(($field['fieldnr'] + 1) % 2 ? 'rowodd' : 'roweven', 'list', "table-$tablename")),
           ($field['fieldnr'] == 0
           ? html('td', array('class'=>'top', 'rowspan'=>count($table['fields'])),
               html('div', array('class'=>'tablename'),
@@ -224,7 +224,7 @@
               : ''
               )
             ).
-            html('td', array('class'=>join_non_null(' ', 'top', 'pluralsingular'), 'rowspan'=>count($table['fields'])),
+            html('td', array('class'=>join_non_null_with_blank('top', 'pluralsingular'), 'rowspan'=>count($table['fields'])),
               html('div', array(),
                 array(
                   html('input', array('type'=>'text', 'name'=>"$tablename:singular", 'value'=>$singular)),
@@ -232,24 +232,24 @@
                 )
               )
             ).
-            html('td', array('class'=>join_non_null(' ', 'top', 'center'), 'rowspan'=>count($table['fields'])),
+            html('td', array('class'=>join_non_null_with_blank('top', 'center'), 'rowspan'=>count($table['fields'])),
               html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
             )
           : ''
           ).
-          html('td', array('class'=>join_non_null(' ', 'row', 'center')),
+          html('td', array('class'=>join_non_null_with_blank('row', 'center')),
             html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null))
           ).
-          html('td', array('class'=>join_non_null(' ', 'row', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)),
+          html('td', array('class'=>join_non_null_with_blank('row', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)),
             html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))
           ).
-          html('td', array('class'=>join_non_null(' ', 'row', 'center')),
+          html('td', array('class'=>join_non_null_with_blank('row', 'center')),
             html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null))
           ).
           html('td', array('class'=>'row', 'title'=>$fieldname),
             html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))
           ).
-          html('td', array('class'=>join_non_null(' ', 'row', 'filler'), 'title'=>join_non_null(' ', $field['column_type'], $nullallowed ? null : 'not null', $fieldname == $table['primarykeyfieldname'] ? 'auto_increment' : null)),
+          html('td', array('class'=>join_non_null_with_blank('row', 'filler'), 'title'=>join_non_null_with_blank($field['column_type'], $nullallowed ? null : 'not null', $fieldname == $table['primarykeyfieldname'] ? 'auto_increment' : null)),
             html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions).
             ($fieldname != $table['primarykeyfieldname'] && preg_match('@^(tiny|small|medium|big)?int(eger)?\b@', $field['column_type'])
             ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename", 'class'=>'foreigntablename'),
@@ -295,11 +295,11 @@
           inputrow(_('database'), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly')), _('The name of this database.')).
           inputrow(_('language'), html('input', array('type'=>'text', 'name'=>'language', 'value'=>$language, 'readonly'=>'readonly', 'class'=>'readonly')), _('The language for displaying dates, numbers, etc in this database.'))
         ).
-        html('table', array('class'=>join_non_null(' ', 'box', 'formmetabasefordatabase')),
+        html('table', array('class'=>join_non_null_with_blank('box', 'formmetabasefordatabase')),
           join($rowsfields)
         ).
         html('p', array(),
-          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract_structure_from_database_to_metabase', 'class'=>'submit'))
+          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract structure from database to metabase', 'class'=>'submit'))
         ),
         'post'
       )

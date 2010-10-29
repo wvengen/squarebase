@@ -172,5 +172,8 @@
   if ($errors)
     error(join(', ', $errors));
 
+  if (has_preference('messagy'))
+    add_log('message', sprintf(_('structure of database %s extracted to metabase %s'), $databasename, $metabasename));
+
   internal_redirect(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename));
 ?>

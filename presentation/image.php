@@ -19,7 +19,7 @@
         html('div', array(),
           $readonly
           ? list_image($metabasename, $databasename, $field, $value)
-          : html($extra ? 'fieldset' : 'div', array('class'=>join_non_null(' ', $presentationname, $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty')),
+          : html($extra ? 'fieldset' : 'div', array('class'=>join_non_null_with_blank($presentationname, $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty')),
               html('ul', array('class'=>'minimal'),
                 html('li', array(),
                   array(
@@ -44,7 +44,7 @@
                     html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:upload:$fieldname", 'value'=>'upload')).
                     html('label', array('for'=>"radio:upload:$fieldname"),
                       html('span', array('class'=>'filesource'), _('upload')).
-                      html('input', array('type'=>'file', 'class'=>join_non_null(' ', $presentationname, $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'id'=>"field:$fieldname", 'name'=>"field:$fieldname", 'readonly'=>$readonly ? 'readonly' : null))
+                      html('input', array('type'=>'file', 'class'=>join_non_null_with_blank($presentationname, $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'id'=>"field:$fieldname", 'name'=>"field:$fieldname", 'readonly'=>$readonly ? 'readonly' : null))
                     )
                   )
                 )

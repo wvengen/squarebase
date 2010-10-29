@@ -31,7 +31,7 @@
     $tablename = $table['tablename'];
     if (has_grant('SELECT', $databasename, table_or_view($metabasename, $databasename, $tablename), '?'))
       $rows[] =
-        html('tr', array('class'=>join_non_null(' ', count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
+        html('tr', array('class'=>join_non_null_with_blank(count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array(),
             internal_reference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$table['singular'], 'uniquefieldname'=>$table['fieldname']), $table['plural'])
           )
