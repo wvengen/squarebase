@@ -65,8 +65,12 @@
     return null;
   }
 
+  function preg_replace_all($replacements, $text) {
+    return preg_replace(array_keys($replacements), array_values($replacements), $text);
+  }
+
   function array_show($array) {
-    return preg_replace(array('@^Array\s*\(\s*(.*?)\s*\)\s*$@s', '@ *\n *@s'), array('$1', "\n"), print_r($array, true));
+    return preg_replace_all(array('@^Array\s*\(\s*(.*?)\s*\)\s*$@s'=>'$1', '@ *\n *@s'=>"\n"), print_r($array, true));
   }
 
   /* all atribute names and values will be encoded using htmlentities; the text however won't, because it may contain other HTML code from previous calls to this function */
@@ -331,14 +335,14 @@
 
       add_log('query',
         html('div', array('class'=>'query'),
-          preg_replace(
-            array('@<@' , '@>@' , '@& @'  ),
-            array('&lt;', '&gt;', '&amp; '),
-            $fullquery
-          ).
-          ' '.'['.sprintf(_('%.2f sec'), ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).']'.
-          ' '.internal_reference(array('action'=>'explain_query', 'query'=>$fullquery), _('explain')).
-          ' '.html('span', array('class'=>'traces'), join(' ', array_reverse($traces)))
+          join_non_null_with_blank(
+            array(
+              preg_replace_all(array('@<@'=>'&lt;', '@>@'=>'&gt;', '@&(?= )@'=>'&amp;'), $fullquery),
+              '['.sprintf(_('%.2f sec'), ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).']',
+              internal_reference(array('action'=>'explain_query', 'query'=>$fullquery), _('explain')),
+              html('span', array('class'=>'traces'), join(' ', array_reverse($traces)))
+            )
+          )
         ).
         (isset($errno) && $errno != '0'
         ? html('ul', array(), html('li', array(), $errno.'='.mysql_error()))
@@ -1258,9 +1262,8 @@
     $languagename = !get_parameter($_GET, 'language', null) && get_parameter($_GET, 'metabasename', null) ? query1field('SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>get_parameter($_GET, 'metabasename'))) : null;
 
     set_best_locale(
-      preg_replace(
-        array('@\.[a-z][a-z0-9\-]*@', '@_([a-z]+)@ie'       ),
-        array(''                    , '"-".strtolower("$1")'),
+      preg_replace_all(
+        array('@\.[a-z][a-z0-9\-]*@'=>'', '@_([a-z]+)@ie'=>'"-".strtolower("$1")'),
         join_non_null_with_comma(
           preg_match('/^([^\.]+)/', get_parameter($_GET, 'language', null),    $matches) ? $matches[1].';q=4.0' : null,
           preg_match('/^([^\.]+)/', $languagename,                   $matches) ? $matches[1].';q=3.0' : null,

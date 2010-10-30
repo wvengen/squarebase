@@ -176,12 +176,12 @@ jQuery.fn.hidelogs = function() {
 
   find('.togglelogs').
   click(
-    function() {
+    function(event) {
+      event.preventDefault();
       $(this).
       parent().
       next().
       toggle();
-      return false;
     }
   ).
   click();
@@ -194,9 +194,10 @@ jQuery.fn.ajaxsubmit = function() {
   closest('form:not(.ajaxified)').
   addClass('ajaxified').
   submit(
-    function() {
+    function(event) {
+      event.preventDefault();
       if ($(this).check_form().find('.ajaxproblem:first').focus().length > 0)
-        return false;
+        return;
 
       $(this).
       find(':input[name=back]').
@@ -209,7 +210,6 @@ jQuery.fn.ajaxsubmit = function() {
       end().
 
       closest('form').
-      closest('.ajax').
       closest('.ajaxcontainer').
       load(
         $(this).
@@ -228,8 +228,6 @@ jQuery.fn.ajaxsubmit = function() {
           ajaxify();
         }
       );
-
-      return false;
     }
   );
   return this;
@@ -255,11 +253,11 @@ jQuery.fn.ajaxify = function() {
   find('.cancel:not(.ajaxified), .close:not(.ajaxified)').
     addClass('ajaxified').
     click(
-      function() {
+      function(event) {
+        event.preventDefault();
         $(this).
         closest('.ajaxcontent').
         unload();
-        return false;
       }
     ).
     hover(
@@ -281,7 +279,8 @@ jQuery.fn.ajaxify = function() {
   find('a:not(.ajaxified)').
   addClass('ajaxified').
   click(
-    function() {
+    function(event) {
+      event.preventDefault();
       var ajaxcontent =  null;
       if ($(this).hasClass('ajaxreload')) {
         ajaxcontent = 
@@ -299,8 +298,8 @@ jQuery.fn.ajaxify = function() {
           containingblock.
           after(
             containingblock.css('display') == 'table-row'
-            ? '<tr class="ajaxcontent"><td colspan="' + $(containingblock).children().length + '" style="padding: 0;"><div class="ajaxcontainer ajaxindent"></div></td></tr>'
-            : '<div class="ajaxcontent"><div class="ajaxcontainer ajaxindent"></div></div>'
+            ? '<tr class="ajaxcontent"><td colspan="' + $(containingblock).children().length + '" style="padding: 0;"><div class="ajaxreceiver ajaxindent"></div></td></tr>'
+            : '<div class="ajaxcontent"><div class="ajaxreceiver ajaxindent"></div></div>'
           );
         else {
           if (ajaxcontent.attr('ajaxurl') == this.href)
@@ -318,7 +317,7 @@ jQuery.fn.ajaxify = function() {
         loading(true);
 
         ajaxcontent.
-        find('.ajaxcontainer:first').
+        find('.ajaxreceiver:first').
         load(
           this.href + ' #content',
 
@@ -335,8 +334,6 @@ jQuery.fn.ajaxify = function() {
           }
         );
       }
-
-      return false;
     }
   );
 
@@ -408,29 +405,29 @@ ready(
       ).
     end().
 
-    find('.alternative .checkboxedit, .alternative select').
+    find('.checkboxedit.viewfortable, .checkboxedit.include').
       change(
         function() {
-          var show = $(this).is('input') ? $(this).attr('checked') : $(this).val();
+          var checked = $(this).attr('checked');
+          var full = $(this).hasClass('.viewfortable') ? not(checked) : checked;
           var rijen =
             $(this).
             closest('table').
-            find('tr.table-' + $(this).closest('td').find('.tablename').text());
+            find('tr.table-' + $(this).closest('tr').find('.tablename').text());
 
           rijen.
-          filter(':first').
-            children('td:first').
-              attr('rowspan', show ? 1 : rijen.length).
-              find('.pluralsingular').
-                css('display', show ? 'none' : 'block').
+          filter('tr:first').
+            children('td.top').
+              attr('rowspan', full ? rijen.length : 1).
+            end().
+            find('.pluralsingular, .intablelist, td:not(.top):not(.reason)').
+              contents().
+                toggle(full).
               end().
             end().
-            find('td:not(:first)').
-              css('display', show ? 'none' : 'table-cell').
-            end().
           end().
-          filter(':not(:first)').
-            css('display', show ? 'none' : 'table-row').
+          filter('tr:not(:first)').
+            css('display', full ? 'table-row' : 'none').
           end();
         }
       ).

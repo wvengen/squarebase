@@ -32,7 +32,7 @@
     : get_parameter($_GET, 'language');
 
   // pass 1: store query results and find the primary key field name
-  $infos = $alltablenames = $tableswithoutsinglevaluedprimarykey = array();
+  $infos = $alltablenames = array();
   $tables = query(
     'SELECT tb.table_name, vw.table_name AS view_name, is_updatable, view_definition '.
     'FROM information_schema.tables tb '.
@@ -71,10 +71,9 @@
     else {
       if (count($allprimarykeyfieldnames) == 1)
         $tableinfo['primarykeyfieldname'] = $allprimarykeyfieldnames[0];
-      else
-        $tableswithoutsinglevaluedprimarykey[] = $tablename;
     }
-    $alltablenames[$tablename] = $tableinfo['primarykeyfieldname'];
+    if ($tableinfo['primarykeyfieldname'])
+      $alltablenames[$tablename] = $tableinfo['primarykeyfieldname'];
     $infos[$tablename] = $tableinfo;
   }
   ksort($infos);
@@ -134,132 +133,163 @@
   foreach ($infos as $tablename=>$table) {
     $rowsfields[] =
       html('tr', array(),
-        column_header(_('table'), 'The name of the table').
-        column_header(_('singular').' / '._('plural'), 'The singular form and the plural form of the table name.').
-        column_header(_('top'), 'Whether this table will be visible on the toplevel of "show database".').
-        column_header(_('desc'), 'Whether this field will be included in the short description of a record.').
-        column_header(_('list'), 'Whether this field will be included in the list of records.').
-        column_header(_('edit'), 'Whether this field will be included in the form to edit a record.').
-        column_header(_('title').' + '._('field'), 'The readable title / original field name.').
-        column_header(_('presentation').' + '._('type'), 'The presentation that will be used to show and edit this field / the original type.', true)
+        column_header(_('table'), _('The name of the table')).
+        column_header(_('include'), _('Whether this table will be included in the metabase.')).
+        column_header(_('singular').' / '._('plural'), _('The singular / plural form of the table name.')).
+        column_header(_('top'), _('Whether this table will be visible on the toplevel of "show database".')).
+        column_header(_('desc'), _('Whether this field will be included in the short description of a record.')).
+        column_header(_('list'), _('Whether this field will be included in the list of records.')).
+        column_header(_('edit'), _('Whether this field will be included in the form to edit a record.')).
+        column_header(_('title').' + '._('field'), _('The readable title').' + '._('The original field name.')).
+        column_header(_('presentation').' + '._('type'), _('The presentation that will be used to show and edit this field').' + '._('The original type.'), true)
       );
 
-    foreach ($table['fields'] as $field) {
-      $fieldname = $field['column_name'];
-
-      $inlistforquickadd = $field['column_name'] != $table['primarykeyfieldname'] && $field['is_nullable'] == 'NO' && !$field['column_default'];
-      if (isset($field['original'])) {
-        $plural           = $field['original']['plural'];
-        $singular         = $field['original']['singular'];
-        $title            = $field['original']['title'];
-        $intablelist      = $field['original']['intablelist'];
-        $nullallowed      = $field['original']['nullallowed'];
-        $presentationname = $field['original']['presentationname'];
-        $indesc           = $field['original']['indesc'];
-        $inlist           = $field['original']['inlist'];
-        $inedit           = $field['original']['inedit'];
-      }
-      else {
-        $plural           = $tablename;
-        $singular         = singularize_noun($plural);
-        $title            = preg_replace(
-                              array('@_@', '@(?<=[a-z])([A-Z]+)@e', "@^(.*?)\b( *(?:$singular|$plural) *)\b(.*?)$@ie"       , '@(?<=[\w ])'._('id').'$@i', '@ {2,}@', '@(^ +| +$)@'),
-                              array(' '  , 'strtolower(" $1")'    , '"$1" && "$3" ? "$1 $3" : ("$1" || "$3" ? "$1$3" : "$0")', ''                        , ' '      , ''           ),
-                              $fieldname
-                            );
-        $intablelist      = true;
-        $nullallowed      = $field['is_nullable'] == 'YES';
-        $presentationname = $field['presentationname'];
-        $indesc           = $field['in_desc'] == $max_in_desc;
-        $inlist           = $field['in_list'] == $max_in_list || $inlistforquickadd;
-        $inedit           = $field['in_edit'] == $max_in_edit;
-      }
-
-      $tableoptions = array(html('option', array('value'=>'', 'selected'=>!$field['linkedtable'] ? 'selected' : null), ''));
-      $alternativeoptions = array(html('option', array('value'=>'', 'selected'=>!$metabasename || isset($alternative_views[$tablename]) ? 'selected' : null), ''));
-      foreach ($alltablenames as $onetablename=>$oneprimarykeyfieldname) {
-        $tableoptions[] = html('option', array('value'=>$onetablename, 'selected'=>$onetablename == $field['linkedtable'] ? 'selected' : null), $onetablename);
-        $alternativeoptions[] = html('option', array('value'=>$onetablename, 'selected'=>isset($alternative_views[$tablename]) && $onetablename == $alternative_views[$tablename] ? 'selected' : null), $onetablename);
-      }
-
-      $mostlikelyoption = null;
-      $moreorlesslikelyoptions = $unlikelyoptions = array();
-      foreach ($field['presentationprobabilities'] as $onepresentationname=>$probability) {
-        $option = html('option', array('value'=>$onepresentationname, 'selected'=>$onepresentationname == $presentationname ? 'selected' : null), $onepresentationname);
-        if ($onepresentationname == $presentationname)
-          $mostlikelyoption = $option;
-        elseif ($probability)
-          $moreorlesslikelyoptions["$probability"] = $option;
-        else
-          $unlikelyoptions[$onepresentationname] = $option;
-      }
-      krsort($moreorlesslikelyoptions);
-      ksort($unlikelyoptions);
-      $presentationnameoptions =
-        ($mostlikelyoption               ? html('optgroup', array('label'=>_('most likely')), $mostlikelyoption) : '').
-        (count($moreorlesslikelyoptions) ? html('optgroup', array('label'=>_('more or less likely')), join(array_values($moreorlesslikelyoptions))) : '').
-        (count($unlikelyoptions)         ? html('optgroup', array('label'=>_('unlikely')), join(array_values($unlikelyoptions))) : '');
-
+    if (!$table['primarykeyfieldname']) {
       $rowsfields[] =
         html('tr', array('class'=>join_non_null_with_blank(($field['fieldnr'] + 1) % 2 ? 'rowodd' : 'roweven', 'list', "table-$tablename")),
-          ($field['fieldnr'] == 0
-          ? html('td', array('class'=>'top', 'rowspan'=>count($table['fields'])),
-              html('div', array('class'=>'tablename'),
-                $tablename.
-                html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$table['primarykeyfieldname']))
-              ).
-              ($table['is_view']
-              ? html('div', array('class'=>'alternative'),
-                  (isset($table['possible_view_for_table'])
-                  ? html('input', array('type'=>'hidden', 'name'=>"$tablename:possibleviewfortable", 'value'=>$table['possible_view_for_table'])).
-                    html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:viewfortable", 'id'=>"$tablename:viewfortable", 'checked'=>!$metabasename || isset($alternative_views[$tablename]) ? 'checked' : null)).
-                    html('label', array('for'=>"$tablename:viewfortable"), sprintf(_('alternative for %s'), $table['possible_view_for_table']))
-                  : html('input', array('type'=>'hidden', 'name'=>"$tablename:viewfortable", 'value'=>'on')).
-                    html('label', array('for'=>"$tablename:possibleviewfortable"), _('alternative for')).
-                    html('select', array('name'=>"$tablename:possibleviewfortable", 'id'=>"$tablename:possibleviewfortable"),
-                      join($alternativeoptions)
+          html('td', array('class'=>'top'),
+            html('div', array('class'=>'tablename'),
+              $tablename
+            )
+          ).
+          html('td', array('class'=>join_non_null_with_blank('top', 'center')),
+            html('input', array('type'=>'checkbox', 'class'=>join_non_null_with_blank('checkboxedit', 'readonly', 'include'), 'readonly'=>'readonly', 'name'=>"$tablename:include"))
+          ).
+          html('td', array('class'=>'top', 'colspan'=>2),
+            ''
+          ).
+          html('td', array('class'=>'reason', 'colspan'=>5),
+            _('no single valued primary key')
+          )
+        );
+    }
+    else {
+      foreach ($table['fields'] as $field) {
+        $fieldname = $field['column_name'];
+
+        $inlistforquickadd = $field['column_name'] != $table['primarykeyfieldname'] && $field['is_nullable'] == 'NO' && !$field['column_default'];
+        if (isset($field['original'])) {
+          $plural           = $field['original']['plural'];
+          $singular         = $field['original']['singular'];
+          $title            = $field['original']['title'];
+          $intablelist      = $field['original']['intablelist'];
+          $nullallowed      = $field['original']['nullallowed'];
+          $presentationname = $field['original']['presentationname'];
+          $indesc           = $field['original']['indesc'];
+          $inlist           = $field['original']['inlist'];
+          $inedit           = $field['original']['inedit'];
+        }
+        else {
+          $plural           = $tablename;
+          $singular         = singularize_noun($plural);
+          $title            = preg_replace_all(
+                                array(
+                                  '@_@'=>' ',
+                                  '@(?<=[a-z])([A-Z]+)@e'=>'strtolower(" $1")',
+                                  "@^(.*?)\b( *(?:$singular|$plural) *)\b(.*?)$@ie"=>'"$1" && "$3" ? "$1 $3" : ("$1" || "$3" ? "$1$3" : "$0")',
+                                  '@(?<=[\w ])'._('id').'$@i'=>'',
+                                  '@ {2,}@'=>' ',
+                                  '@(^ +| +$)@'=>''
+                                ),
+                                $fieldname
+                              );
+          $intablelist      = true;
+          $nullallowed      = $field['is_nullable'] == 'YES';
+          $presentationname = $field['presentationname'];
+          $indesc           = $field['in_desc'] == $max_in_desc;
+          $inlist           = $field['in_list'] == $max_in_list || $inlistforquickadd;
+          $inedit           = $field['in_edit'] == $max_in_edit;
+        }
+
+        $tableoptions = array(html('option', array('value'=>'', 'selected'=>!$field['linkedtable'] ? 'selected' : null), ''));
+        $alternativeoptions = array(html('option', array('value'=>'', 'selected'=>!$metabasename || isset($alternative_views[$tablename]) ? 'selected' : null), ''));
+        foreach ($alltablenames as $onetablename=>$oneprimarykeyfieldname) {
+          $tableoptions[] = html('option', array('value'=>$onetablename, 'selected'=>$onetablename == $field['linkedtable'] ? 'selected' : null), $onetablename);
+          $alternativeoptions[] = html('option', array('value'=>$onetablename, 'selected'=>isset($alternative_views[$tablename]) && $onetablename == $alternative_views[$tablename] ? 'selected' : null), $onetablename);
+        }
+
+        $mostlikelyoption = null;
+        $moreorlesslikelyoptions = $unlikelyoptions = array();
+        foreach ($field['presentationprobabilities'] as $onepresentationname=>$probability) {
+          $option = html('option', array('value'=>$onepresentationname, 'selected'=>$onepresentationname == $presentationname ? 'selected' : null), $onepresentationname);
+          if ($onepresentationname == $presentationname)
+            $mostlikelyoption = $option;
+          elseif ($probability)
+            $moreorlesslikelyoptions["$probability"] = $option;
+          else
+            $unlikelyoptions[$onepresentationname] = $option;
+        }
+        krsort($moreorlesslikelyoptions);
+        ksort($unlikelyoptions);
+        $presentationnameoptions =
+          ($mostlikelyoption               ? html('optgroup', array('label'=>_('most likely')), $mostlikelyoption) : '').
+          (count($moreorlesslikelyoptions) ? html('optgroup', array('label'=>_('more or less likely')), join(array_values($moreorlesslikelyoptions))) : '').
+          (count($unlikelyoptions)         ? html('optgroup', array('label'=>_('unlikely')), join(array_values($unlikelyoptions))) : '');
+
+        $rowsfields[] =
+          html('tr', array('class'=>join_non_null_with_blank(($field['fieldnr'] + 1) % 2 ? 'rowodd' : 'roweven', 'list', "table-$tablename")),
+            ($field['fieldnr'] == 0
+            ? html('td', array('class'=>'top', 'rowspan'=>count($table['fields'])),
+                html('div', array('class'=>'tablename'),
+                  $tablename.
+                  html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$table['primarykeyfieldname']))
+                ).
+                ($table['is_view']
+                ? html('div', array('class'=>'alternative'),
+                    (isset($table['possible_view_for_table'])
+                    ? html('input', array('type'=>'hidden', 'name'=>"$tablename:possibleviewfortable", 'value'=>$table['possible_view_for_table'])).
+                      html('input', array('type'=>'checkbox', 'class'=>join_non_null_with_blank('checkboxedit', 'viewfortable'), 'name'=>"$tablename:viewfortable", 'id'=>"$tablename:viewfortable", 'checked'=>!$metabasename || isset($alternative_views[$tablename]) ? 'checked' : null)).
+                      html('label', array('for'=>"$tablename:viewfortable"), sprintf(_('alternative for %s'), $table['possible_view_for_table']))
+                    : html('input', array('type'=>'hidden', 'name'=>"$tablename:viewfortable", 'value'=>'on')).
+                      html('label', array('for'=>"$tablename:possibleviewfortable"), _('alternative for')).
+                      html('select', array('name'=>"$tablename:possibleviewfortable", 'id'=>"$tablename:possibleviewfortable"),
+                        join($alternativeoptions)
+                      )
                     )
                   )
+                : ''
                 )
-              : ''
-              )
-            ).
-            html('td', array('class'=>join_non_null_with_blank('top', 'pluralsingular'), 'rowspan'=>count($table['fields'])),
-              html('div', array(),
-                array(
-                  html('input', array('type'=>'text', 'name'=>"$tablename:singular", 'value'=>$singular)),
-                  html('input', array('type'=>'text', 'name'=>"$tablename:plural", 'value'=>$plural))
+              ).
+              html('td', array('class'=>join_non_null_with_blank('top', 'center'), 'rowspan'=>count($table['fields'])),
+                html('input', array('type'=>'checkbox', 'class'=>join_non_null_with_blank('checkboxedit', 'include'), 'name'=>"$tablename:include", 'checked'=>!$metabasename || isset($field['original']) ? 'checked' : null))
+              ).
+              html('td', array('class'=>join_non_null_with_blank('top', 'pluralsingular'), 'rowspan'=>count($table['fields'])),
+                html('div', array(),
+                  array(
+                    html('input', array('type'=>'text', 'name'=>"$tablename:singular", 'value'=>$singular)),
+                    html('input', array('type'=>'text', 'name'=>"$tablename:plural", 'value'=>$plural))
+                  )
                 )
-              )
-            ).
-            html('td', array('class'=>join_non_null_with_blank('top', 'center'), 'rowspan'=>count($table['fields'])),
-              html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
-            )
-          : ''
-          ).
-          html('td', array('class'=>join_non_null_with_blank('row', 'center')),
-            html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null))
-          ).
-          html('td', array('class'=>join_non_null_with_blank('row', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)),
-            html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))
-          ).
-          html('td', array('class'=>join_non_null_with_blank('row', 'center')),
-            html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null))
-          ).
-          html('td', array('class'=>'row', 'title'=>$fieldname),
-            html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))
-          ).
-          html('td', array('class'=>join_non_null_with_blank('row', 'filler'), 'title'=>join_non_null_with_blank($field['column_type'], $nullallowed ? null : 'not null', $fieldname == $table['primarykeyfieldname'] ? 'auto_increment' : null)),
-            html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions).
-            ($fieldname != $table['primarykeyfieldname'] && preg_match('@^(tiny|small|medium|big)?int(eger)?\b@', $field['column_type'])
-            ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename", 'class'=>'foreigntablename'),
-                join($tableoptions)
+              ).
+              html('td', array('class'=>join_non_null_with_blank('top', 'center', 'intablelist'), 'rowspan'=>count($table['fields'])),
+                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
               )
             : ''
             ).
-            html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))
-          )
-        );
+            html('td', array('class'=>join_non_null_with_blank('row', 'center')),
+              html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null))
+            ).
+            html('td', array('class'=>join_non_null_with_blank('row', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)),
+              html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))
+            ).
+            html('td', array('class'=>join_non_null_with_blank('row', 'center')),
+              html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null))
+            ).
+            html('td', array('class'=>'row', 'title'=>$fieldname),
+              html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))
+            ).
+            html('td', array('class'=>join_non_null_with_blank('row', 'filler'), 'title'=>join_non_null_with_blank($field['column_type'], $nullallowed ? null : 'not null', $fieldname == $table['primarykeyfieldname'] ? 'auto_increment' : null)),
+              html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions).
+              ($fieldname != $table['primarykeyfieldname'] && preg_match('@^(tiny|small|medium|big)?int(eger)?\b@', $field['column_type'])
+              ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename", 'class'=>'foreigntablename'),
+                  join($tableoptions)
+                )
+              : ''
+              ).
+              html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))
+            )
+          );
+      }
     }
   }
 
@@ -285,23 +315,19 @@
   }
 
   page('form metabase for database', breadcrumbs($metabasename, $databasename),
-    $tableswithoutsinglevaluedprimarykey
-    ? html('p', array(),
-        html('span', array('class'=>'error'), sprintf(_('no single valued primary key for table(s) %s'), join(', ', $tableswithoutsinglevaluedprimarykey)))
-      )
-    : form(
-        html('table', array('class'=>'box'),
-          inputrow(_('metabase'), $metabase_input, _('The name of the metabase that will be build for this database.')).
-          inputrow(_('database'), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly')), _('The name of this database.')).
-          inputrow(_('language'), html('input', array('type'=>'text', 'name'=>'language', 'value'=>$language, 'readonly'=>'readonly', 'class'=>'readonly')), _('The language for displaying dates, numbers, etc in this database.'))
-        ).
-        html('table', array('class'=>join_non_null_with_blank('box', 'formmetabasefordatabase')),
-          join($rowsfields)
-        ).
-        html('p', array(),
-          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract structure from database to metabase', 'class'=>'submit'))
-        ),
-        'post'
-      )
+    form(
+      html('table', array('class'=>'box'),
+        inputrow(_('metabase'), $metabase_input, _('The name of the metabase that will be build for this database.')).
+        inputrow(_('database'), html('input', array('type'=>'text', 'name'=>'databasename', 'value'=>$databasename, 'readonly'=>'readonly', 'class'=>'readonly')), _('The name of this database.')).
+        inputrow(_('language'), html('input', array('type'=>'text', 'name'=>'language', 'value'=>$language, 'readonly'=>'readonly', 'class'=>'readonly')), _('The language for displaying dates, numbers, etc in this database.'))
+      ).
+      html('table', array('class'=>join_non_null_with_blank('box', 'formmetabasefordatabase')),
+        join($rowsfields)
+      ).
+      html('p', array(),
+        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract structure from database to metabase', 'class'=>'submit'))
+      ),
+      'post'
+    )
   );
 ?>

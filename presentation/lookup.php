@@ -6,8 +6,13 @@
         $likeness = array();
         foreach ($alltablenames as $onetablename=>$oneprimarykeyfieldname) {
           $likeness[$onetablename] =
-            (preg_match("@$oneprimarykeyfieldname$@i", $fieldname) ? 200 + strlen($oneprimarykeyfieldname) - levenshtein($onetablename, $fieldname) : null)
-          + (preg_match("@$onetablename$@i", $fieldname) ? 100 + strlen($onetablename) : null);
+            (preg_match("@^$oneprimarykeyfieldname|$oneprimarykeyfieldname$@i", $fieldname)
+            ? 200 + strlen($oneprimarykeyfieldname) - levenshtein($onetablename, $fieldname)
+            : (preg_match("@^$onetablename|$onetablename$@i", $fieldname)
+              ? 100 + strlen($onetablename)
+              : 0
+              )
+            );
         }
         arsort($likeness);
         reset($likeness);
@@ -23,7 +28,7 @@
 
   function probability_lookup($field) {
     return 
-      ($field['referenced_table_name'] && linkedtable_lookup($field['table_name'], $field['column_name'], $field['referenced_table_name'], $field['alltablenames'])
+      ($field['referenced_table_name'] && linkedtable_lookup($field['table_name'], $field['column_name'], $field['referenced_table_name'])
       ? 1.0
       : (preg_match('@^(int|integer)\b@', $field['column_type']) && linkedtable_lookup($field['table_name'], $field['column_name'], null, $field['alltablenames'])
         ? 0.6

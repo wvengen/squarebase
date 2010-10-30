@@ -1,6 +1,8 @@
 Hi, welcome to the wonderful world of Squarebase
 
-Squarebase gives you web-based access to your MySQL databases programming.
++---------------------------------------------------------------+
+| Web-based access to your MySQL databases without programming. |
++---------------------------------------------------------------+
 
 The basic idea is that Squarebase builds a database (called the "metabase") that describes the structure of the database.
 The information in the metabase is used to show the contents of the database.

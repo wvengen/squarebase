@@ -15,7 +15,7 @@ h1 { display: inline; margin-right: 0.5em; }
 #content { clear: both; }
 .box { border: 0.1em solid #999; }
 .tableedit { padding-bottom: 0.5em; }
-.tableedit td, .tablelist th, .tablelist tr.quickadd td, label { white-space: nowrap; }
+.tableedit td, .tablelist th, .formmetabasefordatabase th, .tablelist tr.quickadd td, label { white-space: nowrap; }
 tr.quickadd label { display: block; font-style: italic; font-size: small; }
 .referringlist.tablelist { margin-bottom: 1em; }
 .referrer { font-size: small; margin-left: 0.5em; }
@@ -98,8 +98,10 @@ input.title { width: 8em; }
 .warnings, .messages { padding: 0; }
 .warnings li, .messages li { list-style-type: none; padding: 0.3em; }
 .error, .warnings, .warning, .messages { font-weight: bold; }
-.error, .warnings, .warning { background-color: #f00; color: #fff; }
+.error { background-color: #f00; color: #fff; }
+.warnings, .warning { background-color: #f60; color: #fff; }
 .messages { background-color: #090; color: #fff; }
+.reason { color: #f60; }
 
 .trace { white-space: nowrap; }
 

@@ -124,48 +124,50 @@
     $tablename = $table['table_name'];
     if (get_parameter($_POST, "$tablename:viewfortable", null) && get_parameter($_POST, "$tablename:possibleviewfortable", null))
       insert_or_update($metabasename, 'views', array('viewname'=>$tablename, 'tableid'=>$tableids[get_parameter($_POST, "$tablename:possibleviewfortable")]));
-    else
+    elseif (get_parameter($_POST, "$tablename:include", null))
       $tableids[$tablename] = insert_or_update($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>get_parameter($_POST, "$tablename:singular"), 'plural'=>get_parameter($_POST, "$tablename:plural"), 'intablelist'=>get_parameter($_POST, "$tablename:intablelist", null) == 'on'));
   }
 
   $errors = array();
   for (mysql_data_reset($tables); $table = mysql_fetch_assoc($tables); ) {
     $tablename = $table['table_name'];
-    if (!get_parameter($_POST, "$tablename:viewfortable", null)) {
-      $tableid = $tableids[$tablename];
+    if (get_parameter($_POST, "$tablename:include", null)) {
+      if (!get_parameter($_POST, "$tablename:viewfortable", null)) {
+        $tableid = $tableids[$tablename];
 
-      $indescs = $inlists = $inedits = 0;
-      $fields = query(
-        'SELECT c.table_schema, c.table_name, c.column_name, column_key, column_type, is_nullable, column_default, referenced_table_name '.
-        'FROM information_schema.columns c '.
-        'LEFT JOIN information_schema.key_column_usage kcu ON kcu.table_schema = c.table_schema AND kcu.table_name = c.table_name AND kcu.column_name = c.column_name AND referenced_table_schema = c.table_schema '.
-        'WHERE c.table_schema = "<databasename>" AND c.table_name = "<tablename>"',
-        array('databasename'=>$databasename, 'tablename'=>$tablename)
-      );
-      while ($field = mysql_fetch_assoc($fields)) {
-        $fieldname = $field['column_name'];
+        $indescs = $inlists = $inedits = 0;
+        $fields = query(
+          'SELECT c.table_schema, c.table_name, c.column_name, column_key, column_type, is_nullable, column_default, referenced_table_name '.
+          'FROM information_schema.columns c '.
+          'LEFT JOIN information_schema.key_column_usage kcu ON kcu.table_schema = c.table_schema AND kcu.table_name = c.table_name AND kcu.column_name = c.column_name AND referenced_table_schema = c.table_schema '.
+          'WHERE c.table_schema = "<databasename>" AND c.table_name = "<tablename>"',
+          array('databasename'=>$databasename, 'tablename'=>$tablename)
+        );
+        while ($field = mysql_fetch_assoc($fields)) {
+          $fieldname = $field['column_name'];
 
-        $foreigntablename = get_parameter($_POST, "$tablename:$fieldname:foreigntablename", null);
+          $foreigntablename = get_parameter($_POST, "$tablename:$fieldname:foreigntablename", null);
 
-        $indesc = get_parameter($_POST, "$tablename:$fieldname:indesc", null) ? true : false;
-        $inlist = get_parameter($_POST, "$tablename:$fieldname:inlist", null) ? true : false;
-        $inedit = get_parameter($_POST, "$tablename:$fieldname:inedit", null) ? true : false;
+          $indesc = get_parameter($_POST, "$tablename:$fieldname:indesc", null) ? true : false;
+          $inlist = get_parameter($_POST, "$tablename:$fieldname:inlist", null) ? true : false;
+          $inedit = get_parameter($_POST, "$tablename:$fieldname:inedit", null) ? true : false;
 
-        $fieldid = insert_or_update($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>get_parameter($_POST, "$tablename:$fieldname:title"), 'type'=>$field['column_type'], 'presentationid'=>$presentationids[get_parameter($_POST, "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
+          $fieldid = insert_or_update($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>get_parameter($_POST, "$tablename:$fieldname:title"), 'type'=>$field['column_type'], 'presentationid'=>$presentationids[get_parameter($_POST, "$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
 
-        $indescs += $indesc;
-        $inlists += $inlist;
-        $inedits += $inedit;
+          $indescs += $indesc;
+          $inlists += $inlist;
+          $inedits += $inedit;
 
-        if (get_parameter($_POST, "$tablename:primary") == $fieldname)
-          query('UPDATE `<metabasename>`.tables SET uniquefieldid = <fieldid> WHERE tableid = <tableid>', array('metabasename'=>$metabasename, 'fieldid'=>$fieldid, 'tableid'=>$tableid));
+          if (get_parameter($_POST, "$tablename:primary") == $fieldname)
+            query('UPDATE `<metabasename>`.tables SET uniquefieldid = <fieldid> WHERE tableid = <tableid>', array('metabasename'=>$metabasename, 'fieldid'=>$fieldid, 'tableid'=>$tableid));
+        }
+        if (!$indescs)
+          $errors[] = sprintf(_('no fields to desc for %s'), $tablename);
+        if (!$inlists)
+          $errors[] = sprintf(_('no fields to list for %s'), $tablename);
+        if (!$inedits)
+          $errors[] = sprintf(_('no fields to edit for %s'), $tablename);
       }
-      if (!$indescs)
-        $errors[] = sprintf(_('no fields to desc for %s'), $tablename);
-      if (!$inlists)
-        $errors[] = sprintf(_('no fields to list for %s'), $tablename);
-      if (!$inedits)
-        $errors[] = sprintf(_('no fields to edit for %s'), $tablename);
     }
   }
 
