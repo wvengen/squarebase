@@ -1,9 +1,6 @@
 <?php
   function probability_enum($field) {
-    if (preg_match('@^(enum|set)\b@', $field['column_type']))
-      return 0.9;
-    $distinct = query1('SELECT COUNT(`<fieldname>`) AS numberofrows, COUNT(DISTINCT(`<fieldname>`)) AS numberofdistinctvalues FROM `<databasename>`.`<tablename>`', array('databasename'=>$field['table_schema'], 'tablename'=>$field['table_name'], 'fieldname'=>$field['column_name']));
-    return !$distinct['numberofrows'] ? 0 : 0.4 * (1 - $distinct['numberofdistinctvalues'] / $distinct['numberofrows']);
+    return preg_match('@^(enum|set)\b@', $field['column_type']) ? 0.9 : 0;
   }
 
   function in_desc_enum($field) { return 0; }
@@ -30,7 +27,7 @@
       if (!$oneselected && $value)
         array_unshift($options, html('option', array_merge(array('value'=>$value), array('selected'=>'selected')), $value));
     }
-    return html('select', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>join_non_null_with_blank($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options));
+    return html('select', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options));
   }
 
   function formvalue_enum($field) {

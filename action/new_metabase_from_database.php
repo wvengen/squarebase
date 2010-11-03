@@ -50,7 +50,7 @@
       }
     }
     $rows[] =
-      html('tr', array('class'=>join_non_null_with_blank(count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
+      html('tr', array('class'=>array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
         html('td', array('class'=>'filler'), internal_reference(array('action'=>'language_for_database', 'databasename'=>$databasename), $databasename)).
         html('td', array('class'=>'secondary'), $contents).
         html('td', array('class'=>'secondary'), has_grant('DROP', $databasename) ? internal_reference(array('action'=>'drop_database', 'databasename'=>$databasename), 'drop', array('class'=>'drop')) : '')

@@ -177,11 +177,11 @@ jQuery.fn.hidelogs = function() {
   find('.togglelogs').
   click(
     function(event) {
-      event.preventDefault();
       $(this).
       parent().
       next().
       toggle();
+      return false;
     }
   ).
   click();
@@ -195,7 +195,6 @@ jQuery.fn.ajaxsubmit = function() {
   addClass('ajaxified').
   submit(
     function(event) {
-      event.preventDefault();
       if ($(this).check_form().find('.ajaxproblem:first').focus().length > 0)
         return;
 
@@ -207,27 +206,38 @@ jQuery.fn.ajaxsubmit = function() {
           closest('.ajax').
           attr('id')
         ).
-      end().
+      end();
 
-      closest('form').
-      closest('.ajaxcontainer').
-      load(
-        $(this).
-        attr('action') + ' #content',
+      var ajaxcontainer =
+        ($(this).hasClass('ajaxcontainerminus1')
+        ? $(this).closest('.ajaxcontainer')
+        : ($(this).hasClass('ajaxcontainerminus2')
+          ? $(this).closest('.ajaxcontainer').parent().closest('.ajaxcontainer')
+          : null
+          )
+        );
 
-        $(this).
-        formhash(),
-
-        function(responseText, textStatus, XMLHttpRequest) {
-          if (!responseText.regexmatch(' id="content"'))
-            $(this).
-            html('<div class="error">' + responseText + '</div>');
+      if (ajaxcontainer) {
+        ajaxcontainer.
+        load(
           $(this).
-          hidelogs().
-          find('.ajax').
-          ajaxify();
-        }
-      );
+          attr('action') + ' #content',
+
+          $(this).
+          formhash(),
+
+          function(responseText, textStatus, XMLHttpRequest) {
+            if (!responseText.regexmatch(' id="content"'))
+              $(this).
+              html('<div class="error">' + responseText + '</div>');
+            $(this).
+            hidelogs().
+            find('.ajax').
+            ajaxify();
+          }
+        );
+        return false;
+      }
     }
   );
   return this;
@@ -254,10 +264,10 @@ jQuery.fn.ajaxify = function() {
     addClass('ajaxified').
     click(
       function(event) {
-        event.preventDefault();
         $(this).
         closest('.ajaxcontent').
         unload();
+        return false;
       }
     ).
     hover(
@@ -265,13 +275,7 @@ jQuery.fn.ajaxify = function() {
         $(this).
         closest('.ajaxcontent').
         find('*').
-        addClass('closing');
-      },
-      function() {
-        $(this).
-        closest('.ajaxcontent').
-        find('*').
-        removeClass('closing');
+        toggleClass('closing');
       }
     ).
   end().
@@ -280,7 +284,6 @@ jQuery.fn.ajaxify = function() {
   addClass('ajaxified').
   click(
     function(event) {
-      event.preventDefault();
       var ajaxcontent =  null;
       if ($(this).hasClass('ajaxreload')) {
         ajaxcontent = 
@@ -298,8 +301,8 @@ jQuery.fn.ajaxify = function() {
           containingblock.
           after(
             containingblock.css('display') == 'table-row'
-            ? '<tr class="ajaxcontent"><td colspan="' + $(containingblock).children().length + '" style="padding: 0;"><div class="ajaxreceiver ajaxindent"></div></td></tr>'
-            : '<div class="ajaxcontent"><div class="ajaxreceiver ajaxindent"></div></div>'
+            ? '<tr class="ajaxcontent"><td colspan="' + $(containingblock).children().length + '" style="padding: 0;"><div class="ajaxcontainer ajaxindent"></div></td></tr>'
+            : '<div class="ajaxcontent"><div class="ajaxcontainer ajaxindent"></div></div>'
           );
         else {
           if (ajaxcontent.attr('ajaxurl') == this.href)
@@ -317,7 +320,7 @@ jQuery.fn.ajaxify = function() {
         loading(true);
 
         ajaxcontent.
-        find('.ajaxreceiver:first').
+        find('.ajaxcontainer:first').
         load(
           this.href + ' #content',
 
@@ -334,6 +337,7 @@ jQuery.fn.ajaxify = function() {
           }
         );
       }
+      return false;
     }
   );
 

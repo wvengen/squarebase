@@ -32,7 +32,7 @@
       $link = array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename);
       $links[] = $link;
       $rows[] =
-        html('tr', array('class'=>join_non_null_with_blank(count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
+        html('tr', array('class'=>array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array('class'=>'filler'),
             internal_reference($link, $databasename)
           ).

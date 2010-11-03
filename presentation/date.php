@@ -12,7 +12,7 @@
 
   function formfield_date($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return 
-      html('input', array('type'=>'text', 'class'=>join_non_null_with_blank($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'value'=>date2local($value), 'readonly'=>$readonly ? 'readonly' : null)).
+      html('input', array('type'=>'text', 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'value'=>date2local($value), 'readonly'=>$readonly ? 'readonly' : null)).
       ($extra ? html('span', array('class'=>'help', 'title'=>sprintf(_('Date format: %s'), find_datetime_format('%x', 'text'))), _('?')) : '');
   }
 
@@ -41,9 +41,9 @@
     return
       ".date.edit { width: 20em; }\n".
       ".date.list { width: 6em; }\n".
-      ".ui-datepicker-trigger { margin-left: 0.5em; }\n".
       ".ui-datepicker { background-color: #ffc; width: 17em; }\n".
       ".ui-datepicker.edit { margin: -1.5em 0 0 22.5em; }\n".
+      ".ui-datepicker .ui-datepicker-trigger { height: 1.5em; }\n".
       ".ui-datepicker .ui-datepicker-header { position: relative; padding: 0.2em 0; }\n".
       ".ui-datepicker .ui-datepicker-prev, .ui-datepicker .ui-datepicker-next { position: absolute; top: 0.25em; width: 1.8em; height: 1.35em; cursor: pointer; }\n".
       ".ui-datepicker .ui-datepicker-prev { left: 0.5em; }\n".

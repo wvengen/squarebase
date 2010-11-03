@@ -39,7 +39,7 @@
     foreach (array_keys($explanation) as $key) {
       $cells[] = is_null($explanation[$key]) ? '-' : $explanation[$key];
     }
-    $rows[] = html('tr', array('class'=>join_non_null_with_blank(count($rows) % 2 ? 'rowodd' : 'roweven', 'list')), html('td', array(), $cells));
+    $rows[] = html('tr', array('class'=>array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list')), html('td', array(), $cells));
   }
 
   page('explain query', null,

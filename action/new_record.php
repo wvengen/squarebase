@@ -26,9 +26,10 @@
   $databasename            = get_parameter($_GET, 'databasename');
   $tablename               = get_parameter($_GET, 'tablename');
   $tablenamesingular       = get_parameter($_GET, 'tablenamesingular');
+  $uniquefieldname         = get_parameter($_GET, 'uniquefieldname');
   $referencedfromfieldname = get_parameter($_GET, 'referencedfromfieldname', null);
 
   page('new record', breadcrumbs($metabasename, $databasename, $tablename),
-    edit_record('INSERT', $metabasename, $databasename, $tablename, $tablenamesingular, null, null, $referencedfromfieldname)
+    edit_record('INSERT', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, null, $referencedfromfieldname)
   );
 ?>

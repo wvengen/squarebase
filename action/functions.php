@@ -36,26 +36,8 @@
     return !is_null($var);
   }
 
-  function array_join_non_null($glue, $args) {
-    $pieces = array();
-    foreach ($args as $arg)
-      $pieces = array_merge($pieces, make_array($arg));
-
-    return join($glue, array_filter($pieces, 'is_non_null'));
-  }
-
-  function join_non_null_with_blank() {
-    return array_join_non_null(' ', func_get_args());
-  }
-
-  function join_non_null_with_comma() {
-    return array_join_non_null(',', func_get_args());
-  }
-
-  function join_non_null_with_first_parameter() {
-    $args = func_get_args();
-    $glue = array_shift($args);
-    return array_join_non_null($glue, $args);
+  function join_non_null($glue, $args) {
+    return join($glue, array_filter($args, 'is_non_null'));
   }
 
   function first_non_null() {
@@ -132,14 +114,14 @@
     $attributelist = array();
     foreach ($attributes as $attribute=>$value)
       if ($attribute && !is_null($value))
-        $attributelist[] = htmlentities($attribute).'="'.htmlentities($value).'"';
+        $attributelist[] = htmlentities($attribute).'="'.htmlentities(is_array($value) ? join_non_null(' ', $value) : $value).'"';
     $starttag = $tag ? '<'.$tag.($attributelist ? ' '.join(' ', $attributelist) : '').(is_null($text) ? ' /' : '').'>' : '';
     $endtag = $tag ? "</$tag>" : '';
-    return $starttag.(is_null($text) ? '' : (is_array($text) ? join_non_null_with_first_parameter($endtag.$starttag, $text) : $text).$endtag);
+    return $starttag.(is_null($text) ? '' : (is_array($text) ? join_non_null($endtag.$starttag, $text) : $text).$endtag);
   }
 
-  function preg_match1($pattern, $subject, $default = null) {
-    return preg_match($pattern, $subject, $matches) ? (count($matches) == 2 ? $matches[1] : $matches[0]) : $default;
+  function preg_match1($pattern, $subject) {
+    return preg_match($pattern, $subject, $matches) ? (count($matches) == 2 ? $matches[1] : $matches[0]) : null;
   }
 
   function directory_part($part) {
@@ -330,19 +312,15 @@
       $stack = debug_backtrace();
       $traces = array();
       foreach ($stack as $element) {
-        $traces[] = (isset($element['file']) ? preg_match1('@\/(\w+)\.php$@', $element['file']) : '').(isset($element['line']) ? '#'.$element['line'] : '').':'.$element['function'];
+        $traces[] = (isset($element['file']) ? preg_match1('@/(\w+)\.php$@', $element['file']) : '').(isset($element['line']) ? '#'.$element['line'] : '').':'.$element['function'];
       }
 
       add_log('query',
         html('div', array('class'=>'query'),
-          join_non_null_with_blank(
-            array(
-              preg_replace_all(array('@<@'=>'&lt;', '@>@'=>'&gt;', '@&(?= )@'=>'&amp;'), $fullquery),
-              '['.sprintf(_('%.2f sec'), ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).']',
-              internal_reference(array('action'=>'explain_query', 'query'=>$fullquery), _('explain')),
-              html('span', array('class'=>'traces'), join(' ', array_reverse($traces)))
-            )
-          )
+          preg_replace_all(array('@<@'=>'&lt;', '@>@'=>'&gt;', '@&(?= )@'=>'&amp;'), $fullquery).' '.
+          '['.sprintf(_('%.2f sec'), ($aftersec + $aftermsec) - ($beforesec + $beforemsec)).']'.' '.
+          internal_reference(array('action'=>'explain_query', 'query'=>$fullquery), _('explain')).' '.
+          html('span', array('class'=>'traces'), join(' ', array_reverse($traces)))
         ).
         (isset($errno) && $errno != '0'
         ? html('ul', array(), html('li', array(), $errno.'='.mysql_error()))
@@ -454,7 +432,7 @@
           : ''
           )
         ).
-        html('body', array('class'=>join_non_null_with_blank(has_preference('ajaxy') ? 'ajaxy' : null)),
+        html('body', array('class'=>array(has_preference('ajaxy') ? 'ajaxy' : null)),
           html('div', array('id'=>'header'),
             html('div', array('id'=>'id', 'class'=>'secondary'),
               html('ul', array('id'=>'preferences'),
@@ -510,11 +488,11 @@
     return html('th', array('class'=>$filler ? 'filler' : null, 'title'=>$help), $header.html('span', array('class'=>'help'), _('?')));
   }
 
-  function form($content, $method = 'get') {
-    return
-      html('form', array('action'=>http_url(array('action'=>preg_replace('@ @', '_', preg_match1('@\bvalue="(.*?)"@', preg_match1('@<input [^>]*\btype="submit"[^>]*>@', $content))))), 'enctype'=>'multipart/form-data', 'method'=>$method),
-        $content
-      );
+  function form($content, $attributes = array()) {
+    $attributes = array_merge(array('action'=>http_url(array('action'=>preg_replace('@ @', '_', preg_match1('@\bvalue="(.*?)"@', preg_match1('@<input [^>]*\btype="submit"[^>]*>@', $content))))), 'enctype'=>'multipart/form-data', 'method'=>'get'), $attributes);
+    if ($attributes['method'] == 'post')
+      $attributes['enctype'] = 'multipart/form-data';
+    return html('form', $attributes, $content);
   }
 
   function databasenames($metabasename) {
@@ -548,7 +526,7 @@
     else
       $uniquepart = null;
     return
-      html('ul', array('id'=>'breadcrumbs', 'class'=>'compact'),
+      html('ul', array('id'=>'breadcrumbs', 'class'=>array('compact', 'secondary')),
         html('li', array(), internal_reference(array('action'=>'index'), 'index')).
         html('li', array('class'=>'notfirst'),
           array(
@@ -563,7 +541,7 @@
 
   function altsubmit($id, $text) {
     return
-      html('label', array('for'=>$id, 'class'=>join_non_null_with_blank('altsubmit', $id)),
+      html('label', array('for'=>$id, 'class'=>array('altsubmit', $id)),
         html('input', array('type'=>'checkbox', 'class'=>$id, 'name'=>$id, 'id'=>$id)).
         $text
       );
@@ -601,7 +579,7 @@
           $orderfieldname = $field['fieldname'];
 
         $header[] =
-          html('th', array('class'=>join_non_null_with_blank($field['presentationname'], !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null)),
+          html('th', array('class'=>array($field['presentationname'], !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null)),
             !is_null($foreignvalue) || !call_user_func("is_sortable_$field[presentationname]")
             ? $field['title']
             : internal_reference(
@@ -612,7 +590,7 @@
           );
         if (call_user_func("is_quickaddable_$field[presentationname]"))
           $quickadd[] =
-            html('td', array('class'=>join_non_null_with_blank($field['presentationname'], !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null)),
+            html('td', array('class'=>array($field['presentationname'], !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null)),
               html('label', array('for'=>"field:$field[fieldname]"), $field['title']).
               call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? $foreignvalue : $field['defaultvalue'], (!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname) || !$field['privilege_insert'], false)
             );
@@ -653,14 +631,14 @@
           $field['uniquefieldname'] = $uniquefieldname;
           $field['uniquevalue'] = $row[$uniquefieldname];
           $columns[] =
-            html('td', array('class'=>join_non_null_with_blank('column', $field['presentationname'], $field['thisrecord'] ? 'thisrecord' : null)),
+            html('td', array('class'=>array('column', $field['presentationname'], $field['thisrecord'] ? 'thisrecord' : null)),
               ''.call_user_func("list_$field[presentationname]", $metabasename, $databasename, $field, $row["${tablename}_$field[fieldname]"])
             );
         }
       }
       $columns[] = html('td', array('class'=>'filler'), '');
       $rows[] =
-        html('tr', array('class'=>join_non_null_with_blank(count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
+        html('tr', array('class'=>array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array(),
             $can_update
             ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), _('edit'), array('class'=>'editrecord', 'id'=>"edit_record_${tablenamesingular}_${row[$uniquefieldname]}"))
@@ -678,7 +656,7 @@
             html('div', array(),
               html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add record', 'id'=>"quickadd_record_$tablenamesingular", 'class'=>'submit')).
               altsubmit('addrecordandedit', _('add record and edit')).
-              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, "field:$foreignfieldname"=>$foreignvalue, 'back'=>get_parameter($_SERVER, 'REQUEST_URI'), 'id'=>"full_record_$tablenamesingular"), _('full record'), array('class'=>'fullrecord')).
+              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, "field:$foreignfieldname"=>$foreignvalue, 'back'=>get_parameter($_SERVER, 'REQUEST_URI'), 'id'=>"full_record_$tablenamesingular"), _('full record'), array('class'=>'fullrecord')).
               (is_null($foreignvalue) ? '' : html('span', array('class'=>'changeslost'), _('(changes to form fields are lost)')))
             )
           )
@@ -686,7 +664,7 @@
       : html('tr', array(),
           html('td', array('colspan'=>count($header)),
             html('div', array(),
-              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, "field:$foreignfieldname"=>$foreignvalue, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), _('add record'))
+              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, "field:$foreignfieldname"=>$foreignvalue, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), _('add record'))
             )
           )
         );
@@ -720,8 +698,8 @@
             html('input', array('type'=>'hidden', 'name'=>'tablenamesingular', 'value'=>$tablenamesingular)).
             html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
             html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>isset($back) ? $back : get_parameter($_SERVER, 'HTTP_REFERER'))).
-            html('table', array('class'=>join_non_null_with_blank($interactive ? 'box' : null, 'tablelist')), join($rows)),
-            'post'
+            html('table', array('class'=>array($interactive ? 'box' : null, 'tablelist')), join($rows)),
+            array('method'=>'post', 'class'=>'ajaxcontainerminus1')
           ).
           (is_null($uniquevalue) ? '' : ajaxcontent(edit_record('UPDATE', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue)))
         : ''
@@ -799,7 +777,7 @@
           html('input', array('type'=>'hidden', 'name'=>'referencedfromfieldname', 'value'=>$referencedfromfieldname)).
           html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back)).
           html('table', array('class'=>'tableedit'), html('tr', array(), $lines)),
-          'post'
+          array('method'=>'post', 'class'=>'ajaxcontainerminus2')
         ).
         ($referrers ? html('table', array('class'=>'referringlist'), join($referrers)) : '').
         ($privilege == 'SELECT' || !has_grant($privilege, $databasename, $viewname, '?')
@@ -896,27 +874,31 @@
     }
     return query(
       'SELECT '.
-        join_non_null_with_first_parameter(', ',
-          ($viewname == $tablename ? 'tbl.tablename' : 'vw.viewname').' AS viewname',
-          'tbl.tablename',
-          'tbl.singular',
-          'tbl.plural',
-          'tbl.tableid',
-          'tbl.uniquefieldid',
-          'fld.fieldid',
-          'fld.fieldname',
-          'fld.title',
-          'fld.type',
-          'pst.presentationname',
-          'fld.nullallowed',
-          'fld.defaultvalue',
-          'fld.indesc',
-          'fld.inlist',
-          'fld.inedit',
-          'ftbl.tablename AS foreigntablename',
-          'ftbl.singular AS foreigntablenamesingular',
-          'ffld.fieldname AS foreignuniquefieldname',
-          $selectparts
+        implode(', ',
+          array_merge(
+            array(
+              ($viewname == $tablename ? 'tbl.tablename' : 'vw.viewname').' AS viewname',
+              'tbl.tablename',
+              'tbl.singular',
+              'tbl.plural',
+              'tbl.tableid',
+              'tbl.uniquefieldid',
+              'fld.fieldid',
+              'fld.fieldname',
+              'fld.title',
+              'fld.type',
+              'pst.presentationname',
+              'fld.nullallowed',
+              'fld.defaultvalue',
+              'fld.indesc',
+              'fld.inlist',
+              'fld.inedit',
+              'ftbl.tablename AS foreigntablename',
+              'ftbl.singular AS foreigntablenamesingular',
+              'ffld.fieldname AS foreignuniquefieldname'
+            ),
+            $selectparts
+          )
         ).' '.
       ($viewname == $tablename
       ? 'FROM `<metabasename>`.tables tbl '
@@ -997,7 +979,7 @@
   }
 
   function forget($usernameandhost) {
-    set_parameter($_COOKIE, 'lastusernamesandhosts', join_non_null_with_comma(array_diff(explode(',', get_parameter($_COOKIE, 'lastusernamesandhosts', null)), array($usernameandhost))));
+    set_parameter($_COOKIE, 'lastusernamesandhosts', implode(',', array_diff(explode(',', get_parameter($_COOKIE, 'lastusernamesandhosts', null)), array($usernameandhost))));
   }
 
   function session_begin() {
@@ -1022,7 +1004,7 @@
     set_parameter($_SESSION, 'host'    , $host);
     set_parameter($_SESSION, 'password', $password);
     set_parameter($_COOKIE, 'language', $language);
-    set_parameter($_COOKIE, 'lastusernamesandhosts', join_non_null_with_comma(array_diff(array_unique(array_merge(array("$username@$host"), array_diff(explode(',', get_parameter($_COOKIE, 'lastusernamesandhosts', null)), array("$username@$host")))), array(''))));
+    set_parameter($_COOKIE, 'lastusernamesandhosts', implode(',', array_diff(array_unique(array_merge(array("$username@$host"), array_diff(explode(',', get_parameter($_COOKIE, 'lastusernamesandhosts', null)), array("$username@$host")))), array(''))));
   }
 
   function logout($error = null) {
@@ -1255,7 +1237,7 @@
       if ($_GET && $_POST)
         error(_('both get and post parameters'));
       $parametersource = $_POST ? 'post' : 'get';
-      add_log($parametersource, $parametersource.': '.html('div', array('class'=>'arrayshow'), array_show(array_merge($_POST, $_GET))));
+      add_log($parametersource, $parametersource.': '.preg_match1('@/(\w+)\.php$@', $_SERVER['SCRIPT_NAME']).html('div', array('class'=>'arrayshow'), array_show(array_merge($_POST, $_GET))));
   //  add_log('cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
     }
 
@@ -1264,20 +1246,24 @@
     set_best_locale(
       preg_replace_all(
         array('@\.[a-z][a-z0-9\-]*@'=>'', '@_([a-z]+)@ie'=>'"-".strtolower("$1")'),
-        join_non_null_with_comma(
-          preg_match('/^([^\.]+)/', get_parameter($_GET, 'language', null),    $matches) ? $matches[1].';q=4.0' : null,
-          preg_match('/^([^\.]+)/', $languagename,                   $matches) ? $matches[1].';q=3.0' : null,
-          preg_match('/^([^\.]+)/', get_parameter($_COOKIE, 'language', null), $matches) ? $matches[1].';q=2.0' : null,
-          get_parameter($_SERVER, 'HTTP_ACCEPT_LANGUAGE', null),
-          'en;q=0.0'
+        join(',',
+          array(
+            preg_match('/^([^\.]+)/', get_parameter($_GET, 'language', null),    $matches) ? $matches[1].';q=4.0' : null,
+            preg_match('/^([^\.]+)/', $languagename,                   $matches) ? $matches[1].';q=3.0' : null,
+            preg_match('/^([^\.]+)/', get_parameter($_COOKIE, 'language', null), $matches) ? $matches[1].';q=2.0' : null,
+            get_parameter($_SERVER, 'HTTP_ACCEPT_LANGUAGE', null),
+            'en;q=0.0'
+          )
         )
       ),
-      join_non_null_with_comma(
-        preg_match('/\.(.*?)$/', get_parameter($_GET, 'language', null),    $matches) ? $matches[1].';q=4.0' : null,
-        preg_match('/\.(.*?)$/', $languagename,                   $matches) ? $matches[1].';q=3.0' : null,
-        preg_match('/\.(.*?)$/', get_parameter($_COOKIE, 'language', null), $matches) ? $matches[1].';q=2.0' : null,
-        get_parameter($_SERVER, 'HTTP_ACCEPT_CHARSET', null),
-        '*;q=0.0'
+      join(',',
+        array(
+          preg_match('/\.(.*?)$/', get_parameter($_GET, 'language', null),    $matches) ? $matches[1].';q=4.0' : null,
+          preg_match('/\.(.*?)$/', $languagename,                   $matches) ? $matches[1].';q=3.0' : null,
+          preg_match('/\.(.*?)$/', get_parameter($_COOKIE, 'language', null), $matches) ? $matches[1].';q=2.0' : null,
+          get_parameter($_SERVER, 'HTTP_ACCEPT_CHARSET', null),
+          '*;q=0.0'
+        )
       )
     );
 
