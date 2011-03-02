@@ -28,10 +28,10 @@
     page('drop database', breadcrumbs(null, $databasename),
       form(
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
-        html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>get_parameter($_SERVER, 'HTTP_REFERER'))).
+        html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>get_parameter($_SERVER, 'HTTP_REFERER', 'index.php'))).
         html('p', array(), sprintf(_('Drop database %s?'), html('strong', array(), $databasename))).
         html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'drop database', 'class'=>'submit')).
-        internal_reference(http_parse_url(get_parameter($_SERVER, 'HTTP_REFERER')), 'cancel', array('class'=>'cancel')),
+        internal_reference(http_parse_url(get_parameter($_SERVER, 'HTTP_REFERER', 'index.php')), 'cancel', array('class'=>'cancel')),
         array('method'=>'post')
       )
     );

@@ -221,7 +221,7 @@
 
   function back() {
     call_function(first_non_null(get_parameter($_POST, 'ajax', null), get_parameter($_GET, 'ajax', null)));
-    internal_redirect(http_parse_url(first_non_null(get_parameter($_POST, 'back', null), get_parameter($_GET, 'back', null), get_parameter($_SERVER, 'HTTP_REFERER', null))));
+    internal_redirect(http_parse_url(first_non_null(get_parameter($_POST, 'back', null), get_parameter($_GET, 'back', null), get_parameter($_SERVER, 'HTTP_REFERER', 'index.php'))));
   }
 
   function error($error) {
@@ -692,7 +692,7 @@
     if (is_null($foreignvalue) || isset($offsets))
       $rows[] =
         html('tr', array(),
-          html('td', array(), is_null($foreignvalue) ? internal_reference(http_parse_url(get_parameter($_SERVER, 'HTTP_REFERER')), 'close', array('class'=>'close')) : '').
+          html('td', array(), is_null($foreignvalue) ? internal_reference(http_parse_url(get_parameter($_SERVER, 'HTTP_REFERER', 'index.php')), 'close', array('class'=>'close')) : '').
           html('td', array('colspan'=>count($header) - 1),
             isset($offsets) ? html('ol', array('class'=>'offsets'), html('li', array(), $offsets)) : ''
           )
@@ -707,7 +707,7 @@
             html('input', array('type'=>'hidden', 'name'=>'tablename', 'value'=>$tablename)).
             html('input', array('type'=>'hidden', 'name'=>'tablenamesingular', 'value'=>$tablenamesingular)).
             html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
-            html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>isset($back) ? $back : get_parameter($_SERVER, 'HTTP_REFERER'))).
+            html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>isset($back) ? $back : get_parameter($_SERVER, 'HTTP_REFERER', 'index.php'))).
             html('table', array('class'=>array($interactive ? 'box' : null, 'tablelist')), join($rows)),
             array('method'=>'post', 'class'=>'ajaxcontainerminus1')
           ).
@@ -773,7 +773,7 @@
             );
       }
     }
-    $back = first_non_null(get_parameter($_GET, 'back', null), get_parameter($_SERVER, 'HTTP_REFERER'));
+    $back = first_non_null(get_parameter($_GET, 'back', null), get_parameter($_SERVER, 'HTTP_REFERER', 'index.php'));
 
     return
       html('div', array('class'=>'box'),
