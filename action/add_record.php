@@ -35,13 +35,15 @@
 
   $uniquevalue = insert_or_update_from_formvalues($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, null, 'INSERT');
 
-  if (has_preference('messagy'))
-    add_log('message', sprintf(_('added %s %s'), $tablenamesingular, description($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, $uniquevalue)));
+  if ($uniquevalue) {
+    if (has_preference('messagy'))
+      add_log('message', sprintf(_('added %s %s'), $tablenamesingular, description($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, $uniquevalue)));
 
-  if ($ajax)
-    set_parameter($_POST, 'ajax', preg_replace('@\bvalue=\d+\b@', '', $ajax)."&value=$uniquevalue".($addrecordandedit ? "&uniquevalue=$uniquevalue" : ''));
-  elseif ($addrecordandedit)
-    internal_redirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
+    if ($ajax)
+      set_parameter($_POST, 'ajax', preg_replace('@\bvalue=\d+\b@', '', $ajax)."&value=$uniquevalue".($addrecordandedit ? "&uniquevalue=$uniquevalue" : ''));
+    elseif ($addrecordandedit)
+      internal_redirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
+  }
 
   back();
 ?>

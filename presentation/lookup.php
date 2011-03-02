@@ -64,20 +64,22 @@
     if (!$readonly)
       array_unshift($options, html('option', array_merge(array('value'=>''), $value ? array() : array('selected'=>'selected')), ''));
     if (!$oneselected && $value) {
-      array_unshift($options, html('option', array_merge(array('value'=>$value), array('selected'=>'selected')), $value));
+      array_unshift($options, html('option', array('value'=>$value, 'selected'=>'selected', 'class'=>'unknownforeignrecord'), $value));
       $selected_descriptor = $value;
     }
     return
       html('div', array('class'=>'ajax', 'id'=>http_url(array('action'=>'call_function', 'functionname'=>'ajax_lookup', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'fieldname'=>$fieldname, 'value'=>$value, 'presentationname'=>$presentationname, 'foreigntablename'=>$foreigntablename, 'foreigntablenamesingular'=>$foreigntablenamesingular, 'foreignuniquefieldname'=>$foreignuniquefieldname, 'nullallowed'=>$nullallowed, 'defaultvalue'=>$defaultvalue, 'readonly'=>$readonly, 'extra'=>$extra))),
-        html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>array($presentationname, $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options)).
-        ($extra
-        ? (has_grant('INSERT', $databasename, $foreigntablename, '?') ? internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'referencedfromfieldname'=>$fieldname, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablenamesingular), array('class'=>'newrecordlookup')) : '').
-          (has_grant('UPDATE', $databasename, $foreigntablename, '?')
-          ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'uniquevalue'=>$value, 'referencedfromfieldname'=>$fieldname, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), sprintf(_('edit %s %s'), $foreigntablenamesingular, $selected_descriptor), array('class'=>array('existingrecord', $value ? null : 'hidden')))
-          : internal_reference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'uniquevalue'=>$value, 'referencedfromfieldname'=>$fieldname, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), sprintf(_('show %s %s'), $foreigntablenamesingular, $selected_descriptor), array('class'=>array('existingrecord', $value ? null : 'hidden')))
-          ).
-          html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)'))
-        : ''
+        html('div', array(),
+          html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>array($presentationname, $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options)).
+          ($extra
+          ? (has_grant('INSERT', $databasename, $foreigntablename, '?') ? internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'referencedfromfieldname'=>$fieldname, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), sprintf(_('new %s'), $foreigntablenamesingular), array('class'=>'newrecordlookup')) : '').
+            (has_grant('UPDATE', $databasename, $foreigntablename, '?')
+            ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'uniquevalue'=>$value, 'referencedfromfieldname'=>$fieldname, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), sprintf(_('edit %s %s'), $foreigntablenamesingular, $selected_descriptor), array('class'=>array('existingrecord', $oneselected ? null : 'hidden')))
+            : internal_reference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'uniquevalue'=>$value, 'referencedfromfieldname'=>$fieldname, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), sprintf(_('show %s %s'), $foreigntablenamesingular, $selected_descriptor), array('class'=>array('existingrecord', $oneselected ? null : 'hidden')))
+            ).
+            html('span', array('class'=>'changeslost'), ' '._('(changes to form fields are lost)'))
+          : ''
+          )
         )
       );
   }
@@ -117,12 +119,12 @@
       "  siblings('select').\n".
       "    change(\n".
       "      function() {\n".
+      "        var selectedoption = $(this).find('option:selected');\n".
       "        $(this).\n".
       "        siblings('.existingrecord').\n".
       "        attr('href', $(this).siblings('.existingrecord').attr('href').replace(/uniquevalue=\d*/, '') + '&uniquevalue=' + $(this).val()).\n".
-      "        text($(this).siblings('.existingrecord').text().replace(/^(\w+ \w+ ).*$/, '$1' + $(this).find('option:selected').text())).\n".
-      "        removeClass('hidden').\n".
-      "        addClass($(this).val() ? null : 'hidden');\n".
+      "        text($(this).siblings('.existingrecord').text().replace(/^(\w+ \w+ ).*$/, '$1' + selectedoption.text())).\n".
+      "        toggleClass('hidden', selectedoption.hasClass('unknownforeignrecord') || !$(this).val());\n".
       "      }\n".
       "    ).\n".
       "  end().\n".

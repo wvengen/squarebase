@@ -32,7 +32,7 @@
   $orderfieldname    = get_parameter($_GET, 'orderfieldname', null);
   $orderasc          = get_parameter($_GET, 'orderasc', 'on') == 'on';
 
-  page('show table', breadcrumbs($metabasename, $databasename, $tablename, $uniquefieldname),
+  page('show table', breadcrumbs($metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname),
     list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, null, $orderfieldname, $orderasc, null, null, null, true)
   );
 ?>

@@ -30,7 +30,7 @@
   $uniquevalue             = get_parameter($_GET, 'uniquevalue');
   $referencedfromfieldname = get_parameter($_GET, 'referencedfromfieldname', null);
 
-  page('show record', breadcrumbs($metabasename, $databasename, $tablename, $uniquefieldname, $uniquevalue),
+  page('show record', breadcrumbs($metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue),
     edit_record('SELECT', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $referencedfromfieldname)
   );
 ?>

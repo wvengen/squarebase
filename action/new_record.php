@@ -29,7 +29,7 @@
   $uniquefieldname         = get_parameter($_GET, 'uniquefieldname');
   $referencedfromfieldname = get_parameter($_GET, 'referencedfromfieldname', null);
 
-  page('new record', breadcrumbs($metabasename, $databasename, $tablename),
+  page('new record', breadcrumbs($metabasename, $databasename, $tablename, $tablenamesingular),
     edit_record('INSERT', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, null, $referencedfromfieldname)
   );
 ?>

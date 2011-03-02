@@ -214,7 +214,7 @@
     $parameternames = callable_function($parameters['functionname']);
     $parameterlist = array();
     foreach ($parameternames as $parametername)
-      $parameterlist[] = $parameters[$parametername];
+      $parameterlist[] = isset($parameters[$parametername]) ? $parameters[$parametername] : null;
 
     page($parameters['functionname'], null, call_user_func_array($parameters['functionname'], $parameterlist));
   }
@@ -337,15 +337,15 @@
     switch ($errno) {
       case 1044: // Access denied for user '%s'@'%s' to database '%s'
         return null;
-      case 1062: // Duplicate entry '%s' for key %d
+      case 1062: // "Duplicate entry '%s' for key %d" or "Duplicate entry '%s' for key '%s'"
         $error = mysql_error();
-        $keyvalues = explode('-', preg_match1('@Duplicate entry \'(.*)\'@', $error));
+        $databasename = preg_match1('@^INSERT INTO `(.*?)`@', $fullquery);
+        $tablename    = preg_match1('@^INSERT INTO `.*?`\.`(.*?)`@', $fullquery);
+        $keyvalues = explode('-', preg_match1('@Duplicate entry \'(.*?)\'@', $error));
         $keynr = preg_match1('@for key (\d+)@', $error);
         if ($keynr) {
-          $databasename = preg_match1('@^INSERT INTO `(.*?)`@', $fullquery);
-          $tablename    = preg_match1('@^INSERT INTO `.*?`\.`(.*?)`@', $fullquery);
-          $keyfields = array();
           $keys = query('SELECT seq_in_index, column_name FROM information_schema.statistics WHERE table_schema = "<databasename>" AND table_name = "<tablename>"', array('databasename'=>$databasename, 'tablename'=>$tablename));
+          $keyfields = array();
           while ($key = mysql_fetch_assoc($keys)) {
             if ($key['seq_in_index'] == 1)
               $keynr--;
@@ -354,6 +354,16 @@
             if ($keynr < 0)
               break;
           }
+        }
+        $keyname = preg_match1('@for key \'(.*?)\'@', $error);
+        if ($keyname) {
+          $keys = query('SELECT column_name FROM information_schema.statistics WHERE table_schema = "<databasename>" AND table_name = "<tablename>" AND index_name = "<indexname>"', array('databasename'=>$databasename, 'tablename'=>$tablename, 'indexname'=>$keyname));
+          $keyfields = array();
+          while ($key = mysql_fetch_assoc($keys)) {
+            $keyfields[] = $key['column_name'];
+          }
+        }
+        if ($keyfields) {
           if (count($keyfields) == count($keyvalues)) {
             $combined = array();
             foreach ($keyfields as $num=>$keyfield)
@@ -514,7 +524,7 @@
     return query1field("SELECT $descriptor[select] FROM `<databasename>`.`<viewname>` ".join(' ', $descriptor['joins'])."WHERE `<viewname>`.<uniquefieldname> = <uniquevalue>", array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
   }
 
-  function breadcrumbs($metabasename, $databasename = null, $tablename = null, $uniquefieldname = null, $uniquevalue = null) {
+  function breadcrumbs($metabasename, $databasename = null, $tablename = null, $tablenamesingular = null, $uniquefieldname = null, $uniquevalue = null) {
     if (!is_null($uniquevalue)) {
       if ($metabasename && $databasename && $tablename && $uniquefieldname) {
         $viewname = table_or_view($metabasename, $databasename, $tablename);
@@ -532,7 +542,7 @@
           array(
             !is_null($metabasename) ? (has_grant('DROP', $metabasename) ? internal_reference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename) : $metabasename) : '&hellip;',
             !is_null($databasename) ? ($metabasename ? internal_reference(array('action'=>'show_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'back'=>get_parameter($_SERVER, 'REQUEST_URI')), $databasename) : $databasename) : null,
-            !is_null($tablename)    ? ($metabasename && $databasename && $uniquefieldname ? internal_reference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname), $tablename) : $tablename) : null,
+            !is_null($tablename)    ? ($metabasename && $databasename && $uniquefieldname ? internal_reference(array('action'=>'show_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname), $tablename) : $tablename) : null,
             $uniquepart
           )
         )
@@ -705,7 +715,7 @@
         : ''
         )
       );
-  }
+  } // list_table
 
   function edit_record($privilege, $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $referencedfromfieldname) {
     $viewname = table_or_view($metabasename, $databasename, $tablename, $uniquefieldname, $uniquevalue);
@@ -785,7 +795,7 @@
         : internal_reference(http_parse_url($back), _('cancel'), array('class'=>'cancel'))
         )
       );
-  }
+  } //edit_record
 
   function insert_or_update($databasename, $tablename, $fieldnamesandvalues, $uniquefieldname = null, $uniquevalue = null) {
     $sets = $arguments = array();
