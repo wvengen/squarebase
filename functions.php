@@ -1,6 +1,6 @@
 <?php
   /*
-    Copyright 2009,2010 Frans Reijnhoudt
+    Copyright 2009-2011 Frans Reijnhoudt
 
     This file is part of Squarebase.
 
@@ -46,6 +46,10 @@
 
   function get_session($key, $default = UNDEFINED) {
     return get_parameter('SESSION', $_SESSION, $key, $default);
+  }
+
+  function get_action() {
+    return first_non_null(get_get('action', null), get_post('action', null), 'list_databases');
   }
 
   function set_parameter(&$array, $key, $value) {
@@ -541,7 +545,7 @@
   }
 
   function form($content, $attributes = array()) {
-    $attributes = array_merge(array('action'=>http_build_url(array('action'=>preg_replace('@ @', '_', preg_match1('@\bvalue="(.*?)"@', preg_match1('@<input [^>]*\btype="submit"[^>]*>@', $content))))), 'enctype'=>'multipart/form-data', 'method'=>'get'), $attributes);
+    $attributes = array_merge(array('action'=>'index.php', 'enctype'=>'multipart/form-data', 'method'=>'get'), $attributes);
     if ($attributes['method'] == 'post')
       $attributes['enctype'] = 'multipart/form-data';
     return html('form', $attributes, $content);
@@ -1275,10 +1279,6 @@
     }
   } 
 
-  function get_action() {
-    return preg_match1('@/(\w+)\.php$@', get_server('SCRIPT_NAME'));
-  }
-
   function init() {
     session_begin();
 
@@ -1294,7 +1294,7 @@
         error(_('both get and post parameters'));
       $parametersource = $_POST ? 'post' : 'get';
       add_log($parametersource, $parametersource.': '.get_action().html('div', array('class'=>'arrayshow'), array_show(array_merge($_POST, $_GET))));
-  //  add_log('cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
+//    add_log('cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
     }
 
     $languagename = !get_get('language', null) && get_get('metabasename', null) ? query1field('SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>get_get('metabasename'))) : null;

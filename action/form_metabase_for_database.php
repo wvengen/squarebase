@@ -1,6 +1,6 @@
 <?php
   /*
-    Copyright 2009,2010 Frans Reijnhoudt
+    Copyright 2009-2011 Frans Reijnhoudt
 
     This file is part of Squarebase.
 
@@ -321,7 +321,7 @@
         join($rowsfields)
       ).
       html('p', array(),
-        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract structure from database to metabase', 'class'=>'submit'))
+        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'extract_structure_from_database_to_metabase', 'class'=>'submit'))
       ),
       array('method'=>'post')
     )

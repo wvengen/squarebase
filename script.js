@@ -412,12 +412,11 @@ ready(
     find('.checkboxedit.viewfortable, .checkboxedit.include').
       change(
         function() {
-          var checked = $(this).attr('checked');
-          var full = $(this).hasClass('.viewfortable') ? not(checked) : checked;
           var rijen =
             $(this).
             closest('table').
             find('tr.table-' + $(this).closest('tr').find('.tablename').text());
+          var full = !rijen.find('.viewfortable').attr('checked') && rijen.find('.include').attr('checked');
 
           rijen.
           filter('tr:first').
@@ -433,6 +432,16 @@ ready(
           filter('tr:not(:first)').
             css('display', full ? 'table-row' : 'none').
           end();
+
+          if ($(this).hasClass('include'))
+            rijen.
+            filter('tr:first').
+              children('td.top').
+                find('.alternative').
+                  toggle($(this).attr('checked')).
+                end().
+              end().
+            end();
         }
       ).
       change().

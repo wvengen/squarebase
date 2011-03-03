@@ -1,6 +1,6 @@
 <?php
   /*
-    Copyright 2009,2010 Frans Reijnhoudt
+    Copyright 2009-2011 Frans Reijnhoudt
 
     This file is part of Squarebase.
 
@@ -41,7 +41,7 @@
         array(
           html('input', array('type'=>'text', 'name'=>'databasename')),
           html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
-          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'attach database to metabase', 'class'=>'submit'))
+          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'attach_database_to_metabase', 'class'=>'submit'))
         )
       )
     );

@@ -1,6 +1,6 @@
 <?php
   /*
-    Copyright 2009,2010 Frans Reijnhoudt
+    Copyright 2009-2011 Frans Reijnhoudt
 
     This file is part of Squarebase.
 

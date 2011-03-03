@@ -1,6 +1,6 @@
 <?php
   /*
-    Copyright 2009,2010 Frans Reijnhoudt
+    Copyright 2009-2011 Frans Reijnhoudt
 
     This file is part of Squarebase.
 
@@ -18,12 +18,9 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  include('action/functions.php');
-
-  if (!get_get('action', null))
-    set_get('action', 'list_databases');
+  include('functions.php');
 
   init();
 
-  include_phpfile(array('action', get_get('action').'.php'));
+  include_phpfile(array('action', get_action().'.php'));
 ?>
