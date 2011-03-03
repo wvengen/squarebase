@@ -22,13 +22,13 @@
 
   init();
 
-  $metabasename            = get_parameter($_POST, 'metabasename');
-  $databasename            = get_parameter($_POST, 'databasename');
-  $tablename               = get_parameter($_POST, 'tablename');
-  $tablenamesingular       = get_parameter($_POST, 'tablenamesingular');
-  $uniquefieldname         = get_parameter($_POST, 'uniquefieldname');
-  $uniquevalue             = get_parameter($_POST, 'uniquevalue');
-  $deleterecord            = get_parameter($_POST, 'deleterecord', null);
+  $metabasename            = get_post('metabasename');
+  $databasename            = get_post('databasename');
+  $tablename               = get_post('tablename');
+  $tablenamesingular       = get_post('tablenamesingular');
+  $uniquefieldname         = get_post('uniquefieldname');
+  $uniquevalue             = get_post('uniquevalue');
+  $deleterecord            = get_post('deleterecord', null);
 
   $viewname = table_or_view($metabasename, $databasename, $tablename);
 

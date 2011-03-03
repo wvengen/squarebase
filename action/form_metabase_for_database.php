@@ -24,12 +24,12 @@
 
   include('inflection.php');
 
-  $metabasename = get_parameter($_GET, 'metabasename', null);
-  $databasename = get_parameter($_GET, 'databasename');
+  $metabasename = get_get('metabasename', null);
+  $databasename = get_get('databasename');
   $language =
     $metabasename
     ? query1field('SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>$metabasename))
-    : get_parameter($_GET, 'language');
+    : get_get('language');
 
   // pass 1: store query results and find the primary key field name
   $infos = $alltablenames = array();
@@ -311,7 +311,7 @@
       $metabase_input = html('select', array('name'=>'metabasename'), join($metabase_options));
     }
     // prevent reading the language for a non-existent metabase in the next action
-    $metabase_input .= html('input', array('type'=>'hidden', 'name'=>'language', 'value'=>get_parameter($_COOKIE, 'language')));
+    $metabase_input .= html('input', array('type'=>'hidden', 'name'=>'language', 'value'=>get_cookie('language')));
   }
 
   page('form metabase for database', breadcrumbs($metabasename, $databasename),

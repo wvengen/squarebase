@@ -22,7 +22,7 @@
 
   init();
 
-  $usernameandhost = get_parameter($_GET, 'usernameandhost');
+  $usernameandhost = get_get('usernameandhost');
 
   forget($usernameandhost);
 

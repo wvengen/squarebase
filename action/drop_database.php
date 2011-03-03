@@ -22,7 +22,7 @@
 
   init();
 
-  $databasename = get_parameter($_GET, 'databasename', null);
+  $databasename = get_get('databasename', null);
 
   if ($databasename) {
     page('drop database', breadcrumbs(null, $databasename),
@@ -37,7 +37,7 @@
     );
   }
 
-  $databasename = get_parameter($_POST, 'databasename');
+  $databasename = get_post('databasename');
 
   query('DROP DATABASE `<databasename>`', array('databasename'=>$databasename));
 

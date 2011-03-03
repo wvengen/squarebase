@@ -22,7 +22,7 @@
 
   init();
 
-  $databasename = get_parameter($_GET, 'databasename');
+  $databasename = get_get('databasename');
 
   $tables = query('SELECT table_name FROM information_schema.tables WHERE table_schema = "<databasename>"', array('databasename'=>$databasename));
   if ($tables) {

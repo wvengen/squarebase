@@ -22,13 +22,13 @@
 
   init();
 
-  $metabasename            = get_parameter($_GET, 'metabasename');
-  $databasename            = get_parameter($_GET, 'databasename');
-  $tablename               = get_parameter($_GET, 'tablename');
-  $tablenamesingular       = get_parameter($_GET, 'tablenamesingular');
-  $uniquefieldname         = get_parameter($_GET, 'uniquefieldname');
-  $uniquevalue             = get_parameter($_GET, 'uniquevalue');
-  $referencedfromfieldname = get_parameter($_GET, 'referencedfromfieldname', null);
+  $metabasename            = get_get('metabasename');
+  $databasename            = get_get('databasename');
+  $tablename               = get_get('tablename');
+  $tablenamesingular       = get_get('tablenamesingular');
+  $uniquefieldname         = get_get('uniquefieldname');
+  $uniquevalue             = get_get('uniquevalue');
+  $referencedfromfieldname = get_get('referencedfromfieldname', null);
 
   page('edit record', breadcrumbs($metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue),
     edit_record('UPDATE', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue, $referencedfromfieldname)

@@ -22,12 +22,12 @@
 
   init();
 
-  $metabasename            = get_parameter($_GET, 'metabasename');
-  $databasename            = get_parameter($_GET, 'databasename');
-  $tablename               = get_parameter($_GET, 'tablename');
-  $tablenamesingular       = get_parameter($_GET, 'tablenamesingular');
-  $uniquefieldname         = get_parameter($_GET, 'uniquefieldname');
-  $referencedfromfieldname = get_parameter($_GET, 'referencedfromfieldname', null);
+  $metabasename            = get_get('metabasename');
+  $databasename            = get_get('databasename');
+  $tablename               = get_get('tablename');
+  $tablenamesingular       = get_get('tablenamesingular');
+  $uniquefieldname         = get_get('uniquefieldname');
+  $referencedfromfieldname = get_get('referencedfromfieldname', null);
 
   page('new record', breadcrumbs($metabasename, $databasename, $tablename, $tablenamesingular),
     edit_record('INSERT', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, null, $referencedfromfieldname)

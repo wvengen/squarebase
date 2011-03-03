@@ -22,7 +22,7 @@
 
   init();
 
-  $query = get_parameter($_GET, 'query');
+  $query = get_get('query');
 
   $explanations = query('EXPLAIN EXTENDED '.$query);
   query('SHOW WARNINGS');

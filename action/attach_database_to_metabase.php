@@ -22,8 +22,8 @@
 
   init();
 
-  $metabasename = get_parameter($_GET, 'metabasename');
-  $databasename = get_parameter($_GET, 'databasename');
+  $metabasename = get_get('metabasename');
+  $databasename = get_get('databasename');
 
   query('INSERT IGNORE INTO `<metabasename>`.databases SET databasename = "<databasename>"', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
 

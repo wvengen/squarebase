@@ -22,7 +22,7 @@
 
   init();
 
-  $metabasename = get_parameter($_GET, 'metabasename');
+  $metabasename = get_get('metabasename');
   $rows = array(html('th', array(), _('database')).html('th', array('class'=>'filler'), ''));
   $databasenames = databasenames($metabasename);
 

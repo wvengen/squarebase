@@ -22,15 +22,15 @@
 
   init();
 
-  $metabasename      = get_parameter($_GET, 'metabasename');
-  $databasename      = get_parameter($_GET, 'databasename');
-  $tablename         = get_parameter($_GET, 'tablename');
-  $tablenamesingular = get_parameter($_GET, 'tablenamesingular');
-  $uniquefieldname   = get_parameter($_GET, 'uniquefieldname');
-  $limit             = get_parameter($_GET, 'limit', null);
-  $offset            = get_parameter($_GET, 'offset', null);
-  $orderfieldname    = get_parameter($_GET, 'orderfieldname', null);
-  $orderasc          = get_parameter($_GET, 'orderasc', 'on') == 'on';
+  $metabasename      = get_get('metabasename');
+  $databasename      = get_get('databasename');
+  $tablename         = get_get('tablename');
+  $tablenamesingular = get_get('tablenamesingular');
+  $uniquefieldname   = get_get('uniquefieldname');
+  $limit             = get_get('limit', null);
+  $offset            = get_get('offset', null);
+  $orderfieldname    = get_get('orderfieldname', null);
+  $orderasc          = get_get('orderasc', 'on') == 'on';
 
   page('show table', breadcrumbs($metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname),
     list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, null, $orderfieldname, $orderasc, null, null, null, true)

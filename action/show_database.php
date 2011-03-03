@@ -22,8 +22,8 @@
 
   init();
 
-  $metabasename = get_parameter($_GET, 'metabasename');
-  $databasename = get_parameter($_GET, 'databasename');
+  $metabasename = get_get('metabasename');
+  $databasename = get_get('databasename');
 
   $tables = query('SELECT * FROM `<metabasename>`.tables LEFT JOIN `<metabasename>`.fields ON tables.uniquefieldid = fields.fieldid WHERE intablelist = true ORDER BY tablename', array('metabasename'=>$metabasename));
   $rows = array(html('th', array('class'=>'filler'), _('table')));

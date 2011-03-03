@@ -22,14 +22,14 @@
 
   init();
 
-  $metabasename            = get_parameter($_POST, 'metabasename');
-  $databasename            = get_parameter($_POST, 'databasename');
-  $tablename               = get_parameter($_POST, 'tablename');
-  $tablenamesingular       = get_parameter($_POST, 'tablenamesingular');
-  $uniquefieldname         = get_parameter($_POST, 'uniquefieldname');
-  $addrecordandedit        = get_parameter($_POST, 'addrecordandedit', null);
-  $back                    = get_parameter($_POST, 'back', null);
-  $ajax                    = get_parameter($_POST, 'ajax', null);
+  $metabasename            = get_post('metabasename');
+  $databasename            = get_post('databasename');
+  $tablename               = get_post('tablename');
+  $tablenamesingular       = get_post('tablenamesingular');
+  $uniquefieldname         = get_post('uniquefieldname');
+  $addrecordandedit        = get_post('addrecordandedit', null);
+  $back                    = get_post('back', null);
+  $ajax                    = get_post('ajax', null);
 
   $viewname = table_or_view($metabasename, $databasename, $tablename);
 
@@ -40,7 +40,7 @@
       add_log('message', sprintf(_('added %s %s'), $tablenamesingular, description($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, $uniquevalue)));
 
     if ($ajax)
-      set_parameter($_POST, 'ajax', preg_replace('@\bvalue=\d+\b@', '', $ajax)."&value=$uniquevalue".($addrecordandedit ? "&uniquevalue=$uniquevalue" : ''));
+      set_post('ajax', preg_replace('@\bvalue=\d+\b@', '', $ajax)."&value=$uniquevalue".($addrecordandedit ? "&uniquevalue=$uniquevalue" : ''));
     elseif ($addrecordandedit)
       internal_redirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
   }

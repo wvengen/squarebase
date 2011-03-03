@@ -22,21 +22,21 @@
 
   init();
 
-  $usernameandhost = get_parameter($_GET, 'usernameandhost', null);
-  $username        = get_parameter($_GET, 'username', null);
-  $host            = get_parameter($_GET, 'host', null);
-  $password        = get_parameter($_GET, 'password', null);
-  $next            = get_parameter($_GET, 'next', null);
+  $usernameandhost = get_get('usernameandhost', null);
+  $username        = get_get('username', null);
+  $host            = get_get('host', null);
+  $password        = get_get('password', null);
+  $next            = get_get('next', null);
 
   if ($usernameandhost == $username.'@'.$host)
     internal_redirect(first_non_null(http_parse_url($next), array('action'=>'index')));
 
-  if (is_null($usernameandhost) && get_parameter($_SESSION, 'username', null))
+  if (is_null($usernameandhost) && get_session('username', null))
     internal_redirect(array('action'=>'index'));
 
   if (!$usernameandhost) {
     $radios = array();
-    $lastusernamesandhosts = get_parameter($_COOKIE, 'lastusernamesandhosts', null);
+    $lastusernamesandhosts = get_cookie('lastusernamesandhosts', null);
     if ($lastusernamesandhosts) {
       foreach (explode(',', $lastusernamesandhosts) as $thisusernameandhost)
         $radios[] =

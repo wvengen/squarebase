@@ -22,5 +22,5 @@
 
   init();
 
-  call_function(get_parameter($_SERVER, 'REQUEST_URI'));
+  call_function(get_server('REQUEST_URI'));
 ?>

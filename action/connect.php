@@ -22,11 +22,11 @@
 
   init();
 
-  $lastusernameandhost = get_parameter($_GET, 'lastusernameandhost', null);
-  $usernameandhost     = get_parameter($_GET, 'usernameandhost', null);
-  $password            = get_parameter($_GET, 'password');
-  $language            = get_parameter($_GET, 'language');
-  $next                = get_parameter($_GET, 'next', null);
+  $lastusernameandhost = get_get('lastusernameandhost', null);
+  $usernameandhost     = get_get('usernameandhost', null);
+  $password            = get_get('password');
+  $language            = get_get('language');
+  $next                = get_get('next', null);
 
   $bestusernameandhost = first_non_null($lastusernameandhost, $usernameandhost);
   if (preg_match('@^([^\@]+)\@([^\@]+)$@', $bestusernameandhost, $match)) {
