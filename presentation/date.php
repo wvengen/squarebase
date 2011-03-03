@@ -21,7 +21,7 @@
   }
 
   function formvalue_date($field) {
-    $value = get_parameter($_POST, "field:$field[fieldname]", null);
+    $value = get_post("field:$field[fieldname]", null);
     return $value == '' ? null : local2date($value);
   }
 

@@ -15,7 +15,7 @@
   function ajax_image($metabasename, $databasename, $tablename, $fieldname, $value, $presentationname, $uniquefieldname, $uniquevalue, $nullallowed, $defaultvalue, $readonly, $extra, $newname = null) {
     $field = array('tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'fieldname'=>$fieldname);
     return
-      html('div', array('class'=>'ajax', 'id'=>http_url(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'ajax_image', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname, 'value'=>$value ? 1 : 0, 'presentationname'=>$presentationname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'nullallowed'=>$nullallowed, 'defaultvalue'=>$defaultvalue ? $defaultvalue : '', 'readonly'=>$readonly, 'extra'=>$extra ? 1 : 0, 'newname'=>$newname ? $newname : ''))),
+      html('div', array('class'=>'ajax', 'id'=>http_build_url(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'ajax_image', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname, 'value'=>$value ? 1 : 0, 'presentationname'=>$presentationname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'nullallowed'=>$nullallowed, 'defaultvalue'=>$defaultvalue ? $defaultvalue : '', 'readonly'=>$readonly, 'extra'=>$extra ? 1 : 0, 'newname'=>$newname ? $newname : ''))),
         $readonly
         ? list_image($metabasename, $databasename, $field, $value)
         : html($extra ? 'fieldset' : 'div', array('class'=>array($presentationname, $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty')),
@@ -57,14 +57,14 @@
   }
 
   function formvalue_image($field) {
-    $choice = get_parameter($_POST, "radio:$field[fieldname]", null);
+    $choice = get_post("radio:$field[fieldname]", null);
     switch ($choice) {
     case 'original':
       return query1field('SELECT <fieldname> FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('fieldname'=>$field['fieldname'], 'databasename'=>$field['databasename'], 'tablename'=>$field['tablename'], 'uniquefieldname'=>$field['uniquefieldname'], 'uniquevalue'=>$field['uniquevalue']));
     case 'none':
       return null;
     case 'new':
-      $newname = directory_part(get_parameter($_POST, "field:new:$field[fieldname]"));
+      $newname = directory_part(get_post("field:new:$field[fieldname]"));
       $file = file_name(array('upload', $newname));
       $image = file_get_contents($file);
       unlink($file);
@@ -83,12 +83,12 @@
   callable_function('get_image', array());
 
   function get_image() {
-    $metabasename    = get_parameter($_GET, 'metabasename');
-    $databasename    = get_parameter($_GET, 'databasename');
-    $tablename       = get_parameter($_GET, 'tablename');
-    $uniquefieldname = get_parameter($_GET, 'uniquefieldname');
-    $uniquevalue     = get_parameter($_GET, 'uniquevalue');
-    $fieldname       = get_parameter($_GET, 'fieldname');
+    $metabasename    = get_get('metabasename');
+    $databasename    = get_get('databasename');
+    $tablename       = get_get('tablename');
+    $uniquefieldname = get_get('uniquefieldname');
+    $uniquevalue     = get_get('uniquevalue');
+    $fieldname       = get_get('fieldname');
 
     $image = query1field('SELECT <fieldname> FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('fieldname'=>$fieldname, 'databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
     http_response('Content-type: image/jpeg', $image);
@@ -97,7 +97,7 @@
   callable_function('new_image', array());
 
   function new_image() {
-    $newname = directory_part(get_parameter($_GET, 'newname'));
+    $newname = directory_part(get_get('newname'));
 
     $image = file_get_contents(file_name(array('upload', $newname)));
     http_response('Content-type: image/jpeg', $image);
@@ -119,7 +119,7 @@
     $newname = strftime('%Y_%m_%d_%H_%M_%S').'_'.directory_part($file['name']);
     if (!move_uploaded_file($file['tmp_name'], file_name(array('upload', $newname))))
       return sprintf(_('uploaded file cannot be moved: %s'), $file['name']);
-    set_parameter($_GET, 'ajax', preg_replace('@\bnewname=[^&]*@', "newname=$newname", get_parameter($_GET, 'ajax')));
+    set_get('ajax', preg_replace('@\bnewname=[^&]*@', "newname=$newname", get_get('ajax')));
   }
 
   callable_function('upload_image', array());
@@ -128,7 +128,7 @@
     $warning = process_image();
     if ($warning)
       add_log('warning', $warning);
-    call_function(get_parameter($_GET, 'ajax'));
+    call_function(get_get('ajax'));
   }
 
   function css_image() {
@@ -152,7 +152,7 @@
       "          var inputfile = $(this);\n".
       "          $(this).\n".
       "          uploadFile(\n".
-      "            '".http_url(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'upload_image'))."&ajax=' + escape($(this).closest('.ajax').attr('id')),\n".
+      "            '".http_build_url(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'upload_image'))."&ajax=' + escape($(this).closest('.ajax').attr('id')),\n".
       "            function(iframe) {\n".
       "              inputfile.\n".
       "              closest('.ajax').\n".
