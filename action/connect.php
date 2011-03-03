@@ -18,10 +18,6 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  include('functions.php');
-
-  init();
-
   $lastusernameandhost = get_get('lastusernameandhost', null);
   $usernameandhost     = get_get('usernameandhost', null);
   $password            = get_get('password');
@@ -42,5 +38,5 @@
 
   login($username, $host, $password, $language);
 
-  internal_redirect(first_non_null(http_parse_url($next), array('action'=>'index')));
+  internal_redirect(first_non_null(http_parse_url($next), array('action'=>'list_databases')));
 ?>

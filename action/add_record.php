@@ -18,10 +18,6 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  include('functions.php');
-
-  init();
-
   $metabasename            = get_post('metabasename');
   $databasename            = get_post('databasename');
   $tablename               = get_post('tablename');

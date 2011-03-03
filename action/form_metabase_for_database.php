@@ -18,10 +18,6 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  include('functions.php');
-
-  init();
-
   include('inflection.php');
 
   $metabasename = get_get('metabasename', null);

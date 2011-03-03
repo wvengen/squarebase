@@ -166,7 +166,7 @@
   }
 
   function file_name($parts) {
-    return '../'.join('/', array_map('directory_part', $parts));
+    return join('/', array_map('directory_part', $parts));
   }
 
   function http_parse_query($query) {
@@ -177,16 +177,14 @@
   }
 
   function http_parse_url($url) {
-    return http_parse_query(preg_replace('@^.*?([^\/]*)\.php(\?|$)@', 'action=\1&', $url));
+    return http_parse_query(preg_match1('@\?(.*)$@', $url));
   }
 
   function http_build_url($parameters) {
     if (!isset($parameters['action']))
-      error(sprintf(_('internal url without action: %s'), http_build_query($parameters)));
-    $action = $parameters['action'];
-    unset($parameters['action']);
+      error(sprintf(_('internal url without action: %s'), print_r($parameters, true)));
     $query = http_build_query($parameters);
-    return directory_part($action.'.php').($query ? '?'.$query : '');
+    return 'index.php'.($query ? '?'.$query : '');
   }
 
   function internal_url($parameters) {
@@ -259,7 +257,7 @@
   }
   
   function get_referer() {
-    return get_server('HTTP_REFERER', 'index.php');
+    return get_server('HTTP_REFERER', 'index.php?action=list_databases');
   }
 
   function back() {
@@ -581,7 +579,7 @@
       $uniquepart = null;
     return
       html('ul', array('id'=>'breadcrumbs', 'class'=>array('compact', 'secondary')),
-        html('li', array(), internal_reference(array('action'=>'index'), 'index')).
+        html('li', array(), internal_reference(array('action'=>'list_databases'), 'databases')).
         html('li', array('class'=>'notfirst'),
           array(
             !is_null($metabasename) ? (has_grant('DROP', $metabasename) ? internal_reference(array('action'=>'form_metabase_for_database', 'metabasename'=>$metabasename, 'databasename'=>$databasename), $metabasename) : $metabasename) : '&hellip;',

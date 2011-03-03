@@ -18,10 +18,6 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  include('functions.php');
-
-  init();
-
   $metabases = all_databases();
   $rows = array(html('th', array('class'=>'filler'), _('database')).html('th', array('class'=>'secondary'), _('metabase')).html('th', array(), ''));
   $links = array();
@@ -56,7 +52,7 @@
   if (count($links) == 1 && !$can_create)
     internal_redirect($links[0]);
 
-  page('index', null,
+  page('list databases', null,
     html('table', array('class'=>'box'), join($rows)).
     ($can_create ? internal_reference(array('action'=>'new_metabase_from_database'), _('new metabase from database')) : '')
   );

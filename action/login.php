@@ -18,10 +18,6 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  include('functions.php');
-
-  init();
-
   $usernameandhost = get_get('usernameandhost', null);
   $username        = get_get('username', null);
   $host            = get_get('host', null);
@@ -29,10 +25,10 @@
   $next            = get_get('next', null);
 
   if ($usernameandhost == $username.'@'.$host)
-    internal_redirect(first_non_null(http_parse_url($next), array('action'=>'index')));
+    internal_redirect(first_non_null(http_parse_url($next), array('action'=>'list_databases')));
 
   if (is_null($usernameandhost) && get_session('username', null))
-    internal_redirect(array('action'=>'index'));
+    internal_redirect(array('action'=>'list_databases'));
 
   if (!$usernameandhost) {
     $radios = array();

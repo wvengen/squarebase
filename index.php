@@ -18,12 +18,12 @@
     along with this program. If not, see <http://www.gnu.org/licenses/>.
   */
 
-  $usernameandhost = get_get('usernameandhost');
+  include('action/functions.php');
 
-  forget($usernameandhost);
+  if (!get_get('action', null))
+    set_get('action', 'list_databases');
 
-  if (has_preference('messagy'))
-    add_log('message', sprintf(_('forgotten %s'), $usernameandhost));
+  init();
 
-  internal_redirect(array('action'=>'login'));
+  include_phpfile(array('action', get_get('action').'.php'));
 ?>
