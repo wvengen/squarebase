@@ -26,6 +26,7 @@
   
   function css_float() {
     return
-      ".float { text-align: right; }\n";
+      ".float { text-align: right; }\n".
+      ".float.edit, .float.list { width: 3em; }\n";
   }
 ?>

@@ -21,7 +21,7 @@
   define('UNDEFINED', 'undefined_default_value_for_get_parameter');
 
   function get_parameter($name, $array, $key, $default = UNDEFINED) {
-    if (isset($array[$key]))
+    if (array_key_exists($key, $array))
       return str_replace(array('\\"', '\\\''), array('"', '\''), $array[$key]);
     if ($default != UNDEFINED)
       return $default;
@@ -273,7 +273,7 @@
     $traces = array();
     if (has_preference('logsy')) {
       $stack = debug_backtrace();
-      $mainpath = preg_match1('@^(.*/).*?/@', $stack[0]['file']);
+      $mainpath = preg_match1('@^(.*/)@', $stack[0]['file']);
       foreach ($stack as $element) {
         $args = array();
         if ($element['args']) {
@@ -291,7 +291,6 @@
     }
     page('error', null,
       html('div', array('class'=>'error'), $error).
-      $mainpath.
       ($traces ? html('p', array('class'=>'trace'), html('ol', array(), html('li', array(), $traces))) : '')
     );
     exit;
