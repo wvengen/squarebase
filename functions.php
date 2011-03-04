@@ -349,6 +349,13 @@
           $resultlist[] = html('li', array('class'=>'arrayshow'), "&hellip; $numresults.");
           break;
         }
+        foreach ($resultrow as $column=>$value)
+          if (preg_match('@^GIF89a@', $value))
+            $resultrow[$column] = '[GIF]';
+          elseif (preg_match('@^\xFF\xD8\xFF\xE0..JFIF@', $value))
+            $resultrow[$column] = '[JPG]';
+          elseif (preg_match('@^\x89\x50\x4E\x47\x0D\x0A\x1A\x0A@', $value))
+            $resultrow[$column] = '[PNG]';
         $resultlist[] = html('li', array('class'=>'arrayshow'), array_show($resultrow));
       }
       mysql_data_reset($result);
