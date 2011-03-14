@@ -215,8 +215,12 @@
     exit;
   }
 
+  function external_redirect($url) {
+    http_response('Location: '.$url);
+  }
+
   function internal_redirect($parameters) {
-    http_response('Location: '.http_build_url($parameters));
+    external_redirect(http_build_url($parameters));
   }
 
   function include_phpfile($parts) {
@@ -266,7 +270,7 @@
 
   function back() {
     call_function(first_non_null(get_post('ajax', null), get_get('ajax', null)));
-    internal_redirect(http_parse_url(first_non_null(get_post('back', null), get_get('back', null), get_referer())));
+    external_redirect(http_parse_url(first_non_null(get_post('back', null), get_get('back', null), get_referer())));
   }
 
   function error($error) {
