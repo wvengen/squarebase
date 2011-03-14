@@ -753,6 +753,7 @@
             isset($offsets) ? html('ol', array('class'=>'offsets'), html('li', array(), $offsets)) : ''
           )
         );
+    $back = first_non_null(get_get('back', null), get_referer());
 
     return
       html('div', array('class'=>'ajax', 'id'=>http_build_url(array('action'=>'call_function', 'functionname'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'orderasc'=>$orderasc ? 'on' : '', 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
@@ -763,7 +764,7 @@
             html('input', array('type'=>'hidden', 'name'=>'tablename', 'value'=>$tablename)).
             html('input', array('type'=>'hidden', 'name'=>'tablenamesingular', 'value'=>$tablenamesingular)).
             html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
-            html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>isset($back) ? $back : get_referer())).
+            html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back)).
             html('table', array('class'=>array($interactive ? 'box' : null, 'tablelist')), join($rows)),
             array('method'=>'post', 'class'=>'ajaxcontainerminus1')
           ).
@@ -847,8 +848,8 @@
         ).
         ($referrers ? html('table', array('class'=>'referringlist'), join($referrers)) : '').
         ($privilege == 'SELECT' || !has_grant($privilege, $databasename, $viewname, '?')
-        ? external_reference(http_parse_url($back), _('close'), array('class'=>'close'))
-        : external_reference(http_parse_url($back), _('cancel'), array('class'=>'cancel'))
+        ? external_reference($back, _('close'), array('class'=>'close'))
+        : external_reference($back, _('cancel'), array('class'=>'cancel'))
         )
       );
   } //edit_record
