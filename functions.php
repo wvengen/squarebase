@@ -200,7 +200,7 @@
   }
 
   function internal_reference($parameters, $text, $extra = array()) {
-    return html('a', array_merge($extra, array('href'=>internal_url($parameters))), $text);
+    return external_reference(internal_url($parameters), $text, $extra);
   }
 
   function make_array($value) {
@@ -270,7 +270,7 @@
 
   function back() {
     call_function(first_non_null(get_post('ajax', null), get_get('ajax', null)));
-    external_redirect(http_parse_url(first_non_null(get_post('back', null), get_get('back', null), get_referer())));
+    external_redirect(first_non_null(get_post('back', null), get_get('back', null), get_referer()));
   }
 
   function error($error) {
@@ -720,8 +720,8 @@
           html('td', array(), '').
           html('td', array('colspan'=>count($quickadd) - 1),
             html('div', array(),
-              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add record', 'id'=>"quickadd_record_$tablenamesingular", 'class'=>'submit')).
-              altsubmit('addrecordandedit', _('add record and edit')).
+              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'id'=>"quickadd_record_$tablenamesingular", 'class'=>'submit')).
+              altsubmit('addrecordandedit', 'add_record_and_edit').
               internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, "field:$foreignfieldname"=>$foreignvalue, 'back'=>get_server('REQUEST_URI'), 'id'=>"full_record_$tablenamesingular"), _('full record'), array('class'=>'fullrecord')).
               (is_null($foreignvalue) ? '' : html('span', array('class'=>'changeslost'), _('(changes to form fields are lost)')))
             )
@@ -804,9 +804,9 @@
     $lines[] =
       html('td', array('class'=>'description'), '').
       html('td', array('class'=>'field'),
-        (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>"$mainaction record", 'id'=>"${mainaction}_record_$tablenamesingular", 'class'=>'submit')) : '').
-        ($privilege == 'INSERT' && has_grant($privilege, $databasename, $viewname, '?') ? altsubmit('addrecordandedit', _('add record and edit')) : '').
-        (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $viewname) ? altsubmit('deleterecord', _('delete record')) : '')
+        (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>"${mainaction}_record", 'id'=>"${mainaction}_record_$tablenamesingular", 'class'=>'submit')) : '').
+        ($privilege == 'INSERT' && has_grant($privilege, $databasename, $viewname, '?') ? altsubmit('addrecordandedit', 'add_record_and_edit') : '').
+        (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $viewname) ? altsubmit('deleterecord', 'delete_record') : '')
       ).
       html('td', array('class'=>'filler'), '');
 
@@ -847,8 +847,8 @@
         ).
         ($referrers ? html('table', array('class'=>'referringlist'), join($referrers)) : '').
         ($privilege == 'SELECT' || !has_grant($privilege, $databasename, $viewname, '?')
-        ? internal_reference(http_parse_url($back), _('close'), array('class'=>'close'))
-        : internal_reference(http_parse_url($back), _('cancel'), array('class'=>'cancel'))
+        ? external_reference(http_parse_url($back), _('close'), array('class'=>'close'))
+        : external_reference(http_parse_url($back), _('cancel'), array('class'=>'cancel'))
         )
       );
   } //edit_record
