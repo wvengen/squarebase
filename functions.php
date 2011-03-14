@@ -170,7 +170,7 @@
   }
 
   function file_name($parts) {
-    return join('/', array_map('directory_part', $parts));
+    return dirname(__FILE__).'/'.join('/', array_map('directory_part', $parts));
   }
 
   function http_parse_query($query) {
@@ -1305,6 +1305,7 @@
       $parametersource = $_POST ? 'post' : 'get';
       add_log($parametersource, $parametersource.': '.get_action().html('div', array('class'=>'arrayshow'), array_show(array_merge($_POST, $_GET))));
 //    add_log('cookie', 'cookie: '.html('div', array('class'=>'arrayshow'), array_show($_COOKIE)));
+//    add_log('server', 'server: '.html('div', array('class'=>'arrayshow'), array_show($_SERVER)));
     }
 
     $languagename = !get_get('language', null) && get_get('metabasename', null) ? query1field('SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>get_get('metabasename'))) : null;
