@@ -94,7 +94,7 @@ input.title { width: 8em; }
 
 .important { font-weight: bold; }
 
-.error { padding: 0.5em; margin-bottom: 0.5em; }
+.error { padding: 1em; margin-bottom: 0.5em; }
 .warnings, .messages { padding: 0; }
 .warnings li, .messages li { list-style-type: none; padding: 0.3em; }
 .error, .warnings, .warning, .messages { font-weight: bold; }

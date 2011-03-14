@@ -1311,7 +1311,7 @@
         join(',',
           array(
             preg_match('/^([^\.]+)/', get_get('language', null),    $matches) ? $matches[1].';q=4.0' : null,
-            preg_match('/^([^\.]+)/', $languagename,                   $matches) ? $matches[1].';q=3.0' : null,
+            preg_match('/^([^\.]+)/', $languagename,                $matches) ? $matches[1].';q=3.0' : null,
             preg_match('/^([^\.]+)/', get_cookie('language', null), $matches) ? $matches[1].';q=2.0' : null,
             get_server('HTTP_ACCEPT_LANGUAGE', null),
             'en;q=0.0'
@@ -1321,7 +1321,7 @@
       join(',',
         array(
           preg_match('/\.(.*?)$/', get_get('language', null),    $matches) ? $matches[1].';q=4.0' : null,
-          preg_match('/\.(.*?)$/', $languagename,                   $matches) ? $matches[1].';q=3.0' : null,
+          preg_match('/\.(.*?)$/', $languagename,                $matches) ? $matches[1].';q=3.0' : null,
           preg_match('/\.(.*?)$/', get_cookie('language', null), $matches) ? $matches[1].';q=2.0' : null,
           get_server('HTTP_ACCEPT_CHARSET', null),
           '*;q=0.0'

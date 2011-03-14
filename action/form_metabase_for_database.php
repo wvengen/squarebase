@@ -303,8 +303,16 @@
     else {
       $metabase_options = array();
       foreach ($databases as $database)
-        $metabase_options[] = html('option', array(), $database);
-      $metabase_input = html('select', array('name'=>'metabasename'), join($metabase_options));
+        $metabase_options[html('option', array(), $database)] =
+          (preg_match("@^${database}_metabase$@i", $databasename)
+          ? 200
+          : (preg_match("@^$database|$database$@i", $databasename)
+            ? 100 + strlen($database)
+            : strlen($database) - levenshtein($database, $databasename)
+            )
+          );
+      arsort($metabase_options);
+      $metabase_input = html('select', array('name'=>'metabasename'), join(array_keys($metabase_options)));
     }
     // prevent reading the language for a non-existent metabase in the next action
     $metabase_input .= html('input', array('type'=>'hidden', 'name'=>'language', 'value'=>get_cookie('language')));

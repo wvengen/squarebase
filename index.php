@@ -22,5 +22,6 @@
 
   init();
 
-  include_phpfile(array('action', get_action().'.php'));
+  if (!include_phpfile(array('action', get_action().'.php')))
+    error(sprintf(_('unknown action: %s'), get_action()));
 ?>
