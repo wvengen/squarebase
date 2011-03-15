@@ -59,10 +59,13 @@ jQuery.fn.formvalue = function() {
 }
 
 jQuery.fn.enhance_form = function() {
-  if (!$(this).length || $(this).hasClass('enhancedform'))
-    return this;
-
   $(this).
+  filter(
+    function() {
+      return $(this).length && !$(this).hasClass('enhancedform');
+    }
+  ).
+
   addClass('enhancedform').
 
   find(':input').
@@ -120,8 +123,16 @@ jQuery.fn.enhance_form = function() {
             function() {
               $(this).
               closest('form').
-              find('.altsubmit :checkbox').
-              attr('checked', true);
+                find('.altsubmit :checkbox').
+                  attr('checked', true).
+                end().
+                append(
+                  $('<input>').
+                  attr('type', 'hidden').
+                  attr('name', 'action').
+                  attr('value', $(this).closest('form').find('.submit').val())
+                ).
+              end();
 
               $(this).
               closest('form').
@@ -145,6 +156,13 @@ jQuery.fn.enhance_form = function() {
       end().
     end().
   end().
+
+  submit(
+    function() {
+      if ($(this).check_form().find('.ajaxproblem:first').focus().length > 0)
+        return false;
+    }
+  ).
 
   find('input, select').
   filter(':enabled:not(:submit):not(:button):not(.readonly):not(.skipfirstfocus):not(.list)').
@@ -176,7 +194,7 @@ jQuery.fn.hidelogs = function() {
 
   find('.togglelogs').
   click(
-    function(event) {
+    function() {
       $(this).
       parent().
       next().
@@ -194,10 +212,7 @@ jQuery.fn.ajaxsubmit = function() {
   closest('form:not(.ajaxified)').
   addClass('ajaxified').
   submit(
-    function(event) {
-      if ($(this).check_form().find('.ajaxproblem:first').focus().length > 0)
-        return;
-
+    function() {
       $(this).
       find(':input[name=back]').
         attr('name', 'ajax').
@@ -263,7 +278,7 @@ jQuery.fn.ajaxify = function() {
   find('.cancel:not(.ajaxified), .close:not(.ajaxified)').
     addClass('ajaxified').
     click(
-      function(event) {
+      function() {
         $(this).
         closest('.ajaxcontent').
         unload();
@@ -283,7 +298,7 @@ jQuery.fn.ajaxify = function() {
   find('a:not(.ajaxified)').
   addClass('ajaxified').
   click(
-    function(event) {
+    function() {
       var ajaxcontent =  null;
       if ($(this).hasClass('ajaxreload')) {
         ajaxcontent = 
