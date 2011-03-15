@@ -19,8 +19,9 @@ tr.quickadd label { display: block; font-style: italic; font-size: small; }
 .referringlist.tablelist { margin-bottom: 1em; }
 .referrer { font-size: small; margin-left: 0.5em; }
 
-a { color: #00e; }
-a:hover { background-color: #00e; color: #fff !important; }
+a, .clickable { color: #00e; text-decoration: underline; cursor: pointer; }
+a:hover, .clickable:hover { background-color: #00e; color: #fff !important; }
+.clickable { display: inline-block; margin: 0 0.5em; }
 p { margin: 0.5em 0; }
 
 .secondary { color: #aaa; }

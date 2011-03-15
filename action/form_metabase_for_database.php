@@ -304,11 +304,14 @@
       $metabase_options = array();
       foreach ($databases as $database)
         $metabase_options[html('option', array(), $database)] =
-          (preg_match("@^${database}_metabase$@i", $databasename)
-          ? 200
-          : (preg_match("@^$database|$database$@i", $databasename)
-            ? 100 + strlen($database)
-            : strlen($database) - levenshtein($database, $databasename)
+          ($database == $databasename
+          ? 0
+          : (preg_match("@^${database}_metabase$@i", $databasename)
+            ? 300
+            : (preg_match("@^$database|$database$@i", $databasename)
+              ? 200 + strlen($database)
+              : 100 + strlen($database) - levenshtein($database, $databasename)
+              )
             )
           );
       arsort($metabase_options);

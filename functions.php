@@ -49,7 +49,7 @@
   }
 
   function get_action() {
-    return first_non_null(get_get('action', null), get_post('action', null), 'list_databases');
+    return first_non_null(get_get('action', null), get_post('action', null), $_GET || $_POST ? null : 'list_databases');
   }
 
   function set_parameter(&$array, $key, $value) {
@@ -181,7 +181,10 @@
   }
 
   function http_parse_url($url) {
-    return http_parse_query(preg_match1('@\?(.*)$@', $url));
+    $query = preg_match1('@\bindex\.php\?(.*)$@', $url);
+    if (!$query)
+      error(sprintf(_('invalid internal url: %s'), $url));
+    return http_parse_query($query);
   }
 
   function http_build_url($parameters) {
@@ -191,16 +194,12 @@
     return 'index.php'.($query ? '?'.$query : '');
   }
 
-  function internal_url($parameters) {
-    return http_build_url($parameters);
-  }
-
   function external_reference($url, $text, $extra = array()) {
     return html('a', array_merge($extra, array('href'=>$url)), $text);
   }
 
   function internal_reference($parameters, $text, $extra = array()) {
-    return external_reference(internal_url($parameters), $text, $extra);
+    return external_reference(http_build_url($parameters), $text, $extra);
   }
 
   function make_array($value) {
@@ -265,7 +264,7 @@
   }
   
   function get_referer() {
-    return get_server('HTTP_REFERER', 'index.php?action=list_databases');
+    return get_server('HTTP_REFERER', http_build_url(array('action'=>'list_databases')));
   }
 
   function back() {
@@ -490,11 +489,11 @@
       html('html', array(),
         html('head', array(),
           html('title', array(), $title).
-          html('link', array('href'=>internal_url(array('action'=>'style', 'metabasename'=>get_get('metabasename', null))), 'type'=>'text/css', 'rel'=>'stylesheet')).
+          html('link', array('href'=>http_build_url(array('action'=>'style', 'metabasename'=>get_get('metabasename', null))), 'type'=>'text/css', 'rel'=>'stylesheet')).
           (has_preference('scripty')
           ? html('script', array('type'=>'text/javascript', 'src'=>'jquery/min.js'), '').
             html('script', array('type'=>'text/javascript', 'src'=>'jquery/requirescript.js'), '').
-            html('script', array('type'=>'text/javascript', 'src'=>internal_url(array('action'=>'script', 'metabasename'=>get_get('metabasename', null)))), '')
+            html('script', array('type'=>'text/javascript', 'src'=>http_build_url(array('action'=>'script', 'metabasename'=>get_get('metabasename', null)))), '')
           : ''
           )
         ).

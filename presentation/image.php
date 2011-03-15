@@ -22,27 +22,35 @@
             html('ul', array('class'=>'minimal'),
               html('li', array(),
                 array(
-                  $value
+                  $newname
+                  ? html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:new:$fieldname", 'value'=>'new', 'checked'=>'checked')).
+                    html('label', array('for'=>"radio:new:$fieldname"),
+                      html('span', array('class'=>array('filesource', 'filesourcenew')), _('new')).
+                      html('img', array('src'=>http_build_url(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'new_image', 'newname'=>$newname)), 'alt'=>_('new image'), 'class'=>'listimage')).
+                      html('input', array('type'=>'hidden', 'name'=>"field:new:$fieldname", 'value'=>$newname))
+                    )
+                  : null,
+
+                  !$newname && $value
                   ? html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:original:$fieldname", 'value'=>'original', 'checked'=>$newname ? null : 'checked')).
                     html('label', array('for'=>"radio:original:$fieldname"),
-                      html('span', array('class'=>'filesource'), _('original')).
+                      html('span', array('class'=>array('filesource', 'filesourceoriginal')), _('original')).
                       list_image($metabasename, $databasename, $field, $value)
                     )
                   : null,
-                  html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:none:$fieldname", 'value'=>'none', 'checked'=>$value ? null : 'checked')).
-                  html('label', array('for'=>"radio:none:$fieldname", 'class'=>'filesource'), 'none'),
-                  ($newname
-                  ? html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:new:$fieldname", 'value'=>'new', 'checked'=>'checked')).
-                    html('label', array('for'=>"radio:new:$fieldname"),
-                      html('span', array('class'=>'filesource'), _('new')).
-                      html('img', array('src'=>internal_url(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'new_image', 'newname'=>$newname)), 'alt'=>_('new image'), 'class'=>'listimage')).
-                      html('input', array('type'=>'hidden', 'name'=>"field:new:$fieldname", 'value'=>$newname))
-                    )
-                  : null
-                  ),
+
+                  $value || $newname
+                  ? html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:delete:$fieldname", 'value'=>'delete', 'checked'=>$value ? null : 'checked')).
+                    html('label', array('for'=>"radio:delete:$fieldname", 'class'=>array('filesource', 'filesourcedelete')), _('delete'))
+                  : html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:none:$fieldname", 'value'=>'none', 'checked'=>$value ? null : 'checked')).
+                    html('label', array('for'=>"radio:none:$fieldname", 'class'=>array('filesource', 'filesourcenone')), _('none')),
+
                   html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:upload:$fieldname", 'value'=>'upload')).
                   html('label', array('for'=>"radio:upload:$fieldname"),
-                    html('span', array('class'=>'filesource'), _('upload')).
+                    ($value
+                    ? html('span', array('class'=>array('filesource', 'filesourcereplace')), _('replace'))
+                    : html('span', array('class'=>array('filesource', 'filesourceupload')), _('upload'))
+                    ).
                     html('input', array('type'=>'file', 'class'=>array($presentationname, $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'id'=>"field:$fieldname", 'name'=>"field:$fieldname", 'readonly'=>$readonly ? 'readonly' : null))
                   )
                 )
@@ -62,6 +70,7 @@
     case 'original':
       return query1field('SELECT <fieldname> FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('fieldname'=>$field['fieldname'], 'databasename'=>$field['databasename'], 'tablename'=>$field['tablename'], 'uniquefieldname'=>$field['uniquefieldname'], 'uniquevalue'=>$field['uniquevalue']));
     case 'none':
+    case 'delete':
       return null;
     case 'new':
       $newname = directory_part(get_post("field:new:$field[fieldname]"));
@@ -70,6 +79,7 @@
       unlink($file);
       return $image;
     case 'upload':
+    case 'replace':
       $file = get_parameter($_FILES, "field:$field[fieldname]");
       return $file['tmp_name'] ? file_get_contents($file['tmp_name']) : null;
     }
@@ -77,7 +87,7 @@
   }
 
   function list_image($metabasename, $databasename, $field, $value) {
-    return $value ? html('img', array('src'=>internal_url(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'get_image', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$field['tablename'], 'uniquefieldname'=>$field['uniquefieldname'], 'uniquevalue'=>$field['uniquevalue'], 'fieldname'=>$field['fieldname'], 'forcereload'=>time())), 'alt'=>_('uploaded image'), 'class'=>'listimage')) : '';
+    return $value ? html('img', array('src'=>http_build_url(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'get_image', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$field['tablename'], 'uniquefieldname'=>$field['uniquefieldname'], 'uniquevalue'=>$field['uniquevalue'], 'fieldname'=>$field['fieldname'], 'forcereload'=>time())), 'alt'=>_('uploaded image'), 'class'=>'listimage')) : '';
   }
   
   callable_function('get_image', array());
@@ -133,16 +143,65 @@
 
   function css_image() {
     return
-      ".image.edit img { max-width: 3em; max-height: 3em; }\n".
-      ".image.edit img:hover { max-width: none; max-height: none; }\n".
+      ".image.edit ul li { vertical-align: top; }\n".
       ".image .filesource { display: inline-block; width: 4em; }\n".
       ".image.list li { display: inline; }\n".
-      ".list img.listimage { max-height: 1em !important; }\n".
-      ".list img.listimage:hover { max-height: 4em !important; }\n";
+      ".list img.listimage { max-height: 1em !important; }\n";
   }
 
   function jquery_enhance_form_image() {
     return
+      "find('.image.edit').\n".
+      "  css('border', 0).\n".
+      "  find('ul li').\n".
+      "    css('display', 'inline').\n".
+      "  end().\n".
+      "  find(':radio, .filesourceoriginal, .filesourcenone, .filesourcenew, input.image').\n".
+      "    hide().\n".
+      "  end().\n".
+      "  find('.filesourcedelete, .filesourceupload, .filesourcereplace').\n".
+      "    each(\n".
+      "      function() {\n".
+      "        var text = $(this).text();\n".
+      "        $(this).\n".
+      "        replaceWith('<span class=\"clickable clickable' + text + '\">' + text + '</span>');\n".
+      "      }\n".
+      "    ).\n".
+      "  end().\n".
+      "  find('.clickabledelete').\n".
+      "    click(\n".
+      "      function() {\n".
+      "        $(this).\n".
+      "        closest('.image.edit').\n".
+      "          find(':radio[value=\"delete\"]').\n".
+      "            attr('checked', true).\n".
+      "          end().\n".
+      "          find('.listimage').\n".
+      "            hide().\n".
+      "          end().\n".
+      "          find('.clickabledelete').\n".
+      "            hide().\n".
+      "          end().\n".
+      "          find('.clickablereplace').\n".
+      "            text('upload').\n".
+      "          end().\n".
+      "        end();\n".
+      "      }\n".
+      "    ).\n".
+      "  end().\n".
+      "  find('.clickablereplace, .clickableupload').\n".
+      "    click(\n".
+      "      function() {\n".
+      "        $(this).\n".
+      "        closest('.image.edit').\n".
+      "          find('input.image').\n".
+      "            toggle().\n".
+      "          end().\n".
+      "        end();\n".
+      "      }\n".
+      "    ).\n".
+      "  end().\n".
+      "end().\n".
       "getScripts(['jquery/uploadfile.js'], '.image',\n".
       "  function() {\n".
       "    $(this).\n".

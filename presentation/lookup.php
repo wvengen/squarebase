@@ -52,6 +52,7 @@
     $foreignviewname = table_or_view($metabasename, $databasename, $foreigntablename);
     $descriptor = descriptor($metabasename, $databasename, $foreigntablename, $foreignviewname);
     $references = query("SELECT `$foreignviewname`.`$foreignuniquefieldname` AS _id, $descriptor[select] AS _descriptor FROM `$databasename`.`$foreignviewname` ".join(' ', $descriptor['joins']).($readonly ? ($value ? "WHERE `$foreignviewname`.`$foreignuniquefieldname` = ".((int) $value) : "LIMIT 0") : "ORDER BY ".join(', ', $descriptor['orders'])));
+    $selected_descriptor = null;
     $oneselected = false;
     $options = array();
     while ($reference = mysql_fetch_assoc($references)) {
