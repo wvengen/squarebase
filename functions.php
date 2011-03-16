@@ -799,12 +799,12 @@
           html('td', array('class'=>'filler'), '');
     }
 
-    $mainaction = $privilege == 'UPDATE' ? 'update' : 'add';
+    $mainaction = $privilege == 'UPDATE' ? 'update_record' : 'add_record';
 
     $lines[] =
       html('td', array('class'=>'description'), '').
       html('td', array('class'=>'field'),
-        (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>"${mainaction}_record", 'id'=>"${mainaction}_record_$tablenamesingular", 'class'=>'submit')) : '').
+        (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$mainaction, 'id'=>"${mainaction}_$tablenamesingular", 'class'=>'submit')) : '').
         ($privilege == 'INSERT' && has_grant($privilege, $databasename, $viewname, '?') ? altsubmit('addrecordandedit', 'add_record_and_edit') : '').
         (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $viewname) ? altsubmit('deleterecord', 'delete_record') : '')
       ).

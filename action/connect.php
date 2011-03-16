@@ -38,5 +38,5 @@
 
   login($username, $host, $password, $language);
 
-  internal_redirect(first_non_null(http_parse_url($next), array('action'=>'list_databases')));
+  internal_redirect(first_non_null($next, array('action'=>'list_databases')));
 ?>

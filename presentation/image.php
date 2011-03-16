@@ -47,11 +47,11 @@
 
                   html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:upload:$fieldname", 'value'=>'upload')).
                   html('label', array('for'=>"radio:upload:$fieldname"),
-                    ($value
+                    ($value || $newname
                     ? html('span', array('class'=>array('filesource', 'filesourcereplace')), _('replace'))
                     : html('span', array('class'=>array('filesource', 'filesourceupload')), _('upload'))
                     ).
-                    html('input', array('type'=>'file', 'class'=>array($presentationname, $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'id'=>"field:$fieldname", 'name'=>"field:$fieldname", 'readonly'=>$readonly ? 'readonly' : null))
+                    html('input', array('type'=>'file', 'class'=>array($value || $newname ? 'filereplace' : 'fileupload', $presentationname, $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'id'=>"field:$fieldname", 'name'=>"field:$fieldname", 'readonly'=>$readonly ? 'readonly' : null))
                   )
                 )
               )
@@ -80,7 +80,7 @@
       return $image;
     case 'upload':
     case 'replace':
-      $file = get_parameter($_FILES, "field:$field[fieldname]");
+      $file = get_parameter('FILES', $_FILES, "field:$field[fieldname]");
       return $file['tmp_name'] ? file_get_contents($file['tmp_name']) : null;
     }
     return null;
@@ -156,15 +156,14 @@
       "  find('ul li').\n".
       "    css('display', 'inline').\n".
       "  end().\n".
-      "  find(':radio, .filesourceoriginal, .filesourcenone, .filesourcenew, input.image').\n".
+      "  find(':radio, .filesource, .filereplace').\n".
       "    hide().\n".
       "  end().\n".
-      "  find('.filesourcedelete, .filesourceupload, .filesourcereplace').\n".
+      "  find('.filesourcedelete').\n".
       "    each(\n".
       "      function() {\n".
-      "        var text = $(this).text();\n".
       "        $(this).\n".
-      "        replaceWith('<span class=\"clickable clickable' + text + '\">' + text + '</span>');\n".
+      "        replaceWith('<span class=\"clickable clickabledelete\">delete</span>');\n".
       "      }\n".
       "    ).\n".
       "  end().\n".
@@ -182,8 +181,12 @@
       "          find('.clickabledelete').\n".
       "            hide().\n".
       "          end().\n".
-      "          find('.clickablereplace').\n".
-      "            text('upload').\n".
+      "          find('.filesourcereplace').\n".
+      "            parent().\n".
+      "              find('.image').\n".
+      "                show().\n".
+      "              end().\n".
+      "            end().\n".
       "          end().\n".
       "        end();\n".
       "      }\n".
@@ -195,7 +198,8 @@
       "        $(this).\n".
       "        closest('.image.edit').\n".
       "          find('input.image').\n".
-      "            toggle().\n".
+      "            show().\n".
+      "            focus().\n".
       "          end().\n".
       "        end();\n".
       "      }\n".
