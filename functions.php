@@ -324,7 +324,7 @@
         if (!extension_loaded('mysql'))
           error(_('mysql module not found'));
         if (!get_session('username', null))
-          internal_redirect(array('action'=>'login'));
+          internal_redirect(array('action'=>'login', 'next'=>get_server('REQUEST_URI')));
         $session_connection = mysql_open(get_session('host'), get_session('username'), get_session('password'));
       }
       $connection = $session_connection;
