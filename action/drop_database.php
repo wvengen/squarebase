@@ -26,7 +26,7 @@
         html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
         html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>get_referer())).
         html('p', array(), sprintf(_('Drop database %s?'), html('strong', array(), $databasename))).
-        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'drop_database', 'class'=>'submit')).
+        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'drop_database', 'class'=>array('submit', 'dropdatabase'))).
         internal_reference(http_parse_url(get_referer()), 'cancel', array('class'=>'cancel')),
         array('method'=>'post')
       )

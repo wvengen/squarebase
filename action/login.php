@@ -66,7 +66,7 @@
         ).
         inputrow(_('password'), html('input', array('type'=>'password', 'id'=>'password', 'name'=>'password', 'value'=>$password)), _('The password for username@host from the underlying MySql database.')).
         inputrow(_('language'), select_locale(), _('The default language for displaying translations, dates, numbers, etc.')).
-        inputrow(null,  html('input', array('type'=>'submit', 'name'=>'action',   'value'=>'connect', 'class'=>'submit')))
+        inputrow(null,  html('input', array('type'=>'submit', 'name'=>'action',   'value'=>'connect', 'class'=>array('submit', 'connect'))))
       )
     )
   );

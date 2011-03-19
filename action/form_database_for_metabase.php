@@ -41,7 +41,7 @@
         array(
           html('input', array('type'=>'text', 'name'=>'databasename')),
           html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
-          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'attach_database_to_metabase', 'class'=>'submit'))
+          html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'attach_database_to_metabase', 'class'=>array('submit', 'attachdatabasetometabase')))
         )
       )
     );

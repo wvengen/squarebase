@@ -37,7 +37,7 @@
         inputrow(_('language'), select_locale(), _('The language for displaying dates, numbers, etc in this database.'))
       ).
       html('p', array(),
-        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'form_metabase_for_database', 'class'=>'submit'))
+        html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'form_metabase_for_database', 'class'=>array('submit', 'formmetabasefordatabase')))
       )
     )
   );

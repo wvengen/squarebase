@@ -719,7 +719,7 @@
           html('td', array(), '').
           html('td', array('colspan'=>count($quickadd) - 1),
             html('div', array(),
-              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'id'=>"quickadd_record_$tablenamesingular", 'class'=>'submit')).
+              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'id'=>"quickadd_record_$tablenamesingular", 'class'=>array('submit', 'addrecord'))).
               altsubmit('addrecordandedit', 'add_record_and_edit').
               internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, "field:$foreignfieldname"=>$foreignvalue, 'back'=>get_server('REQUEST_URI'), 'id'=>"full_record_$tablenamesingular"), _('full record'), array('class'=>'fullrecord')).
               (is_null($foreignvalue) ? '' : html('span', array('class'=>'changeslost'), _('(changes to form fields are lost)')))
@@ -803,13 +803,17 @@
           );
     }
 
-    $mainaction = $privilege == 'UPDATE' ? 'update_record' : 'add_record';
-
     $lines[] =
       html('tr', array(),
         html('td', array('class'=>'description'), '').
         html('td', array('class'=>'field'),
-          (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$mainaction, 'id'=>"${mainaction}_$tablenamesingular", 'class'=>'submit')) : '').
+          (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?')
+          ? ($privilege == 'UPDATE'
+            ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_record', 'id'=>"update_record_$tablenamesingular", 'class'=>array('submit', 'updaterecord')))
+            : html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'id'=>"add_record_$tablenamesingular", 'class'=>array('submit', 'addrecord')))
+            )
+          : ''
+          ).
           ($privilege == 'INSERT' && has_grant($privilege, $databasename, $viewname, '?') ? altsubmit('addrecordandedit', 'add_record_and_edit') : '').
           (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $viewname) ? altsubmit('deleterecord', 'delete_record') : '')
         ).
