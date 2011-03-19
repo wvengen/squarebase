@@ -696,7 +696,7 @@
           $field['uniquefieldname'] = $uniquefieldname;
           $field['uniquevalue'] = $row[$uniquefieldname];
           $columns[] =
-            html('td', array('class'=>array('column', $field['presentationname'], $field['thisrecord'] ? 'thisrecord' : null)),
+            html('td', array('class'=>array('column', "tablelist-field-$databasename-$field[fieldname]", "tablelist-field-$field[fieldname]", $field['presentationname'], $field['thisrecord'] ? 'thisrecord' : null)),
               ''.call_user_func("list_$field[presentationname]", $metabasename, $databasename, $field, $row["${tablename}_$field[fieldname]"])
             );
         }
@@ -765,7 +765,7 @@
             html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
             html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back)).
             html('table', array('class'=>array($interactive ? 'box' : null, 'tablelist')), join($rows)),
-            array('method'=>'post', 'class'=>'ajaxcontainerminus1')
+            array('method'=>'post', 'class'=>array('ajaxcontainerminus1', "tablelist-record-$databasename"))
           ).
           (is_null($uniquevalue) ? '' : ajaxcontent(edit_record('UPDATE', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue)))
         : ''
@@ -796,7 +796,7 @@
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
       if ($field['inedit'])
         $lines[] =
-          html('tr', array('class'=>array("column-$tablenamesingular-$field[fieldname]", "column-$field[fieldname]")),
+          html('tr', array('class'=>array("editrecord-field-$tablenamesingular-$field[fieldname]", "editrecord-field-$field[fieldname]")),
             html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
             html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), first_non_null(get_get("field:$field[fieldname]", null), $privilege == 'INSERT' ? $field['defaultvalue'] : $row[$field['fieldname']]), $privilege == 'SELECT' || ($privilege == 'INSERT' && (!$field['privilege_insert'] || get_get("field:$field[fieldname]", null))) || ($privilege == 'UPDATE' && !$field['privilege_update']), true)).
             html('td', array('class'=>'filler'), '')
@@ -838,7 +838,7 @@
     $back = first_non_null(get_get('back', null), get_referer());
 
     return
-      html('div', array('class'=>array('box', "table-$tablenamesingular")),
+      html('div', array('class'=>'box'),
         form(
           html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
           html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
@@ -849,7 +849,7 @@
           html('input', array('type'=>'hidden', 'name'=>'referencedfromfieldname', 'value'=>$referencedfromfieldname)).
           html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back)).
           html('table', array('class'=>'tableedit'), join($lines)),
-          array('method'=>'post', 'class'=>'ajaxcontainerminus2')
+          array('method'=>'post', 'class'=>array('ajaxcontainerminus2', "editrecord-table-$tablenamesingular"))
         ).
         ($referrers ? html('table', array('class'=>'referringlist'), join($referrers)) : '').
         ($privilege == 'SELECT' || !has_grant($privilege, $databasename, $viewname, '?')
