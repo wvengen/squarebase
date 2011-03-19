@@ -788,27 +788,33 @@
     get_presentationnames();
 
     $lines = array(
-      html('th', array('colspan'=>2, 'class'=>'heading'), $tablenamesingular).
-      html('th', array('class'=>'filler'), '')
+      html('tr', array(),
+        html('th', array('colspan'=>2, 'class'=>'heading'), $tablenamesingular).
+        html('th', array('class'=>'filler'), '')
+      )
     );
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
       if ($field['inedit'])
         $lines[] =
-          html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
-          html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), first_non_null(get_get("field:$field[fieldname]", null), $privilege == 'INSERT' ? $field['defaultvalue'] : $row[$field['fieldname']]), $privilege == 'SELECT' || ($privilege == 'INSERT' && (!$field['privilege_insert'] || get_get("field:$field[fieldname]", null))) || ($privilege == 'UPDATE' && !$field['privilege_update']), true)).
-          html('td', array('class'=>'filler'), '');
+          html('tr', array('class'=>array("column-$tablenamesingular-$field[fieldname]", "column-$field[fieldname]")),
+            html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
+            html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), first_non_null(get_get("field:$field[fieldname]", null), $privilege == 'INSERT' ? $field['defaultvalue'] : $row[$field['fieldname']]), $privilege == 'SELECT' || ($privilege == 'INSERT' && (!$field['privilege_insert'] || get_get("field:$field[fieldname]", null))) || ($privilege == 'UPDATE' && !$field['privilege_update']), true)).
+            html('td', array('class'=>'filler'), '')
+          );
     }
 
     $mainaction = $privilege == 'UPDATE' ? 'update_record' : 'add_record';
 
     $lines[] =
-      html('td', array('class'=>'description'), '').
-      html('td', array('class'=>'field'),
-        (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$mainaction, 'id'=>"${mainaction}_$tablenamesingular", 'class'=>'submit')) : '').
-        ($privilege == 'INSERT' && has_grant($privilege, $databasename, $viewname, '?') ? altsubmit('addrecordandedit', 'add_record_and_edit') : '').
-        (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $viewname) ? altsubmit('deleterecord', 'delete_record') : '')
-      ).
-      html('td', array('class'=>'filler'), '');
+      html('tr', array(),
+        html('td', array('class'=>'description'), '').
+        html('td', array('class'=>'field'),
+          (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?') ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>$mainaction, 'id'=>"${mainaction}_$tablenamesingular", 'class'=>'submit')) : '').
+          ($privilege == 'INSERT' && has_grant($privilege, $databasename, $viewname, '?') ? altsubmit('addrecordandedit', 'add_record_and_edit') : '').
+          (($privilege == 'UPDATE' || $privilege == 'SELECT') && has_grant('DELETE', $databasename, $viewname) ? altsubmit('deleterecord', 'delete_record') : '')
+        ).
+        html('td', array('class'=>'filler'), '')
+      );
 
     $referrers = array();
     if (!is_null($uniquevalue)) {
@@ -832,7 +838,7 @@
     $back = first_non_null(get_get('back', null), get_referer());
 
     return
-      html('div', array('class'=>'box'),
+      html('div', array('class'=>array('box', "table-$tablenamesingular")),
         form(
           html('input', array('type'=>'hidden', 'name'=>'metabasename', 'value'=>$metabasename)).
           html('input', array('type'=>'hidden', 'name'=>'databasename', 'value'=>$databasename)).
@@ -842,7 +848,7 @@
           html('input', array('type'=>'hidden', 'name'=>'uniquevalue', 'value'=>$uniquevalue)).
           html('input', array('type'=>'hidden', 'name'=>'referencedfromfieldname', 'value'=>$referencedfromfieldname)).
           html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back)).
-          html('table', array('class'=>'tableedit'), html('tr', array(), $lines)),
+          html('table', array('class'=>'tableedit'), join($lines)),
           array('method'=>'post', 'class'=>'ajaxcontainerminus2')
         ).
         ($referrers ? html('table', array('class'=>'referringlist'), join($referrers)) : '').
