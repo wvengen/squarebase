@@ -822,14 +822,14 @@
 
     $referrers = array();
     if (!is_null($uniquevalue)) {
-      $referringfields = query('SELECT tbl.tablename, tbl.singular, fld.fieldname AS fieldname, fld.title AS title, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.fields fld LEFT JOIN `<metabasename>`.tables mtf ON mtf.tableid = fld.foreigntableid LEFT JOIN `<metabasename>`.tables tbl ON tbl.tableid = fld.tableid LEFT JOIN `<metabasename>`.fields mfu ON tbl.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
+      $referringfields = query('SELECT tbl.tablename, tbl.plural, tbl.singular, fld.fieldname AS fieldname, fld.title AS title, mfu.fieldname AS uniquefieldname FROM `<metabasename>`.fields fld LEFT JOIN `<metabasename>`.tables mtf ON mtf.tableid = fld.foreigntableid LEFT JOIN `<metabasename>`.tables tbl ON tbl.tableid = fld.tableid LEFT JOIN `<metabasename>`.fields mfu ON tbl.uniquefieldid = mfu.fieldid WHERE mtf.tablename = "<tablename>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename));
       while ($referringfield = mysql_fetch_assoc($referringfields)) {
         $viewname = table_or_view($metabasename, $databasename, $referringfield['tablename']);
         if ($viewname)
           $referrers[] =
             html('tr', array(),
               html('td', array(),
-                $referringfield['tablename'].
+                $referringfield['plural'].
                 ($referringfield['title'] == $tablenamesingular ? '' : html('span', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['title'])))
               ).
               html('td', array(),
