@@ -1,4 +1,4 @@
-* { margin: 0; border: 0; padding: 0; font-family: sans-serif !important; }
+* { margin: 0; border: 0; padding: 0; font-family: sans-serif; }
 body { margin: 0.5em; overflow-y: scroll; }
 
 #header { background-color: #ddd; margin-bottom: 0.5em; padding: 0 0 0.4em 0.5em; height: 3.5em; }
@@ -13,6 +13,7 @@ body { margin: 0.5em; overflow-y: scroll; }
 
 #content { clear: both; }
 .box { border: 0.1em solid #999; }
+.box.closing { border-color: #f00; }
 .tableedit { padding-bottom: 0.5em; }
 .tableedit td, .tablelist th, .formmetabasefordatabase th, .tablelist tr.quickadd td, label { white-space: nowrap; }
 tr.quickadd label { display: block; font-style: italic; font-size: small; }
@@ -20,13 +21,13 @@ tr.quickadd label { display: block; font-style: italic; font-size: small; }
 .referrer { font-size: small; margin-left: 0.5em; }
 
 a, .clickable { color: #00e; text-decoration: underline; cursor: pointer; }
-a:hover, .clickable:hover { background-color: #00e; color: #fff !important; }
+a:hover, .clickable:hover { background-color: #00e; color: #fff; }
 .clickable { display: inline-block; margin: 0 0.5em; }
 p { margin: 0.5em 0; }
 
 .secondary { color: #aaa; }
-.secondary a { color: #aae !important; }
-.secondary a:hover { background-color: #aae; color: #fff !important; }
+.secondary a { color: #aae; }
+.secondary a:hover { background-color: #aae; color: #fff; }
 
 table { width: 100%; border-collapse: collapse; background-color: #fff; }
 th, td { padding: 0.1em; vertical-align: top; width: 1%; }
@@ -63,7 +64,7 @@ ul.minimal li .radio { margin-right: 0.3em; }
 input.submit, input.button { border: 0.15em solid #ccc; border-color: #ccc #666 #666 #ccc; background-color: #eee; color: #33f; padding: 0 0.2em; }
 input.submit, input.button, .fullrecord, .cancel { margin-right: 1em; }
 input.submit:hover, input.button:hover { background-color: #ddd; }
-.deleterecord:hover, .cancel:hover, .drop:hover, .forget:hover, .close:hover { background-color: #f00 !important; color: #fff !important; }
+input.button.deleterecord:hover, .cancel:hover, .drop:hover, .forget:hover, .close:hover { background-color: #f00; color: #fff; }
 .cancel, .close { padding: 0.1em 0.5em; }
 .drop { margin-left: 1em; }
 .inlistforquickadd { background-color: #fda; }
@@ -71,12 +72,9 @@ input.submit:hover, input.button:hover { background-color: #ddd; }
 label.altsubmit { margin: 0 1em 0 -0.5em; padding: 0 0.5em; }
 label.altsubmit input { margin-right: 0.3em; }
 
-.closing { background-color: #fcc !important; }
-tr.rowodd.closing td, tr.rowodd.closing td a { background-color: #faa !important; }
-tr.roweven.closing td, tr.roweven.closing td a, .message.closing { background-color: #fbb !important; }
 .ajaxindent { margin: 0 0.5em; }
-.ajaxproblem { border-color: #c00 !important; }
-.ajaxincompatible { background-color: #f90 !important; }
+.ajaxproblem { border-color: #c00; }
+td.ajaxincompatible { background-color: #f90; }
 
 .column { white-space: nowrap; }
 .thisrecord { display: none; }
@@ -108,7 +106,7 @@ input.title { width: 8em; }
 
 #footer { margin-top: 0.5em; overflow: hidden; }
 #footer #poweredby { float: right; }
-#footer #poweredby:hover { background-color: inherit !important; }
+#footer #poweredby:hover { background-color: inherit; }
 
 .logs { border: 0.1em solid #ccc; background-color: #eee; color: #999; clear: both; white-space: normal; }
 .logs>li { margin-bottom: 0.5em; }

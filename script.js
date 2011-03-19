@@ -288,8 +288,7 @@ jQuery.fn.ajaxify = function() {
     hover(
       function() {
         $(this).
-        closest('.ajaxcontent').
-        find('*').
+        closest('.box').
         toggleClass('closing');
       }
     ).
