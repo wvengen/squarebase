@@ -25,7 +25,7 @@
   $next            = get_get('next', null);
 
   if ($usernameandhost == $username.'@'.$host)
-    internal_redirect(first_non_null(http_parse_url($next), array('action'=>'list_databases')));
+    external_redirect(first_non_null($next, http_build_url(array('action'=>'list_databases'))));
 
   if (is_null($usernameandhost) && get_session('username', null))
     internal_redirect(array('action'=>'list_databases'));
