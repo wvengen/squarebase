@@ -696,7 +696,7 @@
           $field['uniquefieldname'] = $uniquefieldname;
           $field['uniquevalue'] = $row[$uniquefieldname];
           $columns[] =
-            html('td', array('class'=>array('column', "tablelist-field-$databasename-$field[fieldname]", "tablelist-field-$field[fieldname]", $field['presentationname'], $field['thisrecord'] ? 'thisrecord' : null)),
+            html('td', array('class'=>array('column', "tablelist-field-$field[fieldname]", $field['presentationname'], $field['thisrecord'] ? 'thisrecord' : null)),
               ''.call_user_func("list_$field[presentationname]", $metabasename, $databasename, $field, $row["${tablename}_$field[fieldname]"])
             );
         }
@@ -765,7 +765,7 @@
             html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
             html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back)).
             html('table', array('class'=>array($interactive ? 'box' : null, 'tablelist')), join($rows)),
-            array('method'=>'post', 'class'=>array('ajaxcontainerminus1', "tablelist-record-$databasename"))
+            array('method'=>'post', 'class'=>array('ajaxcontainerminus1', "tablelist-record-$tablenamesingular"))
           ).
           (is_null($uniquevalue) ? '' : ajaxcontent(edit_record('UPDATE', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue)))
         : ''
@@ -796,7 +796,7 @@
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
       if ($field['inedit'])
         $lines[] =
-          html('tr', array('class'=>array("editrecord-field-$tablenamesingular-$field[fieldname]", "editrecord-field-$field[fieldname]")),
+          html('tr', array('class'=>"editrecord-field-$field[fieldname]"),
             html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
             html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), first_non_null(get_get("field:$field[fieldname]", null), $privilege == 'INSERT' ? $field['defaultvalue'] : $row[$field['fieldname']]), $privilege == 'SELECT' || ($privilege == 'INSERT' && (!$field['privilege_insert'] || get_get("field:$field[fieldname]", null))) || ($privilege == 'UPDATE' && !$field['privilege_update']), true)).
             html('td', array('class'=>'filler'), '')
@@ -828,7 +828,7 @@
         if ($viewname)
           $referrers[] =
             html('tr', array(),
-              html('td', array(),
+              html('td', array('class'=>"tablelist-label-$tablenamesingular"),
                 $referringfield['plural'].
                 ($referringfield['title'] == $tablenamesingular ? '' : html('span', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['title'])))
               ).
