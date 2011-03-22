@@ -279,10 +279,14 @@ jQuery.fn.ajaxify = function() {
     addClass('ajaxified').
     click(
       function() {
-        $(this).
-        closest('.ajaxcontent').
-        unload();
-        return false;
+        var ajaxcontent =
+          $(this).
+          closest('.ajaxcontent');
+        if (ajaxcontent.length) {
+          ajaxcontent.
+          unload();
+          return false;
+        }
       }
     ).
     hover(
