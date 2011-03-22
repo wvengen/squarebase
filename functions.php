@@ -729,7 +729,7 @@
       : html('tr', array(),
           html('td', array('colspan'=>count($header)),
             html('div', array(),
-              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, "field-$foreignfieldname"=>$foreignvalue, 'back'=>get_server('REQUEST_URI')), _('add record'))
+              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, "field-$foreignfieldname"=>$foreignvalue, 'back'=>get_server('REQUEST_URI')), _('add record'), array('class'=>'addrecord'))
             )
           )
         );
