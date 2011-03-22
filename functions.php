@@ -765,7 +765,7 @@
             html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
             html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back)).
             html('table', array('class'=>array($interactive ? 'box' : null)), join($rows)),
-            array('method'=>'post', 'class'=>array('ajaxcontainerminus1', 'tablelist', "table-$tablenamesingular"))
+            array('method'=>'post', 'class'=>array('ajaxcontainerminus1', 'tablelist', "table-$tablename"))
           ).
           (is_null($uniquevalue) ? '' : ajaxcontent(edit_record('UPDATE', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue)))
         : ''
@@ -853,7 +853,7 @@
           html('input', array('type'=>'hidden', 'name'=>'referencedfromfieldname', 'value'=>$referencedfromfieldname)).
           html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back)).
           html('table', array('class'=>'tableedit'), join($lines)),
-          array('method'=>'post', 'class'=>array('ajaxcontainerminus2', 'editrecord', "table-$tablenamesingular"))
+          array('method'=>'post', 'class'=>array('ajaxcontainerminus2', 'editrecord', "table-$tablename"))
         ).
         ($referrers ? html('table', array('class'=>'referringlist'), join($referrers)) : '').
         ($privilege == 'SELECT' || !has_grant($privilege, $databasename, $viewname, '?')
