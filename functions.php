@@ -719,9 +719,9 @@
           html('td', array(), '').
           html('td', array('colspan'=>count($quickadd) - 1),
             html('div', array(),
-              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'id'=>"quickadd-record-$tablenamesingular", 'class'=>array('submit', 'addrecord'))).
+              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'id'=>"quickadd-record-$tablename", 'class'=>array('submit', 'addrecord'))).
               altsubmit('addrecordandedit', 'add_record_and_edit').
-              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, "field-$foreignfieldname"=>$foreignvalue, 'back'=>get_server('REQUEST_URI'), 'id'=>"full-record-$tablenamesingular"), _('full record'), array('class'=>'fullrecord')).
+              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, "field-$foreignfieldname"=>$foreignvalue, 'back'=>get_server('REQUEST_URI'), 'id'=>"full-record-$tablename"), _('full record'), array('class'=>'fullrecord')).
               (is_null($foreignvalue) ? '' : html('span', array('class'=>'changeslost'), _('(changes to form fields are lost)')))
             )
           )
@@ -809,8 +809,8 @@
         html('td', array('class'=>'field'),
           (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?')
           ? ($privilege == 'UPDATE'
-            ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_record', 'id'=>"update-record-$tablenamesingular", 'class'=>array('submit', 'updaterecord')))
-            : html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'id'=>"add-record-$tablenamesingular", 'class'=>array('submit', 'addrecord')))
+            ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_record', 'id'=>"update-record-$tablename", 'class'=>array('submit', 'updaterecord')))
+            : html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'id'=>"add-record-$tablename", 'class'=>array('submit', 'addrecord')))
             )
           : ''
           ).
@@ -828,7 +828,7 @@
         if ($viewname)
           $referrers[] =
             html('tr', array(),
-              html('td', array('class'=>"label-$tablenamesingular"),
+              html('td', array('class'=>"label-$tablename"),
                 $referringfield['plural'].
                 ($referringfield['title'] == $tablenamesingular ? '' : html('span', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['title'])))
               ).
