@@ -267,9 +267,13 @@
     return get_server('HTTP_REFERER', http_build_url(array('action'=>'list_databases')));
   }
 
+  function get_back() {
+    return first_non_null(get_post('back', null), get_get('back', null), get_referer());
+  }
+
   function back() {
     call_function(first_non_null(get_post('ajax', null), get_get('ajax', null)));
-    external_redirect(first_non_null(get_post('back', null), get_get('back', null), get_referer()));
+    external_redirect(get_back());
   }
 
   function error($error) {
@@ -747,12 +751,11 @@
     if (is_null($foreignvalue) || isset($offsets))
       $rows[] =
         html('tr', array(),
-          html('td', array(), is_null($foreignvalue) ? external_reference(get_referer(), 'close', array('class'=>'close')) : '').
+          html('td', array(), is_null($foreignvalue) ? external_reference(get_back(), 'close', array('class'=>'close')) : '').
           html('td', array('colspan'=>count($header) - 1),
             isset($offsets) ? html('ol', array('class'=>'offsets'), html('li', array(), $offsets)) : ''
           )
         );
-    $back = first_non_null(get_get('back', null), get_referer());
 
     return
       html('div', array('class'=>'ajax', 'id'=>http_build_url(array('action'=>'call_function', 'functionname'=>'list_table', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'limit'=>$limit, 'offset'=>$offset, 'uniquefieldname'=>$uniquefieldname, 'orderfieldname'=>$orderfieldname, 'orderasc'=>$orderasc ? 'on' : '', 'foreignfieldname'=>$foreignfieldname, 'foreignvalue'=>$foreignvalue, 'parenttablename'=>$parenttablename, 'interactive'=>$interactive))),
@@ -763,7 +766,7 @@
             html('input', array('type'=>'hidden', 'name'=>'tablename', 'value'=>$tablename)).
             html('input', array('type'=>'hidden', 'name'=>'tablenamesingular', 'value'=>$tablenamesingular)).
             html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
-            html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back)).
+            html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>get_back())).
             html('table', array('class'=>array($interactive ? 'box' : null)), join($rows)),
             array('method'=>'post', 'class'=>array('ajaxcontainerminus1', 'tablelist', "table-$tablename"))
           ).
@@ -839,7 +842,6 @@
             );
       }
     }
-    $back = first_non_null(get_get('back', null), get_referer());
 
     return
       html('div', array('class'=>'box'),
@@ -851,14 +853,14 @@
           html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
           html('input', array('type'=>'hidden', 'name'=>'uniquevalue', 'value'=>$uniquevalue)).
           html('input', array('type'=>'hidden', 'name'=>'referencedfromfieldname', 'value'=>$referencedfromfieldname)).
-          html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back)).
+          html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>get_back())).
           html('table', array('class'=>'tableedit'), join($lines)),
           array('method'=>'post', 'class'=>array('ajaxcontainerminus2', 'editrecord', "table-$tablename"))
         ).
         ($referrers ? html('table', array('class'=>'referringlist'), join($referrers)) : '').
         ($privilege == 'SELECT' || !has_grant($privilege, $databasename, $viewname, '?')
-        ? external_reference($back, _('close'), array('class'=>'close'))
-        : external_reference($back, _('cancel'), array('class'=>'cancel'))
+        ? external_reference(get_back(), _('close'), array('class'=>'close'))
+        : external_reference(get_back(), _('cancel'), array('class'=>'cancel'))
         )
       );
   } //edit_record

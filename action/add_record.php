@@ -24,7 +24,6 @@
   $tablenamesingular       = get_post('tablenamesingular');
   $uniquefieldname         = get_post('uniquefieldname');
   $addrecordandedit        = get_post('addrecordandedit', null);
-  $back                    = get_post('back', null);
   $ajax                    = get_post('ajax', null);
 
   $viewname = table_or_view($metabasename, $databasename, $tablename);
@@ -38,7 +37,7 @@
     if ($ajax)
       set_post('ajax', preg_replace('@\bvalue=\d+\b@', '', $ajax)."&value=$uniquevalue".($addrecordandedit ? "&uniquevalue=$uniquevalue" : ''));
     elseif ($addrecordandedit)
-      internal_redirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'back'=>$back));
+      internal_redirect(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue, 'back'=>get_back()));
   }
 
   back();
