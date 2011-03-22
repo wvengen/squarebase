@@ -15,7 +15,7 @@
 
   function formfield_ternaryboolean($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return
-      html('select', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null),
+      html('select', array('name'=>"field-$field[fieldname]", 'id'=>"field-$field[fieldname]", 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null),
         (!$readonly || is_null($value) ? html('option', array_merge(array('value'=>''   ), is_null($value) ? array('selected'=>'selected') : array()), ''      ) : '').
         (!$readonly || $value == '0'   ? html('option', array_merge(array('value'=>'no' ), $value == '0'   ? array('selected'=>'selected') : array()), _('no' )) : '').
         (!$readonly || $value == '1'   ? html('option', array_merge(array('value'=>'yes'), $value == '1'   ? array('selected'=>'selected') : array()), _('yes')) : '')
@@ -23,7 +23,7 @@
   }
 
   function formvalue_ternaryboolean($field) {
-    $value = get_post("field:$field[fieldname]", null);
+    $value = get_post("field-$field[fieldname]", null);
     return $value == 'yes' ? 1 : ($value == 'no' ? 0 : null);
   }
 

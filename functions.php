@@ -656,7 +656,7 @@
         if (call_user_func("is_quickaddable_$field[presentationname]"))
           $quickadd[] =
             html('td', array('class'=>array($field['presentationname'], !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? 'thisrecord' : null)),
-              html('label', array('for'=>"field:$field[fieldname]"), $field['title']).
+              html('label', array('for'=>"field-$field[fieldname]"), $field['title']).
               call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), !is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname ? $foreignvalue : $field['defaultvalue'], (!is_null($foreignvalue) && $field['fieldname'] == $foreignfieldname) || !$field['privilege_insert'], false)
             );
       }
@@ -696,7 +696,7 @@
           $field['uniquefieldname'] = $uniquefieldname;
           $field['uniquevalue'] = $row[$uniquefieldname];
           $columns[] =
-            html('td', array('class'=>array('column', "tablelist-field-$field[fieldname]", $field['presentationname'], $field['thisrecord'] ? 'thisrecord' : null)),
+            html('td', array('class'=>array('column', "field-$field[fieldname]", $field['presentationname'], $field['thisrecord'] ? 'thisrecord' : null)),
               ''.call_user_func("list_$field[presentationname]", $metabasename, $databasename, $field, $row["${tablename}_$field[fieldname]"])
             );
         }
@@ -706,8 +706,8 @@
         html('tr', array('class'=>array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
           html('td', array(),
             $can_update
-            ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>get_server('REQUEST_URI')), _('edit'), array('class'=>'editrecord', 'id'=>"edit_record_${tablenamesingular}_${row[$uniquefieldname]}"))
-            : internal_reference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field:$foreignfieldname"=>$foreignvalue, 'back'=>get_server('REQUEST_URI')), _('show'), array('class'=>'showrecord', 'id'=>"show_record_${tablenamesingular}_${row[$uniquefieldname]}"))
+            ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field-$foreignfieldname"=>$foreignvalue, 'back'=>get_server('REQUEST_URI')), _('edit'), array('class'=>'editthisrecord', 'id'=>"edit-record-$tablenamesingular-$row[$uniquefieldname]"))
+            : internal_reference(array('action'=>'show_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field-$foreignfieldname"=>$foreignvalue, 'back'=>get_server('REQUEST_URI')), _('show'), array('class'=>'showthisrecord', 'id'=>"show-record-$tablenamesingular-$row[$uniquefieldname]"))
           ).
           join($columns)
         );
@@ -719,9 +719,9 @@
           html('td', array(), '').
           html('td', array('colspan'=>count($quickadd) - 1),
             html('div', array(),
-              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'id'=>"quickadd_record_$tablenamesingular", 'class'=>array('submit', 'addrecord'))).
+              html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'id'=>"quickadd-record-$tablenamesingular", 'class'=>array('submit', 'addrecord'))).
               altsubmit('addrecordandedit', 'add_record_and_edit').
-              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, "field:$foreignfieldname"=>$foreignvalue, 'back'=>get_server('REQUEST_URI'), 'id'=>"full_record_$tablenamesingular"), _('full record'), array('class'=>'fullrecord')).
+              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, "field-$foreignfieldname"=>$foreignvalue, 'back'=>get_server('REQUEST_URI'), 'id'=>"full-record-$tablenamesingular"), _('full record'), array('class'=>'fullrecord')).
               (is_null($foreignvalue) ? '' : html('span', array('class'=>'changeslost'), _('(changes to form fields are lost)')))
             )
           )
@@ -729,7 +729,7 @@
       : html('tr', array(),
           html('td', array('colspan'=>count($header)),
             html('div', array(),
-              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, "field:$foreignfieldname"=>$foreignvalue, 'back'=>get_server('REQUEST_URI')), _('add record'))
+              internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, "field-$foreignfieldname"=>$foreignvalue, 'back'=>get_server('REQUEST_URI')), _('add record'))
             )
           )
         );
@@ -764,8 +764,8 @@
             html('input', array('type'=>'hidden', 'name'=>'tablenamesingular', 'value'=>$tablenamesingular)).
             html('input', array('type'=>'hidden', 'name'=>'uniquefieldname', 'value'=>$uniquefieldname)).
             html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back)).
-            html('table', array('class'=>array($interactive ? 'box' : null, 'tablelist')), join($rows)),
-            array('method'=>'post', 'class'=>array('ajaxcontainerminus1', "tablelist-record-$tablenamesingular"))
+            html('table', array('class'=>array($interactive ? 'box' : null)), join($rows)),
+            array('method'=>'post', 'class'=>array('ajaxcontainerminus1', 'tablelist', "table-$tablenamesingular"))
           ).
           (is_null($uniquevalue) ? '' : ajaxcontent(edit_record('UPDATE', $metabasename, $databasename, $tablename, $tablenamesingular, $uniquefieldname, $uniquevalue)))
         : ''
@@ -796,9 +796,9 @@
     for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
       if ($field['inedit'])
         $lines[] =
-          html('tr', array('class'=>"editrecord-field-$field[fieldname]"),
-            html('td', array('class'=>'description'), html('label', array('for'=>"field:$field[fieldname]"), $field['title'])).
-            html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), first_non_null(get_get("field:$field[fieldname]", null), $privilege == 'INSERT' ? $field['defaultvalue'] : $row[$field['fieldname']]), $privilege == 'SELECT' || ($privilege == 'INSERT' && (!$field['privilege_insert'] || get_get("field:$field[fieldname]", null))) || ($privilege == 'UPDATE' && !$field['privilege_update']), true)).
+          html('tr', array('class'=>"field-$field[fieldname]"),
+            html('td', array('class'=>'description'), html('label', array('for'=>"field-$field[fieldname]"), $field['title'])).
+            html('td', array(), call_user_func("formfield_$field[presentationname]", $metabasename, $databasename, array_merge($field, array('uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)), first_non_null(get_get("field-$field[fieldname]", null), $privilege == 'INSERT' ? $field['defaultvalue'] : $row[$field['fieldname']]), $privilege == 'SELECT' || ($privilege == 'INSERT' && (!$field['privilege_insert'] || get_get("field-$field[fieldname]", null))) || ($privilege == 'UPDATE' && !$field['privilege_update']), true)).
             html('td', array('class'=>'filler'), '')
           );
     }
@@ -809,8 +809,8 @@
         html('td', array('class'=>'field'),
           (($privilege == 'UPDATE' || $privilege == 'INSERT') && has_grant($privilege, $databasename, $viewname, '?')
           ? ($privilege == 'UPDATE'
-            ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_record', 'id'=>"update_record_$tablenamesingular", 'class'=>array('submit', 'updaterecord')))
-            : html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'id'=>"add_record_$tablenamesingular", 'class'=>array('submit', 'addrecord')))
+            ? html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'update_record', 'id'=>"update-record-$tablenamesingular", 'class'=>array('submit', 'updaterecord')))
+            : html('input', array('type'=>'submit', 'name'=>'action', 'value'=>'add_record', 'id'=>"add-record-$tablenamesingular", 'class'=>array('submit', 'addrecord')))
             )
           : ''
           ).
@@ -828,7 +828,7 @@
         if ($viewname)
           $referrers[] =
             html('tr', array(),
-              html('td', array('class'=>"tablelist-label-$tablenamesingular"),
+              html('td', array('class'=>"label-$tablenamesingular"),
                 $referringfield['plural'].
                 ($referringfield['title'] == $tablenamesingular ? '' : html('span', array('class'=>'referrer'), sprintf(_('via %s'), $referringfield['title'])))
               ).
@@ -853,7 +853,7 @@
           html('input', array('type'=>'hidden', 'name'=>'referencedfromfieldname', 'value'=>$referencedfromfieldname)).
           html('input', array('type'=>'hidden', 'name'=>'back', 'value'=>$back)).
           html('table', array('class'=>'tableedit'), join($lines)),
-          array('method'=>'post', 'class'=>array('ajaxcontainerminus2', "editrecord-table-$tablenamesingular"))
+          array('method'=>'post', 'class'=>array('ajaxcontainerminus2', 'editrecord', "table-$tablenamesingular"))
         ).
         ($referrers ? html('table', array('class'=>'referringlist'), join($referrers)) : '').
         ($privilege == 'SELECT' || !has_grant($privilege, $databasename, $viewname, '?')

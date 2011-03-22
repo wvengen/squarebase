@@ -36,8 +36,8 @@
     if ($lastusernamesandhosts) {
       foreach (explode(',', $lastusernamesandhosts) as $thisusernameandhost)
         $radios[] =
-          html('input', array('type'=>'radio', 'class'=>array('radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'id'=>"lastusernameandhost:$thisusernameandhost", 'value'=>$thisusernameandhost, 'checked'=>$radios ? null : 'checked')).
-          html('label', array('for'=>"lastusernameandhost:$thisusernameandhost"), preg_replace('@\@localhost$@', '', $thisusernameandhost)).
+          html('input', array('type'=>'radio', 'class'=>array('radio', 'skipfirstfocus'), 'name'=>'lastusernameandhost', 'id'=>"lastusernameandhost-$thisusernameandhost", 'value'=>$thisusernameandhost, 'checked'=>$radios ? null : 'checked')).
+          html('label', array('for'=>"lastusernameandhost-$thisusernameandhost"), preg_replace('@\@localhost$@', '', $thisusernameandhost)).
           internal_reference(array('action'=>'forget_username_and_host', 'usernameandhost'=>$thisusernameandhost), 'forget', array('class'=>'forget'));
     }
     if (!$radios)

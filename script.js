@@ -42,7 +42,7 @@ jQuery.fn.loading = function(on) {
 jQuery.fn.formhash = function() {
   var hash = {};
   this.
-  find(':input[name]:not([type=submit])').
+  find(':input[name]').
   each(
     function() {
       var name = $(this).attr('name');

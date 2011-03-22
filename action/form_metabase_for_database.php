@@ -149,7 +149,7 @@
             )
           ).
           html('td', array('class'=>array('top', 'center')),
-            html('input', array('type'=>'checkbox', 'class'=>array('checkboxedit', 'readonly', 'include'), 'readonly'=>'readonly', 'name'=>"$tablename:include"))
+            html('input', array('type'=>'checkbox', 'class'=>array('checkboxedit', 'readonly', 'include'), 'readonly'=>'readonly', 'name'=>"$tablename-include"))
           ).
           html('td', array('class'=>'top', 'colspan'=>2),
             ''
@@ -228,17 +228,17 @@
             ? html('td', array('class'=>'top', 'rowspan'=>count($table['fields'])),
                 html('div', array('class'=>'tablename'),
                   $tablename.
-                  html('input', array('type'=>'hidden', 'name'=>"$tablename:primary", 'value'=>$table['primarykeyfieldname']))
+                  html('input', array('type'=>'hidden', 'name'=>"$tablename-primary", 'value'=>$table['primarykeyfieldname']))
                 ).
                 ($table['is_view']
                 ? html('div', array('class'=>'alternative'),
                     (isset($table['possible_view_for_table'])
-                    ? html('input', array('type'=>'hidden', 'name'=>"$tablename:possibleviewfortable", 'value'=>$table['possible_view_for_table'])).
-                      html('input', array('type'=>'checkbox', 'class'=>array('checkboxedit', 'viewfortable'), 'name'=>"$tablename:viewfortable", 'id'=>"$tablename:viewfortable", 'checked'=>!$metabasename || isset($alternative_views[$tablename]) ? 'checked' : null)).
-                      html('label', array('for'=>"$tablename:viewfortable"), sprintf(_('alternative for %s'), $table['possible_view_for_table']))
-                    : html('input', array('type'=>'hidden', 'name'=>"$tablename:viewfortable", 'value'=>'on')).
-                      html('label', array('for'=>"$tablename:possibleviewfortable"), _('alternative for')).
-                      html('select', array('name'=>"$tablename:possibleviewfortable", 'id'=>"$tablename:possibleviewfortable"),
+                    ? html('input', array('type'=>'hidden', 'name'=>"$tablename-possibleviewfortable", 'value'=>$table['possible_view_for_table'])).
+                      html('input', array('type'=>'checkbox', 'class'=>array('checkboxedit', 'viewfortable'), 'name'=>"$tablename-viewfortable", 'id'=>"$tablename-viewfortable", 'checked'=>!$metabasename || isset($alternative_views[$tablename]) ? 'checked' : null)).
+                      html('label', array('for'=>"$tablename-viewfortable"), sprintf(_('alternative for %s'), $table['possible_view_for_table']))
+                    : html('input', array('type'=>'hidden', 'name'=>"$tablename-viewfortable", 'value'=>'on')).
+                      html('label', array('for'=>"$tablename-possibleviewfortable"), _('alternative for')).
+                      html('select', array('name'=>"$tablename-possibleviewfortable", 'id'=>"$tablename-possibleviewfortable"),
                         join($alternativeoptions)
                       )
                     )
@@ -247,42 +247,42 @@
                 )
               ).
               html('td', array('class'=>array('top', 'center'), 'rowspan'=>count($table['fields'])),
-                html('input', array('type'=>'checkbox', 'class'=>array('checkboxedit', 'include'), 'name'=>"$tablename:include", 'checked'=>!$metabasename || isset($field['original']) ? 'checked' : null))
+                html('input', array('type'=>'checkbox', 'class'=>array('checkboxedit', 'include'), 'name'=>"$tablename-include", 'checked'=>!$metabasename || isset($field['original']) ? 'checked' : null))
               ).
               html('td', array('class'=>array('top', 'pluralsingular'), 'rowspan'=>count($table['fields'])),
                 html('div', array(),
                   array(
-                    html('input', array('type'=>'text', 'name'=>"$tablename:singular", 'value'=>$singular)),
-                    html('input', array('type'=>'text', 'name'=>"$tablename:plural", 'value'=>$plural))
+                    html('input', array('type'=>'text', 'name'=>"$tablename-singular", 'value'=>$singular)),
+                    html('input', array('type'=>'text', 'name'=>"$tablename-plural", 'value'=>$plural))
                   )
                 )
               ).
               html('td', array('class'=>array('top', 'center', 'intablelist'), 'rowspan'=>count($table['fields'])),
-                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename:intablelist", 'checked'=>$intablelist ? 'checked' : null))
+                html('input', array('type'=>'checkbox', 'class'=>'checkboxedit', 'name'=>"$tablename-intablelist", 'checked'=>$intablelist ? 'checked' : null))
               )
             : ''
             ).
             html('td', array('class'=>array('row', 'center')),
-              html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:indesc", 'checked'=>$indesc ? 'checked' : null))
+              html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename-$fieldname-indesc", 'checked'=>$indesc ? 'checked' : null))
             ).
             html('td', array('class'=>array('row', 'center', $inlistforquickadd ? 'inlistforquickadd' : null)),
-              html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inlist", 'checked'=>$inlist ? 'checked' : null))
+              html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename-$fieldname-inlist", 'checked'=>$inlist ? 'checked' : null))
             ).
             html('td', array('class'=>array('row', 'center')),
-              html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename:$fieldname:inedit", 'checked'=>$inedit ? 'checked' : null))
+              html('input', array('type'=>'checkbox', 'class'=>'checkboxedit insome', 'name'=>"$tablename-$fieldname-inedit", 'checked'=>$inedit ? 'checked' : null))
             ).
             html('td', array('class'=>'row', 'title'=>$fieldname),
-              html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename:$fieldname:title", 'value'=>$title))
+              html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename-$fieldname-title", 'value'=>$title))
             ).
             html('td', array('class'=>array('row', 'filler'), 'title'=>$field['column_type'].($nullallowed ? '' : ' '.'not null').($fieldname == $table['primarykeyfieldname'] ? ' '.'auto_increment' : '')),
-              html('select', array('name'=>"$tablename:$fieldname:presentationname", 'class'=>'presentationname'), $presentationnameoptions).
+              html('select', array('name'=>"$tablename-$fieldname-presentationname", 'class'=>'presentationname'), $presentationnameoptions).
               ($fieldname != $table['primarykeyfieldname'] && preg_match('@^(tiny|small|medium|big)?int(eger)?\b@', $field['column_type'])
-              ? html('select', array('name'=>"$tablename:$fieldname:foreigntablename", 'class'=>'foreigntablename'),
+              ? html('select', array('name'=>"$tablename-$fieldname-foreigntablename", 'class'=>'foreigntablename'),
                   join($tableoptions)
                 )
               : ''
               ).
-              html('input', array('type'=>'hidden', 'name'=>"$tablename:$fieldname:nullallowed", 'value'=>$nullallowed ? 'on' : ''))
+              html('input', array('type'=>'hidden', 'name'=>"$tablename-$fieldname-nullallowed", 'value'=>$nullallowed ? 'on' : ''))
             )
           );
       }

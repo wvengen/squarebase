@@ -23,35 +23,35 @@
               html('li', array(),
                 array(
                   $newname
-                  ? html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:new:$fieldname", 'value'=>'new', 'checked'=>'checked')).
-                    html('label', array('for'=>"radio:new:$fieldname"),
+                  ? html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio-$fieldname", 'id'=>"radio-new-$fieldname", 'value'=>'new', 'checked'=>'checked')).
+                    html('label', array('for'=>"radio-new-$fieldname"),
                       html('span', array('class'=>array('filesource', 'filesourcenew')), _('new')).
                       html('img', array('src'=>http_build_url(array('action'=>'call_function', 'presentationname'=>'image', 'functionname'=>'new_image', 'newname'=>$newname)), 'alt'=>_('new image'), 'class'=>'listimage')).
-                      html('input', array('type'=>'hidden', 'name'=>"field:new:$fieldname", 'value'=>$newname))
+                      html('input', array('type'=>'hidden', 'name'=>"field-new-$fieldname", 'value'=>$newname))
                     )
                   : null,
 
                   !$newname && $value
-                  ? html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:original:$fieldname", 'value'=>'original', 'checked'=>$newname ? null : 'checked')).
-                    html('label', array('for'=>"radio:original:$fieldname"),
+                  ? html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio-$fieldname", 'id'=>"radio-original-$fieldname", 'value'=>'original', 'checked'=>$newname ? null : 'checked')).
+                    html('label', array('for'=>"radio-original-$fieldname"),
                       html('span', array('class'=>array('filesource', 'filesourceoriginal')), _('original')).
                       list_image($metabasename, $databasename, $field, $value)
                     )
                   : null,
 
                   $value || $newname
-                  ? html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:delete:$fieldname", 'value'=>'delete', 'checked'=>$value ? null : 'checked')).
-                    html('label', array('for'=>"radio:delete:$fieldname", 'class'=>array('filesource', 'filesourcedelete')), _('delete'))
-                  : html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:none:$fieldname", 'value'=>'none', 'checked'=>$value ? null : 'checked')).
-                    html('label', array('for'=>"radio:none:$fieldname", 'class'=>array('filesource', 'filesourcenone')), _('none')),
+                  ? html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio-$fieldname", 'id'=>"radio-delete-$fieldname", 'value'=>'delete', 'checked'=>$value ? null : 'checked')).
+                    html('label', array('for'=>"radio-delete-$fieldname", 'class'=>array('filesource', 'filesourcedelete')), _('delete'))
+                  : html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio-$fieldname", 'id'=>"radio-none-$fieldname", 'value'=>'none', 'checked'=>$value ? null : 'checked')).
+                    html('label', array('for'=>"radio-none-$fieldname", 'class'=>array('filesource', 'filesourcenone')), _('none')),
 
-                  html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio:$fieldname", 'id'=>"radio:upload:$fieldname", 'value'=>'upload')).
-                  html('label', array('for'=>"radio:upload:$fieldname"),
+                  html('input', array('type'=>'radio', 'class'=>'radio', 'name'=>"radio-$fieldname", 'id'=>"radio-upload-$fieldname", 'value'=>'upload')).
+                  html('label', array('for'=>"radio-upload-$fieldname"),
                     ($value || $newname
                     ? html('span', array('class'=>array('filesource', 'filesourcereplace')), _('replace'))
                     : html('span', array('class'=>array('filesource', 'filesourceupload')), _('upload'))
                     ).
-                    html('input', array('type'=>'file', 'class'=>array($value || $newname ? 'filereplace' : 'fileupload', $presentationname, $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'id'=>"field:$fieldname", 'name'=>"field:$fieldname", 'readonly'=>$readonly ? 'readonly' : null))
+                    html('input', array('type'=>'file', 'class'=>array($value || $newname ? 'filereplace' : 'fileupload', $presentationname, $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'id'=>"field-$fieldname", 'name'=>"field-$fieldname", 'readonly'=>$readonly ? 'readonly' : null))
                   )
                 )
               )
@@ -65,7 +65,7 @@
   }
 
   function formvalue_image($field) {
-    $choice = get_post("radio:$field[fieldname]", null);
+    $choice = get_post("radio-$field[fieldname]", null);
     switch ($choice) {
     case 'original':
       return query1field('SELECT <fieldname> FROM `<databasename>`.`<tablename>` WHERE <uniquefieldname> = "<uniquevalue>"', array('fieldname'=>$field['fieldname'], 'databasename'=>$field['databasename'], 'tablename'=>$field['tablename'], 'uniquefieldname'=>$field['uniquefieldname'], 'uniquevalue'=>$field['uniquevalue']));
@@ -73,14 +73,14 @@
     case 'delete':
       return null;
     case 'new':
-      $newname = directory_part(get_post("field:new:$field[fieldname]"));
+      $newname = directory_part(get_post("field-new-$field[fieldname]"));
       $file = file_name(array('upload', $newname));
       $image = file_get_contents($file);
       unlink($file);
       return $image;
     case 'upload':
     case 'replace':
-      $file = get_parameter('FILES', $_FILES, "field:$field[fieldname]");
+      $file = get_parameter('FILES', $_FILES, "field-$field[fieldname]");
       return $file['tmp_name'] ? file_get_contents($file['tmp_name']) : null;
     }
     return null;

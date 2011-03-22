@@ -11,11 +11,11 @@
   function is_quickaddable_autoincrement() { return true; }
 
   function formfield_autoincrement($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
-    return html('input', array('type'=>'text', 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', 'readonly'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>'readonly'));
+    return html('input', array('type'=>'text', 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', 'readonly'), 'name'=>"field-$field[fieldname]", 'id'=>"field-$field[fieldname]", 'value'=>$value, 'readonly'=>'readonly'));
   }
 
   function formvalue_autoincrement($field) {
-    $value = get_post("field:$field[fieldname]", null);
+    $value = get_post("field-$field[fieldname]", null);
     return $value == '' ? null : $value;
   }
 

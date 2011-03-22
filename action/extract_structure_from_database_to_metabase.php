@@ -118,17 +118,17 @@
   $tableids = array();
   while ($table = mysql_fetch_assoc($tables)) {
     $tablename = $table['table_name'];
-    if (get_post("$tablename:viewfortable", null) && get_post("$tablename:possibleviewfortable", null))
-      insert_or_update($metabasename, 'views', array('viewname'=>$tablename, 'tableid'=>$tableids[get_post("$tablename:possibleviewfortable")]));
-    elseif (get_post("$tablename:include", null))
-      $tableids[$tablename] = insert_or_update($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>get_post("$tablename:singular"), 'plural'=>get_post("$tablename:plural"), 'intablelist'=>get_post("$tablename:intablelist", null) == 'on'));
+    if (get_post("$tablename-viewfortable", null) && get_post("$tablename-possibleviewfortable", null))
+      insert_or_update($metabasename, 'views', array('viewname'=>$tablename, 'tableid'=>$tableids[get_post("$tablename-possibleviewfortable")]));
+    elseif (get_post("$tablename-include", null))
+      $tableids[$tablename] = insert_or_update($metabasename, 'tables', array('tablename'=>$tablename, 'singular'=>get_post("$tablename-singular"), 'plural'=>get_post("$tablename-plural"), 'intablelist'=>get_post("$tablename-intablelist", null) == 'on'));
   }
 
   $errors = array();
   for (mysql_data_reset($tables); $table = mysql_fetch_assoc($tables); ) {
     $tablename = $table['table_name'];
-    if (get_post("$tablename:include", null)) {
-      if (!get_post("$tablename:viewfortable", null)) {
+    if (get_post("$tablename-include", null)) {
+      if (!get_post("$tablename-viewfortable", null)) {
         $tableid = $tableids[$tablename];
 
         $indescs = $inlists = $inedits = 0;
@@ -142,19 +142,19 @@
         while ($field = mysql_fetch_assoc($fields)) {
           $fieldname = $field['column_name'];
 
-          $foreigntablename = get_post("$tablename:$fieldname:foreigntablename", null);
+          $foreigntablename = get_post("$tablename-$fieldname-foreigntablename", null);
 
-          $indesc = get_post("$tablename:$fieldname:indesc", null) ? true : false;
-          $inlist = get_post("$tablename:$fieldname:inlist", null) ? true : false;
-          $inedit = get_post("$tablename:$fieldname:inedit", null) ? true : false;
+          $indesc = get_post("$tablename-$fieldname-indesc", null) ? true : false;
+          $inlist = get_post("$tablename-$fieldname-inlist", null) ? true : false;
+          $inedit = get_post("$tablename-$fieldname-inedit", null) ? true : false;
 
-          $fieldid = insert_or_update($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>get_post("$tablename:$fieldname:title"), 'type'=>$field['column_type'], 'presentationid'=>$presentationids[get_post("$tablename:$fieldname:presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
+          $fieldid = insert_or_update($metabasename, 'fields', array('tableid'=>$tableid, 'fieldname'=>$fieldname, 'title'=>get_post("$tablename-$fieldname-title"), 'type'=>$field['column_type'], 'presentationid'=>$presentationids[get_post("$tablename-$fieldname-presentationname")], 'foreigntableid'=>$foreigntablename ? $tableids[$foreigntablename] : null, 'nullallowed'=>$field['is_nullable'] == 'YES' ? true : false, 'defaultvalue'=>$field['column_default'], 'indesc'=>$indesc, 'inlist'=>$inlist, 'inedit'=>$inedit));
 
           $indescs += $indesc;
           $inlists += $inlist;
           $inedits += $inedit;
 
-          if (get_post("$tablename:primary") == $fieldname)
+          if (get_post("$tablename-primary") == $fieldname)
             query('UPDATE `<metabasename>`.tables SET uniquefieldid = <fieldid> WHERE tableid = <tableid>', array('metabasename'=>$metabasename, 'fieldid'=>$fieldid, 'tableid'=>$tableid));
         }
         if (!$indescs)

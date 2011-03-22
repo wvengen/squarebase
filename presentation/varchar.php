@@ -15,11 +15,11 @@
   function is_quickaddable_varchar() { return true; }
 
   function formfield_varchar($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
-    return html('input', array('type'=>'text', 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null));
+    return html('input', array('type'=>'text', 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field-$field[fieldname]", 'id'=>"field-$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null));
   }
 
   function formvalue_varchar($field) {
-    $value = get_post("field:$field[fieldname]", null);
+    $value = get_post("field-$field[fieldname]", null);
     return $value == '' ? null : $value;
   }
 

@@ -27,11 +27,11 @@
       if (!$oneselected && $value)
         array_unshift($options, html('option', array_merge(array('value'=>$value), array('selected'=>'selected')), $value));
     }
-    return html('select', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options));
+    return html('select', array('name'=>"field-$field[fieldname]", 'id'=>"field-$field[fieldname]", 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options));
   }
 
   function formvalue_enum($field) {
-    return get_post("field:$field[fieldname]", null);
+    return get_post("field-$field[fieldname]", null);
   }
 
   function list_enum($metabasename, $databasename, $field, $value) {

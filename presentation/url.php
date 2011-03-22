@@ -21,12 +21,12 @@
 
   function formfield_url($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return
-      html('input', array('type'=>'text', 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null)).
+      html('input', array('type'=>'text', 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field-$field[fieldname]", 'id'=>"field-$field[fieldname]", 'value'=>$value, 'readonly'=>$readonly ? 'readonly' : null)).
       ($extra && $value ? external_reference($value, 'link') : '');
   }
 
   function formvalue_url($field) {
-    $value = get_post("field:$field[fieldname]", null);
+    $value = get_post("field-$field[fieldname]", null);
     return $value == '' ? null : $value;
   }
 

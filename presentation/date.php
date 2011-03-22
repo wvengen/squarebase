@@ -12,7 +12,7 @@
 
   function formfield_date($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
     return 
-      html('input', array('type'=>'text', 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field:$field[fieldname]", 'value'=>date2local($value), 'readonly'=>$readonly ? 'readonly' : null)).
+      html('input', array('type'=>'text', 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'name'=>"field-$field[fieldname]", 'value'=>date2local($value), 'readonly'=>$readonly ? 'readonly' : null)).
       ($extra ? html('span', array('class'=>'help', 'title'=>sprintf(_('Date format: %s'), find_datetime_format('%x', 'text'))), _('?')) : '');
   }
 
@@ -21,7 +21,7 @@
   }
 
   function formvalue_date($field) {
-    $value = get_post("field:$field[fieldname]", null);
+    $value = get_post("field-$field[fieldname]", null);
     return $value == '' ? null : local2date($value);
   }
 

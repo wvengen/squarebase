@@ -1,7 +1,7 @@
 <?php
   function linkedtable_lookup($tablename, $fieldname, $foreigntablename = null, $alltablenames = null) {
     static $linkedtables = array();
-    if (!isset($linkedtables["$tablename:$fieldname"])) {
+    if (!isset($linkedtables["$tablename-$fieldname"])) {
       if (is_null($foreigntablename)) {
         $likeness = array();
         foreach ($alltablenames as $onetablename=>$oneprimarykeyfieldname) {
@@ -18,12 +18,12 @@
         reset($likeness);
         list($table1, $likeness1) = each($likeness);
         list($table2, $likeness2) = each($likeness);
-        $linkedtables["$tablename:$fieldname"] = is_null($likeness1) || $likeness1 === $likeness2 ? '' : $table1;
+        $linkedtables["$tablename-$fieldname"] = is_null($likeness1) || $likeness1 === $likeness2 ? '' : $table1;
       }
       else
-        $linkedtables["$tablename:$fieldname"] = $foreigntablename;
+        $linkedtables["$tablename-$fieldname"] = $foreigntablename;
     }
-    return isset($linkedtables["$tablename:$fieldname"]) ? $linkedtables["$tablename:$fieldname"] : null;
+    return isset($linkedtables["$tablename-$fieldname"]) ? $linkedtables["$tablename-$fieldname"] : null;
   }
 
   function probability_lookup($field) {
@@ -71,7 +71,7 @@
     return
       html('div', array('class'=>'ajax', 'id'=>http_build_url(array('action'=>'call_function', 'functionname'=>'ajax_lookup', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'fieldname'=>$fieldname, 'value'=>$value, 'presentationname'=>$presentationname, 'foreigntablename'=>$foreigntablename, 'foreigntablenamesingular'=>$foreigntablenamesingular, 'foreignuniquefieldname'=>$foreignuniquefieldname, 'nullallowed'=>$nullallowed, 'defaultvalue'=>$defaultvalue, 'readonly'=>$readonly, 'extra'=>$extra))),
         html('div', array(),
-          html('select', array('name'=>"field:$fieldname", 'id'=>"field:$fieldname", 'class'=>array($presentationname, "lookup-from-table-$foreigntablenamesingular", $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options)).
+          html('select', array('name'=>"field-$fieldname", 'id'=>"field-$fieldname", 'class'=>array($presentationname, "lookup-from-table-$foreigntablenamesingular", $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $nullallowed || $defaultvalue != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), join($options)).
           ($extra
           ? (has_grant('INSERT', $databasename, $foreigntablename, '?') ? internal_reference(array('action'=>'new_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$foreigntablename, 'tablenamesingular'=>$foreigntablenamesingular, 'uniquefieldname'=>$foreignuniquefieldname, 'referencedfromfieldname'=>$fieldname, 'back'=>get_server('REQUEST_URI')), sprintf(_('new %s'), $foreigntablenamesingular), array('class'=>'newrecordlookup')) : '').
             (has_grant('UPDATE', $databasename, $foreigntablename, '?')
@@ -91,7 +91,7 @@
   }
 
   function formvalue_lookup($field) {
-    $value = get_post("field:$field[fieldname]", null);
+    $value = get_post("field-$field[fieldname]", null);
     return $value == '' ? null : $value;
   }
 

@@ -11,11 +11,11 @@
   function is_quickaddable_text() { return false; }
 
   function formfield_text($metabasename, $databasename, $field, $value, $readonly, $extra = true) {
-    return html('textarea', array('name'=>"field:$field[fieldname]", 'id'=>"field:$field[fieldname]", 'rows'=>10, 'cols'=>80, 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), htmlentities($value));
+    return html('textarea', array('name'=>"field-$field[fieldname]", 'id'=>"field-$field[fieldname]", 'rows'=>10, 'cols'=>80, 'class'=>array($field['presentationname'], $extra ? 'edit' : 'list', $readonly ? 'readonly' : null, $field['nullallowed'] || $field['defaultvalue'] != '' ? null : 'notempty'), 'readonly'=>$readonly ? 'readonly' : null), htmlentities($value));
   }
 
   function formvalue_text($field) {
-    $value = get_post("field:$field[fieldname]", null);
+    $value = get_post("field-$field[fieldname]", null);
     return $value == '' ? null : $value;
   }
 
