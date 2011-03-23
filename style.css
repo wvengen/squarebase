@@ -66,6 +66,7 @@ input.submit, input.button, .fullrecord, .cancel { margin-right: 1em; }
 input.submit:hover, input.button:hover { background-color: #ddd; }
 input.button.deleterecord:hover, .cancel:hover, .drop:hover, .forget:hover, .close:hover { background-color: #f00; color: #fff; }
 .cancel, .close { padding: 0.1em 0.5em; }
+.close { margin-left: -0.1em; }
 .drop { margin-left: 1em; }
 .inlistforquickadd { background-color: #fda; }
 
