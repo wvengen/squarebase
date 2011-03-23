@@ -24,7 +24,7 @@
   $language            = get_get('language');
   $next                = get_get('next', null);
 
-  $bestusernameandhost = first_non_null($lastusernameandhost, $usernameandhost);
+  $bestusernameandhost = first_non_null($lastusernameandhost ? $lastusernameandhost : null, $usernameandhost ? $usernameandhost : null);
   if (preg_match('@^([^\@]+)\@([^\@]+)$@', $bestusernameandhost, $match)) {
     $username = $match[1];
     $host     = $match[2];
