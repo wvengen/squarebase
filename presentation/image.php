@@ -146,7 +146,7 @@
       ".image.edit ul li { vertical-align: top; }\n".
       ".image .filesource { display: inline-block; width: 4em; }\n".
       ".image.list li { display: inline; }\n".
-      ".list img.listimage { max-height: 1em !important; }\n";
+      ".list img.listimage { max-height: 1em; }\n";
   }
 
   function jquery_enhance_form_image() {
