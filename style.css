@@ -20,7 +20,7 @@ tr.quickadd label { display: block; font-style: italic; font-size: small; }
 .referringlist.tablelist { margin-bottom: 1em; }
 .referrer { font-size: small; margin-left: 0.5em; }
 
-a, .clickable { color: #00e; text-decoration: underline; cursor: pointer; }
+a, .clickable { color: #00e; text-decoration: underline; cursor: pointer; padding: 0 0.1em; display: inline-block; }
 a:hover, .clickable:hover { background-color: #00e; color: #fff; }
 .clickable { display: inline-block; margin: 0 0.5em; }
 p { margin: 0.5em 0; }
@@ -30,7 +30,7 @@ p { margin: 0.5em 0; }
 .secondary a:hover { background-color: #aae; color: #fff; }
 
 table { width: 100%; border-collapse: collapse; background-color: #fff; }
-th, td { padding: 0.1em; vertical-align: top; width: 1%; }
+th, td { padding: 0.1em 0; vertical-align: top; width: 1%; }
 th { text-align: left; background-color: #fff; font-weight: normal; font-style: italic; font-size: small; }
 th.heading { font-weight: bold; font-style: normal; font-size: medium; }
 tr.rowodd { background-color: #ddd; }

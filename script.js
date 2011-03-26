@@ -271,6 +271,8 @@ jQuery.fn.ajaxify = function() {
     ajaxsubmit().
   end().
 
+  /* jquery_ajaxify_* */
+
   find('.changeslost').
     css('display', 'none').
   end().
@@ -403,8 +405,9 @@ ready(
     $('html').
     hidelogs();
 
-    $('body.ajaxy .ajax').
-    ajaxify();
+    if ($('body.ajaxy .ajax').length)
+      $('.ajax').
+      ajaxify();
 
     $('form').
     enhance_form();

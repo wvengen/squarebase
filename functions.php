@@ -580,7 +580,7 @@
 
   function description($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, $uniquevalue) {
     $descriptor = descriptor($metabasename, $databasename, $tablename, $viewname);
-    return query1field("SELECT $descriptor[select] FROM `<databasename>`.`<viewname>` ".join(' ', $descriptor['joins'])."WHERE `<viewname>`.<uniquefieldname> = <uniquevalue>", array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+    return query1field("SELECT $descriptor[select] FROM `<databasename>`.`<viewname>` ".join(' ', $descriptor['joins']).'WHERE `<viewname>`.<uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
   }
 
   function breadcrumbs($metabasename, $databasename = null, $tablename = null, $tablenamesingular = null, $uniquefieldname = null, $uniquevalue = null) {
@@ -874,8 +874,8 @@
     }
     query(
       $uniquefieldname && !is_null($uniquevalue)
-      ? "UPDATE `<databasename>`.`<tablename>` SET ".join(', ', $sets)." WHERE <uniquefieldname> = \"<uniquevalue>\""
-      : "INSERT INTO `<databasename>`.`<tablename>` SET ".join(', ', $sets),
+      ? 'UPDATE `<databasename>`.`<tablename>` SET '.join(', ', $sets).' WHERE <uniquefieldname> = "<uniquevalue>"'
+      : 'INSERT INTO `<databasename>`.`<tablename>` SET '.join(', ', $sets),
       array_merge($arguments, array('databasename'=>$databasename, 'tablename'=>$tablename, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue))
     );
     return $uniquefieldname && !is_null($uniquevalue) ? $uniquevalue : mysql_insert_id();
@@ -930,7 +930,7 @@
     if ($alternatives[$metabasename][$databasename][$tablename][0] == $tablename || is_null($uniquefieldname))
       return $alternatives[$metabasename][$databasename][$tablename][0];
     foreach ($alternatives[$metabasename][$databasename][$tablename] as $viewname)
-      if (query1field('SELECT COUNT(*) FROM `<databasename>`.`<viewname>` WHERE <uniquefieldname> = <uniquevalue>', array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)))
+      if (query1field('SELECT COUNT(*) FROM `<databasename>`.`<viewname>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue)))
         return $viewname;
     return null;
   }
