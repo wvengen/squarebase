@@ -80,6 +80,11 @@
       return $image;
     case 'upload':
     case 'replace':
+      $warning = check_image();
+      if ($warning) {
+        add_log('warning', sprintf(_('no image stored because %s'), $warning));
+        return null;
+      }
       $file = get_parameter('FILES', $_FILES, "field-$field[fieldname]");
       return $file['tmp_name'] ? file_get_contents($file['tmp_name']) : null;
     }
@@ -113,7 +118,7 @@
     http_response('Content-type: image/jpeg', $image);
   }
 
-  function process_image() {
+  function check_image() {
     if (count($_FILES) != 1)
       return sprintf(_('not 1 file uploaded but %d'), count($_FILES));
     $names = array_keys($_FILES);
@@ -126,6 +131,15 @@
       return sprintf(_('invalid characters in file name: %s'), $file['name']);
     if (!preg_match('@\.jpe?g$@i', $file['name']))
       return sprintf(_('invalid extension: %s'), $file['name']);
+    return null;
+  }
+
+  function process_image() {
+    $error = check_image();
+    if ($error)
+      return $error;
+    $names = array_keys($_FILES);
+    $file = $_FILES[$names[0]];
     $newname = strftime('%Y_%m_%d_%H_%M_%S').'_'.directory_part($file['name']);
     if (!move_uploaded_file($file['tmp_name'], file_name(array('upload', $newname))))
       return sprintf(_('uploaded file cannot be moved: %s'), $file['name']);
@@ -205,7 +219,11 @@
       "      }\n".
       "    ).\n".
       "  end().\n".
-      "end().\n".
+      "end().\n";
+  }
+
+  function jquery_ajaxify_image() {
+    return
       "getScripts(['jquery/uploadfile.js'], '.image',\n".
       "  function() {\n".
       "    $(this).\n".
