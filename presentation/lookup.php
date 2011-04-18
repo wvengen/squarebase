@@ -6,9 +6,9 @@
         $likeness = array();
         foreach ($alltablenames as $onetablename=>$oneprimarykeyfieldname) {
           $likeness[$onetablename] =
-            (preg_match("@^$oneprimarykeyfieldname|$oneprimarykeyfieldname$@i", $fieldname)
+            (preg_match("@(\b|_)$oneprimarykeyfieldname(_|\b)@i", $fieldname)
             ? 200 + strlen($oneprimarykeyfieldname) - levenshtein($onetablename, $fieldname)
-            : (preg_match("@^$onetablename|$onetablename$@i", $fieldname)
+            : (preg_match("@(\b|_)$onetablename(\b|_)@i", $fieldname)
               ? 100 + strlen($onetablename)
               : 0
               )
