@@ -43,7 +43,7 @@
 
     $allprimarykeyfieldnames = array();
     $fields = query(
-      'SELECT c.table_schema, c.table_name, c.column_name, column_key, column_type, is_nullable, column_default, referenced_table_name '.
+      'SELECT c.table_schema, c.table_name, c.column_name, column_key, column_type, is_nullable, column_default, extra, referenced_table_name '.
       'FROM information_schema.columns c '.
       'LEFT JOIN information_schema.key_column_usage kcu ON kcu.table_schema = c.table_schema AND kcu.table_name = c.table_name AND kcu.column_name = c.column_name AND referenced_table_schema = c.table_schema '.
       'WHERE c.table_schema = "<databasename>" AND c.table_name = "<tablename>"',
@@ -77,10 +77,11 @@
   // pass 2: find presentation and in_desc, in_list and in_edit (needs $alltablenames and $infos)
   $presentationnames = get_presentationnames();
   foreach ($infos as $tablename=>$table) {
-    $max_in_desc = $max_in_list = $max_in_edit = 0;
+    $infos[$tablename]['max_in_desc'] = 0;
+    $infos[$tablename]['max_in_list'] = 0;
+    $infos[$tablename]['max_in_edit'] = 0;
     foreach ($table['fields'] as $index=>$field) {
       $fieldname = $field['column_name'];
-
       $augmentedfield =
         array_merge(
           $field,
@@ -107,9 +108,9 @@
       $infos[$tablename]['fields'][$index]['in_list'] = call_user_func("in_list_$bestpresentationname", $augmentedfield);
       $infos[$tablename]['fields'][$index]['in_edit'] = call_user_func("in_edit_$bestpresentationname", $augmentedfield);
 
-      $max_in_desc = max($max_in_desc, $infos[$tablename]['fields'][$index]['in_desc']);
-      $max_in_list = max($max_in_list, $infos[$tablename]['fields'][$index]['in_list']);
-      $max_in_edit = max($max_in_edit, $infos[$tablename]['fields'][$index]['in_edit']);
+      $infos[$tablename]['max_in_desc'] = max($infos[$tablename]['max_in_desc'], $infos[$tablename]['fields'][$index]['in_desc']);
+      $infos[$tablename]['max_in_list'] = max($infos[$tablename]['max_in_list'], $infos[$tablename]['fields'][$index]['in_list']);
+      $infos[$tablename]['max_in_edit'] = max($infos[$tablename]['max_in_edit'], $infos[$tablename]['fields'][$index]['in_edit']);
 
       if ($metabasename)
         $infos[$tablename]['fields'][$index]['original'] = query01('SELECT tbl.singular, tbl.plural, tbl.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, ftbl.tablename AS foreigntablename FROM `<metabasename>`.tables AS tbl LEFT JOIN `<metabasename>`.fields AS fld ON fld.tableid = tbl.tableid LEFT JOIN `<metabasename>`.presentations pst ON pst.presentationid = fld.presentationid LEFT JOIN `<metabasename>`.tables AS ftbl ON fld.foreigntableid = ftbl.tableid WHERE tbl.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname));
@@ -117,7 +118,7 @@
     }
   }
 
-  // pass 3: produce output for tables and fields (needs $max_in_****)
+  // pass 3: produce output for tables and fields (needs $infos[$tablename]['max_in_****'])
   $alternative_views = array();
   if ($metabasename) {
     $views = query('SELECT * FROM `<metabasename>`.views', array('metabasename'=>$metabasename));
@@ -192,9 +193,9 @@
           $intablelist      = true;
           $nullallowed      = $field['is_nullable'] == 'YES';
           $presentationname = $field['presentationname'];
-          $indesc           = $field['in_desc'] == $max_in_desc;
-          $inlist           = $field['in_list'] == $max_in_list || $inlistforquickadd;
-          $inedit           = $field['in_edit'] == $max_in_edit;
+          $indesc           = $field['in_desc'] == $infos[$tablename]['max_in_desc'];
+          $inlist           = $field['in_list'] == $infos[$tablename]['max_in_list'] || $inlistforquickadd;
+          $inedit           = $field['in_edit'] == $infos[$tablename]['max_in_edit'];
         }
 
         $tableoptions = array(html('option', array('value'=>'', 'selected'=>!$field['linkedtable'] ? 'selected' : null), ''));
@@ -274,9 +275,9 @@
             html('td', array('class'=>'row', 'title'=>$fieldname),
               html('input', array('type'=>'text', 'class'=>'title', 'name'=>"$tablename-$fieldname-title", 'value'=>$title))
             ).
-            html('td', array('class'=>array('row', 'filler'), 'title'=>$field['column_type'].($nullallowed ? '' : ' '.'not null').($fieldname == $table['primarykeyfieldname'] ? ' '.'auto_increment' : '')),
+            html('td', array('class'=>array('row', 'filler'), 'title'=>join_non_null(' ', array($field['column_type'], $nullallowed ? null : 'not null', ($fieldname == $table['primarykeyfieldname'] ? 'primary_key' : null)))),
               html('select', array('name'=>"$tablename-$fieldname-presentationname", 'class'=>'presentationname'), $presentationnameoptions).
-              ($fieldname != $table['primarykeyfieldname'] && preg_match('@^(tiny|small|medium|big)?int(eger)?\b@', $field['column_type'])
+              ($fieldname != $table['primarykeyfieldname']
               ? html('select', array('name'=>"$tablename-$fieldname-foreigntablename", 'class'=>'foreigntablename'),
                   join($tableoptions)
                 )

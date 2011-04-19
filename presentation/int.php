@@ -4,7 +4,7 @@
     if (preg_match('@^(tinyint|smallint|mediumint|int|integer|bigint)\b@', $field['column_type']))
       return 0.4;
     // real numbers without decimals
-    if (preg_match('@^(real|double|float|decimal|numeric)\s*\(\s*\d+\s*,\s*0\s*\)@', $field['column_type']))
+    if (preg_match('@^(real|double|float|decimal|dec|fixed|numeric)\s*\(\s*\d+\s*,\s*0\s*\)@', $field['column_type']))
       return 0.4;
     return 0;
   }
