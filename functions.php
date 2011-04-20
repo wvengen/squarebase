@@ -866,6 +866,12 @@
   } //edit_record
 
   function insert_or_update($databasename, $tablename, $fieldnamesandvalues, $uniquefieldname = null, $uniquevalue = null) {
+    if (!$fieldnamesandvalues)
+      error(
+        $uniquefieldname && !is_null($uniquevalue)
+        ? _('no fields to update')
+        : _('no fields to insert')
+      );
     $sets = $arguments = array();
     foreach ($fieldnamesandvalues as $fieldname=>$fieldvalue) {
       $sets[] = "<_name_$fieldname> = \"<_value_$fieldname>\"";

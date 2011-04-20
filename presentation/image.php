@@ -245,7 +245,7 @@
       "                find('#content').\n".
       "                html()\n".
       "              ).\n".
-      "              enhance_form();\n".
+      "              ajaxify();\n".
       "            }\n".
       "          );\n".
       "        }\n".

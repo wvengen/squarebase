@@ -275,10 +275,8 @@ jQuery.fn.unload = function() {
 
 jQuery.fn.ajaxify = function() {
   $(this).
-  find('form').
-    enhance_form().
-    ajaxsubmit().
-  end().
+  enhance_form().
+  ajaxsubmit().
 
   /* jquery_ajaxify_* */
 
