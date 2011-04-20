@@ -159,8 +159,11 @@ jQuery.fn.enhance_form = function() {
 
   submit(
     function() {
-      if ($(this).check_form().find('.ajaxproblem:first').focus().length > 0)
-        return false;
+      $(this).
+      check_form().
+      find('.ajaxproblem:first').
+      focus();
+      return !$(this).has_problem();
     }
   ).
 
@@ -183,6 +186,10 @@ jQuery.fn.check_form = function() {
   addClass('ajaxproblem');
 
   return this;
+}
+
+jQuery.fn.has_problem = function() {
+  return $(this).find('.ajaxproblem').length > 0 && $(this).closest('form').find(':checked[name=deleterecord]').length == 0;
 }
 
 jQuery.fn.hidelogs = function() {
@@ -213,6 +220,8 @@ jQuery.fn.ajaxsubmit = function() {
   addClass('ajaxified').
   submit(
     function() {
+      if ($(this).has_problem())
+        return false;
       $(this).
       find(':input[name=back]').
         attr('name', 'ajax').
