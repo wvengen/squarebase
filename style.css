@@ -64,10 +64,10 @@ ul.minimal li .radio { margin-right: 0.3em; }
 input.submit, input.button { border: 0.15em solid #ccc; border-color: #ccc #666 #666 #ccc; background-color: #eee; color: #33f; padding: 0 0.2em; }
 input.submit, input.button, .fullrecord, .cancel { margin-right: 1em; }
 input.submit:hover, input.button:hover { background-color: #ddd; }
-input.button.deleterecord:hover, .cancel:hover, .drop:hover, .forget:hover, .close:hover { background-color: #f00; color: #fff; }
-.cancel, .close { padding: 0.1em 0.5em; }
-.close { margin-left: -0.1em; }
-.drop { margin-left: 1em; }
+input.button.deleterecord:hover, a.cancel:hover, a.drop:hover, a.forget:hover, a.close:hover { background-color: #f00; color: #fff; }
+a.cancel, a.close { padding: 0.1em 0.5em; }
+a.close { margin-left: -0.1em; }
+a.drop { margin-left: 1em; }
 .inlistforquickadd { background-color: #fda; }
 
 label.altsubmit { margin: 0 1em 0 -0.5em; padding: 0 0.5em; }

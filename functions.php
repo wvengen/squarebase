@@ -750,7 +750,7 @@
 
     if (is_null($foreignvalue) || isset($offsets))
       $rows[] =
-        html('tr', array(),
+        html('tr', array('class'=>'close'),
           html('td', array(), is_null($foreignvalue) ? external_reference(get_back(), 'close', array('class'=>'close')) : '').
           html('td', array('colspan'=>count($header) - 1),
             isset($offsets) ? html('ol', array('class'=>'offsets'), html('li', array(), $offsets)) : ''
