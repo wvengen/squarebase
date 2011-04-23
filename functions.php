@@ -690,7 +690,7 @@
     );
     $foundrecords = $limit ? query1field('SELECT FOUND_ROWS()') : null;
 
-    $rows = mysql_num_rows($records) > 0 ? array(html('tr', array(), join($header))) : array();
+    $rows = mysql_num_rows($records) > 0 ? array(html('tr', array('class'=>'rowheader'), join($header))) : array();
     while ($row = mysql_fetch_assoc($records)) {
       $columns = array();
       for (mysql_data_reset($fields); $field = mysql_fetch_assoc($fields); ) {
@@ -707,7 +707,7 @@
       }
       $columns[] = html('td', array('class'=>'filler'), '');
       $rows[] =
-        html('tr', array('class'=>array(count($rows) % 2 ? 'rowodd' : 'roweven', 'list')),
+        html('tr', array('class'=>array(count($rows) % 2 ? 'rowodd' : 'roweven', 'rownormal')),
           html('td', array(),
             $can_update
             ? internal_reference(array('action'=>'edit_record', 'metabasename'=>$metabasename, 'databasename'=>$databasename, 'tablename'=>$tablename, 'tablenamesingular'=>$tablenamesingular, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$row[$uniquefieldname], "field-$foreignfieldname"=>$foreignvalue, 'back'=>get_server('REQUEST_URI')), _('edit'), array('class'=>'editthisrecord', 'id'=>"edit-record-$tablenamesingular-$row[$uniquefieldname]"))
@@ -718,8 +718,8 @@
     }
     if ($interactive && ($can_quickadd || $can_insert)) {
       $rows[] = $can_quickadd
-      ? html('tr', array('class'=>'quickadd'), join($quickadd)).
-        html('tr', array(),
+      ? html('tr', array('class'=>'rowquickadd'), join($quickadd)).
+        html('tr', array('class'=>'rowadd'),
           html('td', array(), '').
           html('td', array('colspan'=>count($quickadd) - 1),
             html('div', array(),

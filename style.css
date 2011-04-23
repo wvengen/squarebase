@@ -15,8 +15,8 @@ body { margin: 0.5em; overflow-y: scroll; }
 .box { border: 0.1em solid #999; }
 .box.closing { border-color: #f00; }
 .tableedit { padding-bottom: 0.5em; }
-.tableedit td, .tablelist th, .formmetabasefordatabase th, .tablelist tr.quickadd td, label { white-space: nowrap; }
-tr.quickadd label { display: block; font-style: italic; font-size: small; }
+.tableedit td, .tablelist th, .formmetabasefordatabase th, .tablelist tr.rowquickadd td, label { white-space: nowrap; }
+tr.rowquickadd label { display: block; font-style: italic; font-size: small; }
 .referringlist.tablelist { margin-bottom: 1em; }
 .referrer { font-size: small; margin-left: 0.5em; }
 
