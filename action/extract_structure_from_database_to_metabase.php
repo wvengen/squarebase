@@ -26,74 +26,74 @@
   query('CREATE DATABASE IF NOT EXISTS `<metabasename>`', array('metabasename'=>$metabasename));
 
   query(
-    'CREATE TABLE `<metabasename>`.languages ('.
-      'languageid       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-      'languagename     VARCHAR(100) NOT NULL,'.
-      'UNIQUE KEY (languagename)'.
+    'CREATE TABLE `<metabasename>`.`languages` ('.
+      '`languageid`       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+      '`languagename`     VARCHAR(100) NOT NULL,'.
+      'UNIQUE KEY (`languagename`)'.
     ')',
     array('metabasename'=>$metabasename)
   );
 
   query(
-    'CREATE TABLE `<metabasename>`.databases ('.
-      'databaseid       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-      'databasename     VARCHAR(100) NOT NULL,'.
-      'UNIQUE KEY (databasename)'.
+    'CREATE TABLE `<metabasename>`.`databases` ('.
+      '`databaseid`       INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+      '`databasename`     VARCHAR(100) NOT NULL,'.
+      'UNIQUE KEY (`databasename`)'.
     ')',
     array('metabasename'=>$metabasename)
   );
 
   query(
-    'CREATE TABLE `<metabasename>`.tables ('.
-      'tableid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-      'tablename        VARCHAR(100) NOT NULL,'.
-      'singular         VARCHAR(100) NOT NULL,'.
-      'plural           VARCHAR(100) NOT NULL,'.
-      'uniquefieldid    INT UNSIGNED NOT NULL REFERENCES `fields` (fieldid),'.
-      'intablelist      BOOLEAN      NOT NULL,'.
-      'UNIQUE KEY (tablename),'.
-      'INDEX (uniquefieldid)'.
+    'CREATE TABLE `<metabasename>`.`tables` ('.
+      '`tableid`          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+      '`tablename`        VARCHAR(100) NOT NULL,'.
+      '`singular`         VARCHAR(100) NOT NULL,'.
+      '`plural`           VARCHAR(100) NOT NULL,'.
+      '`uniquefieldid`    INT UNSIGNED NOT NULL REFERENCES `fields` (`fieldid`),'.
+      '`intablelist`      BOOLEAN      NOT NULL,'.
+      'UNIQUE KEY (`tablename`),'.
+      'INDEX (`uniquefieldid`)'.
     ')',
     array('metabasename'=>$metabasename)
   );
 
   query(
-    'CREATE TABLE `<metabasename>`.fields ('.
-      'fieldid          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-      'tableid          INT UNSIGNED NOT NULL REFERENCES `tables` (tableid),'.
-      'fieldname        VARCHAR(100) NOT NULL,'.
-      'title            VARCHAR(100) NOT NULL,'.
-      'type             VARCHAR(100) NOT NULL,'.
-      'nullallowed      BOOLEAN      NOT NULL,'.
-      'defaultvalue     VARCHAR(100)         ,'.
-      'presentationid   INT UNSIGNED NOT NULL REFERENCES `presentations` (presentationid),'.
-      'indesc           BOOLEAN      NOT NULL,'.
-      'inlist           BOOLEAN      NOT NULL,'.
-      'inedit           BOOLEAN      NOT NULL,'.
-      'foreigntableid   INT UNSIGNED          REFERENCES `tables` (tableid),'.
-      'UNIQUE KEY (tableid, fieldname),'.
-      'INDEX (foreigntableid),'.
-      'INDEX (presentationid)'.
+    'CREATE TABLE `<metabasename>`.`fields` ('.
+      '`fieldid`          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+      '`tableid`          INT UNSIGNED NOT NULL REFERENCES `tables` (`tableid`),'.
+      '`fieldname`        VARCHAR(100) NOT NULL,'.
+      '`title`            VARCHAR(100) NOT NULL,'.
+      '`type`             VARCHAR(100) NOT NULL,'.
+      '`nullallowed`      BOOLEAN      NOT NULL,'.
+      '`defaultvalue`     VARCHAR(100)         ,'.
+      '`presentationid`   INT UNSIGNED NOT NULL REFERENCES `presentations` (`presentationid`),'.
+      '`indesc`           BOOLEAN      NOT NULL,'.
+      '`inlist`           BOOLEAN      NOT NULL,'.
+      '`inedit`           BOOLEAN      NOT NULL,'.
+      '`foreigntableid`   INT UNSIGNED          REFERENCES `tables` (`tableid`),'.
+      'UNIQUE KEY (`tableid`, `fieldname`),'.
+      'INDEX (`foreigntableid`),'.
+      'INDEX (`presentationid`)'.
     ')',
     array('metabasename'=>$metabasename)
   );
 
   query(
-    'CREATE TABLE `<metabasename>`.views ('.
-      'viewid           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-      'viewname         VARCHAR(100) NOT NULL,'.
-      'tableid          INT UNSIGNED NOT NULL REFERENCES `tables` (tableid),'.
-      'UNIQUE KEY (viewname),'.
-      'INDEX (tableid)'.
+    'CREATE TABLE `<metabasename>`.`views` ('.
+      '`viewid`           INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+      '`viewname`         VARCHAR(100) NOT NULL,'.
+      '`tableid`          INT UNSIGNED NOT NULL REFERENCES `tables` (`tableid`),'.
+      'UNIQUE KEY (`viewname`),'.
+      'INDEX (`tableid`)'.
     ')',
     array('metabasename'=>$metabasename)
   );
 
   query(
-    'CREATE TABLE `<metabasename>`.presentations ('.
-      'presentationid   INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
-      'presentationname VARCHAR(100) NOT NULL,'.
-      'UNIQUE KEY (presentationname)'.
+    'CREATE TABLE `<metabasename>`.`presentations` ('.
+      '`presentationid`   INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,'.
+      '`presentationname` VARCHAR(100) NOT NULL,'.
+      'UNIQUE KEY (`presentationname`)'.
     ')',
     array('metabasename'=>$metabasename)
   );
@@ -108,11 +108,11 @@
     $presentationids[$presentationname] = insert_or_update($metabasename, 'presentations', array('presentationname'=>$presentationname));
 
   $tables = query(
-    'SELECT tb.table_name, vw.table_name AS view_name, is_updatable, view_definition '.
-    'FROM information_schema.tables tb '.
-    'LEFT JOIN information_schema.views vw ON vw.table_schema = tb.table_schema AND vw.table_name = tb.table_name '.
-    'WHERE tb.table_schema = "<databasename>" '.
-    'ORDER BY vw.table_name, tb.table_name', // base tables first, views last, so the table id of a view can be set to that of the underlying base table for alternative views
+    'SELECT `tb`.`table_name`, `vw`.`table_name` AS `view_name`, `is_updatable`, `view_definition` '.
+    'FROM `information_schema`.`tables` `tb` '.
+    'LEFT JOIN `information_schema`.`views` `vw` ON `vw`.`table_schema` = `tb`.`table_schema` AND `vw`.`table_name` = `tb`.`table_name` '.
+    'WHERE `tb`.`table_schema` = "<databasename>" '.
+    'ORDER BY `vw`.`table_name`, `tb`.`table_name`', // base tables first, views last, so the table id of a view can be set to that of the underlying base table for alternative views
     array('databasename'=>$databasename)
   );
   $tableids = array();
@@ -133,10 +133,10 @@
 
         $indescs = $inlists = $inedits = 0;
         $fields = query(
-          'SELECT c.table_schema, c.table_name, c.column_name, column_key, column_type, is_nullable, column_default, referenced_table_name '.
-          'FROM information_schema.columns c '.
-          'LEFT JOIN information_schema.key_column_usage kcu ON kcu.table_schema = c.table_schema AND kcu.table_name = c.table_name AND kcu.column_name = c.column_name AND referenced_table_schema = c.table_schema '.
-          'WHERE c.table_schema = "<databasename>" AND c.table_name = "<tablename>"',
+          'SELECT `col`.`table_schema`, `col`.`table_name`, `col`.`column_name`, `column_key`, `column_type`, `is_nullable`, `column_default`, `referenced_table_name` '.
+          'FROM `information_schema`.`columns` `col` '.
+          'LEFT JOIN `information_schema`.`key_column_usage` `kcu` ON `kcu`.`table_schema` = `col`.`table_schema` AND `kcu`.`table_name` = `col`.`table_name` AND `kcu`.`column_name` = `col`.`column_name` AND `referenced_table_schema` = `col`.`table_schema` '.
+          'WHERE `col`.`table_schema` = "<databasename>" AND `col`.`table_name` = "<tablename>"',
           array('databasename'=>$databasename, 'tablename'=>$tablename)
         );
         while ($field = mysql_fetch_assoc($fields)) {
@@ -155,7 +155,7 @@
           $inedits += $inedit;
 
           if (get_post("$tablename-primary") == $fieldname)
-            query('UPDATE `<metabasename>`.tables SET uniquefieldid = <fieldid> WHERE tableid = <tableid>', array('metabasename'=>$metabasename, 'fieldid'=>$fieldid, 'tableid'=>$tableid));
+            query('UPDATE `<metabasename>`.`tables` SET `uniquefieldid` = "<fieldid>" WHERE `tableid` = "<tableid>"', array('metabasename'=>$metabasename, 'fieldid'=>$fieldid, 'tableid'=>$tableid));
         }
         if (!$indescs)
           $errors[] = sprintf(_('no fields to desc for %s'), $tablename);

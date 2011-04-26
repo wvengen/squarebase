@@ -72,6 +72,7 @@ jQuery.fn.enhance_form = function() {
     keyup(
       function() {
         $(this).
+        closest('form').
         check_form();
       }
     ).
@@ -81,6 +82,7 @@ jQuery.fn.enhance_form = function() {
     change(
       function() {
         $(this).
+        closest('form').
         check_form();
       }
     ).
@@ -161,7 +163,8 @@ jQuery.fn.enhance_form = function() {
     function() {
       $(this).
       check_form().
-      find('.ajaxproblem:first').
+      find('.ajaxproblem').
+      not('form .ajaxproblem').
       focus();
       return !$(this).has_problem();
     }
@@ -177,7 +180,6 @@ jQuery.fn.enhance_form = function() {
 
 jQuery.fn.check_form = function() {
   $(this).
-  closest('form').
   find('.ajaxproblem').
     removeClass('ajaxproblem').
   end().
@@ -189,7 +191,9 @@ jQuery.fn.check_form = function() {
 }
 
 jQuery.fn.has_problem = function() {
-  return $(this).find('.ajaxproblem').length > 0 && $(this).closest('form').find(':checked[name=deleterecord]').length == 0;
+  return false;
+  //submitting a form now also submits the outermost form which maybe have ajaxproblemes
+  return $(this).find('.ajaxproblem').not('form .ajaxproblem').length > 0 && $(this).find(':checked[name=deleterecord]').length == 0;
 }
 
 jQuery.fn.hidelogs = function() {
@@ -260,8 +264,8 @@ jQuery.fn.ajaxsubmit = function() {
             ajaxify();
           }
         );
-        return false;
       }
+      return false;
     }
   );
   return this;

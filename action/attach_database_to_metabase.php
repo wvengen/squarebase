@@ -21,7 +21,7 @@
   $metabasename = get_get('metabasename');
   $databasename = get_get('databasename');
 
-  query('INSERT IGNORE INTO `<metabasename>`.databases SET databasename = "<databasename>"', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
+  query('INSERT IGNORE INTO `<metabasename>`.`databases` SET `databasename` = "<databasename>"', array('metabasename'=>$metabasename, 'databasename'=>$databasename));
 
   if (has_preference('messagy'))
     add_log('message', sprintf(_('database %s attached to metabase %s'), $databasename, $metabasename));

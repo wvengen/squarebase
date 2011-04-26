@@ -15,7 +15,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with this program. If not, see <http://www.gnu.org/licenses/>.
+    along with this program. If not, see <http://`www`.`gnu`.org/licenses/>.
   */
 
   include('inflection.php');
@@ -24,17 +24,17 @@
   $databasename = get_get('databasename');
   $language =
     $metabasename
-    ? query1field('SELECT languagename FROM `<metabasename>`.languages', array('metabasename'=>$metabasename))
+    ? query1field('SELECT `languagename` FROM `<metabasename>`.`languages`', array('metabasename'=>$metabasename))
     : get_get('language');
 
   // pass 1: store query results and find the primary key field name
   $infos = $alltablenames = array();
   $tables = query(
-    'SELECT tb.table_name, vw.table_name AS view_name, is_updatable, view_definition '.
-    'FROM information_schema.tables tb '.
-    'LEFT JOIN information_schema.views vw ON vw.table_schema = tb.table_schema AND vw.table_name = tb.table_name '.
-    'WHERE tb.table_schema = "<databasename>" '.
-    'ORDER BY vw.table_name, tb.table_name', // base tables first, views last, so the primary key of a view can be set to that of the underlying base table for simple views
+    'SELECT `tb`.`table_name`, `vw`.`table_name` AS `view_name`, `is_updatable`, `view_definition` '.
+    'FROM `information_schema`.`tables` `tb` '.
+    'LEFT JOIN `information_schema`.`views` `vw` ON `vw`.`table_schema` = `tb`.`table_schema` AND `vw`.`table_name` = `tb`.`table_name` '.
+    'WHERE `tb`.`table_schema` = "<databasename>" '.
+    'ORDER BY `vw`.`table_name`, `tb`.`table_name`', // base tables first, views last, so the primary key of a view can be set to that of the underlying base table for simple views
     array('databasename'=>$databasename)
   );
   while ($table = mysql_fetch_assoc($tables)) {
@@ -43,10 +43,10 @@
 
     $allprimarykeyfieldnames = array();
     $fields = query(
-      'SELECT c.table_schema, c.table_name, c.column_name, column_key, column_type, is_nullable, column_default, extra, referenced_table_name '.
-      'FROM information_schema.columns c '.
-      'LEFT JOIN information_schema.key_column_usage kcu ON kcu.table_schema = c.table_schema AND kcu.table_name = c.table_name AND kcu.column_name = c.column_name AND referenced_table_schema = c.table_schema '.
-      'WHERE c.table_schema = "<databasename>" AND c.table_name = "<tablename>"',
+      'SELECT `col`.`table_schema`, `col`.`table_name`, `col`.`column_name`, `column_key`, `column_type`, `is_nullable`, `column_default`, `extra`, `referenced_table_name` '.
+      'FROM `information_schema`.`columns` `col` '.
+      'LEFT JOIN `information_schema`.`key_column_usage` `kcu` ON `kcu`.`table_schema` = `col`.`table_schema` AND `kcu`.`table_name` = `col`.`table_name` AND `kcu`.`column_name` = `col`.`column_name` AND `referenced_table_schema` = `col`.`table_schema` '.
+      'WHERE `col`.`table_schema` = "<databasename>" AND `col`.`table_name` = "<tablename>"',
       array('databasename'=>$databasename, 'tablename'=>$tablename)
     );
     $fieldnr = 0;
@@ -113,7 +113,7 @@
       $infos[$tablename]['max_in_edit'] = max($infos[$tablename]['max_in_edit'], $infos[$tablename]['fields'][$index]['in_edit']);
 
       if ($metabasename)
-        $infos[$tablename]['fields'][$index]['original'] = query01('SELECT tbl.singular, tbl.plural, tbl.intablelist, title, presentationname, nullallowed, indesc, inlist, inedit, ftbl.tablename AS foreigntablename FROM `<metabasename>`.tables AS tbl LEFT JOIN `<metabasename>`.fields AS fld ON fld.tableid = tbl.tableid LEFT JOIN `<metabasename>`.presentations pst ON pst.presentationid = fld.presentationid LEFT JOIN `<metabasename>`.tables AS ftbl ON fld.foreigntableid = ftbl.tableid WHERE tbl.tablename = "<tablename>" AND fieldname = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname));
+        $infos[$tablename]['fields'][$index]['original'] = query01('SELECT `tbl`.`singular`, `tbl`.`plural`, `tbl`.`intablelist`, `title`, `presentationname`, `nullallowed`, `indesc`, `inlist`, `inedit`, `ftbl`.`tablename` AS `foreigntablename` FROM `<metabasename>`.`tables` AS `tbl` LEFT JOIN `<metabasename>`.`fields` AS `fld` ON `fld`.`tableid` = `tbl`.`tableid` LEFT JOIN `<metabasename>`.`presentations` `pst` ON `pst`.`presentationid` = `fld`.`presentationid` LEFT JOIN `<metabasename>`.`tables` AS `ftbl` ON `fld`.`foreigntableid` = `ftbl`.`tableid` WHERE `tbl`.`tablename` = "<tablename>" AND `fieldname` = "<fieldname>"', array('metabasename'=>$metabasename, 'tablename'=>$tablename, 'fieldname'=>$fieldname));
       $infos[$tablename]['fields'][$index]['linkedtable'] = isset($infos[$tablename]['fields'][$index]['original']) ? $infos[$tablename]['fields'][$index]['original']['foreigntablename'] : @call_user_func("linkedtable_$bestpresentationname", $tablename, $fieldname);
     }
   }
@@ -121,7 +121,7 @@
   // pass 3: produce output for tables and fields (needs $infos[$tablename]['max_in_****'])
   $alternative_views = array();
   if ($metabasename) {
-    $views = query('SELECT * FROM `<metabasename>`.views', array('metabasename'=>$metabasename));
+    $views = query('SELECT * FROM `<metabasename>`.`views`', array('metabasename'=>$metabasename));
     while ($view = mysql_fetch_assoc($views))
       $alternative_views[$view['viewname']] = 1;
   }

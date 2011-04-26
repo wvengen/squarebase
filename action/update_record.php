@@ -31,7 +31,7 @@
   if ($deleterecord) {
     if (has_preference('messagy'))
       $description = description($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, $uniquevalue);
-    query('DELETE FROM `<databasename>`.`<viewname>` WHERE <uniquefieldname> = "<uniquevalue>"', array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+    query('DELETE FROM `<databasename>`.`<viewname>` WHERE `<uniquefieldname>` = "<uniquevalue>"', array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
     if (has_preference('messagy'))
       add_log('message', sprintf(_('deleted %s %s'), $tablenamesingular, $description));
   }

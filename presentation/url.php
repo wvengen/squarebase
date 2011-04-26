@@ -2,7 +2,7 @@
   function probability_url($field) {
     if (!preg_match('@^(var)?char\b@', $field['column_type']))
       return 0;
-    $texts = query("SELECT `<fieldname>` FROM `<databasename>`.`<tablename>` WHERE `<fieldname>` IS NOT NULL LIMIT 10", array('fieldname'=>$field['column_name'], 'tablename'=>$field['table_name'], 'databasename'=>$field['table_schema']));
+    $texts = query('SELECT `<fieldname>` FROM `<databasename>`.`<tablename>` WHERE `<fieldname>` IS NOT NULL LIMIT 10', array('fieldname'=>$field['column_name'], 'tablename'=>$field['table_name'], 'databasename'=>$field['table_schema']));
     if (mysql_num_rows($texts) == 0)
       return 0;
     while ($text = mysql_fetch_assoc($texts)) {
