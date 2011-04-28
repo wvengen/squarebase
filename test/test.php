@@ -75,21 +75,29 @@
   $selenium->equal(readDatabase($connection), $database);
 
   //logout
-  $selenium->open("index.php?action=logout");
+  $selenium->open('index.php?action=logout');
   $selenium->noErrorAndNoWarningAndTitle('login');
   $selenium->equal($selenium->getContent('currentusernameandhost'), '');
 
   //login
   $selenium->type('usernameandhost', "$mysql_user@$mysql_host");
   $selenium->type('password', $mysql_passwd);
-  $selenium->clickAndWaitForPageToLoad('action', 'new metabase from database');
-  $selenium->equal($selenium->getContent('currentusernameandhost'), "$mysql_user@$mysql_host");
+  $selenium->clickAndWaitForPageToLoad('action');
+  $selenium->equal($selenium->getContent('currentusernameandhost'), $mysql_user);
+
+  // if metabases are present we get a list of databases
+  if ($selenium->getTitle() == 'list databases') {
+    // proceed to new metabase creation page
+    $selenium->clickAndWaitForPageToLoad('link=new metabase from database', 'new metabase from database');
+  } else {
+    $selenium->noErrorAndNoWarningAndTitle('new metabase from database');
+  }
 
   //new metabase from database
   $selenium->clickAndWaitForPageToLoad('link=inventory', 'language for database');
 
-  //language for database
-  $selenium->clickAndWaitForPageToLoad('action', 'form metabase for database');
+  //language for database (forming the metabase can be an intensive operation)
+  $selenium->clickAndWaitForPageToLoad('action', 'form metabase for database', 20000);
 
   //form metabase for database
   $selenium->clickAndWaitForPageToLoad('action', 'show database');
@@ -99,14 +107,14 @@
 
   //quickadd computer
   $selenium->type('field-description', 'Dell Optiplex');
-  $selenium->clickAndWaitForAjaxToLoad('quickadd_record_computer');
+  $selenium->clickAndWaitForAjaxToLoad('quickadd-record-computers');
 
   $database['computers'][] = array('computerID'=>1, 'description'=>'Dell Optiplex');
   $selenium->equal(readDatabase($connection), $database);
 
   //quickadd computer
   $selenium->type('field-description', 'Dell Inspiron');
-  $selenium->clickAndWaitForAjaxToLoad('quickadd_record_computer');
+  $selenium->clickAndWaitForAjaxToLoad('quickadd-record-computers');
 
   $database['computers'][] = array('computerID'=>2, 'description'=>'Dell Inspiron');
   $selenium->equal(readDatabase($connection), $database);
@@ -114,14 +122,14 @@
   //full record computer
   $selenium->clickAndWaitForAjaxToLoad('link=full record');
   $selenium->type('document.forms[1].elements["field-description"]', 'Dell Dimension');
-  $selenium->clickAndWaitForAjaxToLoad('add_record_computer');
+  $selenium->clickAndWaitForAjaxToLoad('add-record-computers');
 
   $database['computers'][] = array('computerID'=>3, 'description'=>'Dell Dimension');
   $selenium->equal(readDatabase($connection), $database);
 
   //quickadd computer
   $selenium->type('field-description', 'iMcDonalds');
-  $selenium->clickAndWaitForAjaxToLoad('quickadd_record_computer');
+  $selenium->clickAndWaitForAjaxToLoad('quickadd-record-computers');
 
   $database['computers'][] = array('computerID'=>4, 'description'=>'iMcDonalds');
   $selenium->equal(readDatabase($connection), $database);

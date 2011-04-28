@@ -75,15 +75,18 @@
       $this->equal($this->getTitle(), $title);
     }
 
-    public function clickAndWaitForPageToLoad($locator, $title) {
+    public function clickAndWaitForPageToLoad($locator, $title=null, $timeout=5000) {
       $this->click($locator);
-      $this->waitForPageToLoad(5000);
-      $this->noErrorAndNoWarningAndTitle($title);
+      $this->waitForPageToLoad($timeout);
+      if (is_null($title))
+        $this->noErrorAndNoWarning();
+      else
+        $this->noErrorAndNoWarningAndTitle($title);
     }
 
-    public function clickAndWaitForAjaxToLoad($locator) {
+    public function clickAndWaitForAjaxToLoad($locator, $timeout=5000) {
       $this->click($locator);
-      $this->waitForCondition('selenium.browserbot.getCurrentWindow().jQuery.active == 0', 5000);
+      $this->waitForCondition('selenium.browserbot.getCurrentWindow().jQuery.active == 0', $timeout);
       $this->noErrorAndNoWarning();
     }
   }
