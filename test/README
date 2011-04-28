@@ -1,7 +1,10 @@
 These tests check the functionality of Squarebase in a browser.
+Please review local.php for your local configuration.
+
 
 Depends on
-* Selenium (http://seleniumhq.org/)
-  * Selenium Core (http://seleniumhq.org/projects/core/)
-  * Selenium Remote Control (http://seleniumhq.org/projects/remote-control/)
+* Selenium version 1 (http://seleniumhq.org/)
 * PEAR/Testing_Selenium (http://pear.php.net/package/Testing_Selenium/)
+
+Both can be installed in this source tree by running 'make selenium_install'
+from this project's root.

@@ -1,6 +1,10 @@
 <?php
+  // add directory to include path for in-tree installation
+  set_include_path(get_include_path().PATH_SEPARATOR.dirname(__FILE__));
+
   require_once('functions.php');
   require_once('My_Selenium.php');
+  require_once('local.php');
 
   //return the database in an array
   function readDatabase($connection) {
@@ -19,11 +23,11 @@
   }
 
   //start selenium
-  $selenium = new My_Selenium('*firefox', 'http://localhost/');
+  $selenium = new My_Selenium('*firefox', $site_url);
   $selenium->startAndShowProgress();
 
   //make a test database
-  $connection = mysql_connect('localhost', 'sqbase', 'sqbase');
+  $connection = mysql_connect($mysql_host, $mysql_user, $mysql_passwd);
 
   query('DROP DATABASE IF EXISTS inventory', array(), $connection);
   query('CREATE DATABASE inventory', array(), $connection);
@@ -71,15 +75,15 @@
   $selenium->equal(readDatabase($connection), $database);
 
   //logout
-  $selenium->open('/squarebase.org/index.php?action=logout');
+  $selenium->open("index.php?action=logout");
   $selenium->noErrorAndNoWarningAndTitle('login');
   $selenium->equal($selenium->getContent('currentusernameandhost'), '');
 
   //login
-  $selenium->type('usernameandhost', 'sqbase');
-  $selenium->type('password', 'sqbase');
+  $selenium->type('usernameandhost', "$mysql_user@$mysql_host");
+  $selenium->type('password', $mysql_passwd);
   $selenium->clickAndWaitForPageToLoad('action', 'new metabase from database');
-  $selenium->equal($selenium->getContent('currentusernameandhost'), 'sqbase');
+  $selenium->equal($selenium->getContent('currentusernameandhost'), "$mysql_user@$mysql_host");
 
   //new metabase from database
   $selenium->clickAndWaitForPageToLoad('link=inventory', 'language for database');
