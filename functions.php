@@ -348,7 +348,7 @@
         $query
       );
     if ($unknown_characters_or_keywords)
-      add_log('warning', sprintf(_('unknown characters or keywords in query: %s in %s'), $unknown_characters_or_keywords, $query));
+      error(sprintf(_('unknown characters or keywords in query: %s in %s'), $unknown_characters_or_keywords, $query));
 
     $fullquery = preg_replace('@(["`])?<(\w+)>(["`])?@e', '(is_null($arguments["$2"]) ? "NULL" : (is_bool($arguments["$2"]) ? ($arguments["$2"] ? "TRUE" : "FALSE") : (!"$1" && is_numeric($arguments["$2"]) ? (int) $arguments["$2"] : "$1".mysql_escape_string($arguments["$2"])."$3")))', $query);
 
@@ -593,7 +593,7 @@
 
   function description($metabasename, $databasename, $tablename, $viewname, $uniquefieldname, $uniquevalue) {
     $descriptor = descriptor($metabasename, $databasename, $tablename, $viewname);
-    return query1field("SELECT $descriptor[select] FROM `<databasename>`.`<viewname>` ".join(' ', $descriptor['joins']).'WHERE `<viewname>`.`<uniquefieldname>` = "<uniquevalue>"', array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue));
+    return query1field("SELECT $descriptor[select] FROM `<databasename>`.`<viewname>` ".join(' ', $descriptor['joins']).'WHERE `<viewname>`.`<uniquefieldname>` = "<uniquevalue>"', array('databasename'=>$databasename, 'viewname'=>$viewname, 'uniquefieldname'=>$uniquefieldname, 'uniquevalue'=>$uniquevalue) + $descriptor['arguments']);
   }
 
   function breadcrumbs($metabasename, $databasename = null, $tablename = null, $tablenamesingular = null, $uniquefieldname = null, $uniquevalue = null) {
@@ -634,7 +634,7 @@
   function list_table($metabasename, $databasename, $tablename, $tablenamesingular, $limit, $offset, $uniquefieldname, $uniquevalue, $orderfieldname, $orderasc = true, $foreignfieldname = null, $foreignvalue = null, $parenttablename = null, $interactive = true) {
     $viewname = table_or_view($metabasename, $databasename, $tablename);
     $originalorderfieldname = $orderfieldname;
-    $joins = $selectnames = $ordernames = array();
+    $joins = $selectnames = $ordernames = $arguments = array();
     $can_insert = $can_quickadd = has_grant('INSERT', $databasename, $viewname, '?');
     $can_update = has_grant('UPDATE', $databasename, $viewname, '?');
     $header = $quickadd = array();
@@ -652,6 +652,7 @@
           $selectnames[] = "$descriptor[select] AS `$field[foreigntablename]_$field[fieldname]_descriptor`";
           $joins = array_merge($joins, $descriptor['joins']);
           $ordernames = array_merge($ordernames, $descriptor['orders']);
+          $arguments = $arguments + $descriptor['arguments'];
         }
         else
           $ordernames[] = "`${tablename}_$field[fieldname]`";
@@ -697,9 +698,10 @@
       ($selectnames ? ', '.join(', ', $selectnames) : '').
       " FROM `$databasename`.`$viewname` ".
       join(' ', array_unique($joins)).
-      (!is_null($foreignvalue) ? " WHERE `$viewname`.`$foreignfieldname` = '$foreignvalue'" : '').
+      (!is_null($foreignvalue) ? " WHERE `$viewname`.`$foreignfieldname` = \"$foreignvalue\"" : '').
       ($ordernames ? " ORDER BY ".join(', ', $ordernames) : '').
-      ($limit ? " LIMIT $limit".($offset ? " OFFSET $offset" : '') : '')
+      ($limit ? " LIMIT $limit".($offset ? " OFFSET $offset" : '') : ''),
+      $arguments
     );
     $foundrecords = $limit ? query1field('SELECT FOUND_ROWS()') : null;
 
@@ -1020,7 +1022,7 @@
     static $descriptors = array();
     $viewname = table_or_view($metabasename, $databasename, $tablename);
     if (!isset($descriptors[$viewname])) {
-      $selects = $joins = $orders = array();
+      $selects = $joins = $orders = $arguments = array();
       $fields = fields_from_table($metabasename, $databasename, $tablename, $viewname);
       while ($field = mysql_fetch_assoc($fields)) {
         if ($field['indesc']) {
@@ -1033,23 +1035,34 @@
             $selects[] = $descriptor['select'];
             $orders = array_merge($orders, $descriptor['orders']);
             $joins = array_merge($joins, $descriptor['joins']);
+            $arguments = $arguments + $descriptor['arguments'];
           }
           else {
-            $selects[] = first_non_null(@call_user_func("formattedsql_$field[presentationname]", "`{tablealias}`.`$field[fieldname]`"), "`{tablealias}`.`$field[fieldname]`");
-            $orders[] = "`{tablealias}`.`$field[fieldname]`";
+            $full_fieldname = "`{tablealias}`.`$field[fieldname]`";
+            $selects[] = first_non_null(@call_user_func("formattedsql_$field[presentationname]", $full_fieldname), $full_fieldname);
+            $orders[] = $full_fieldname;
           }
         }
       }
       $descriptors[$viewname] = array(
         'select'   =>count($selects) == 1 ? $selects[0] : 'CONCAT_WS(" ", '.join(', ', $selects).')',
         'joins'    =>$joins,
-        'orders'   =>$orders
+        'orders'   =>$orders,
+        'arguments'=>$arguments
       );
     }
+    $descriptor = $descriptors[$viewname];
     return array(
-      'select'   =>preg_replace('@{tablealias}@', $tablealias, $descriptors[$viewname]['select']),
-      'joins'    =>preg_replace('@{tablealias}@', $tablealias, $descriptors[$viewname]['joins']),
-      'orders'   =>preg_replace('@{tablealias}@', $tablealias, $descriptors[$viewname]['orders'])
+      'select'   =>preg_replace('@{tablealias}@', $tablealias, $descriptor['select']),
+      'joins'    =>preg_replace('@{tablealias}@', $tablealias, $descriptor['joins']),
+      'orders'   =>preg_replace('@{tablealias}@', $tablealias, $descriptor['orders']),
+      'arguments'=>
+        $descriptor['arguments']
+        ? array_combine(
+            preg_replace('@{tablealias}@', $tablealias, array_keys($descriptor['arguments'])),
+            array_values($descriptor['arguments'])
+          )
+        : array()
     );
   }
 
